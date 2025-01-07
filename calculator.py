@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+from collections.abc import Iterator
 @dataclass
 class AST:
     pass
@@ -72,10 +72,6 @@ def lex(s: str) -> Iterator[Token]:
                     i = i + 1
                     yield OperatorToken(t)
                     
-                    
-                    
-                    
-from collections.abc import Iterator
 def parse(s: str) -> AST:
     from more_itertools import peekable
     t = peekable(lex(s))
@@ -132,7 +128,7 @@ def parse(s: str) -> AST:
                 next(t)
                 return ast
             case _:
-                raise ValueError("Expected Token")
+                raise ValueError("Unexpected Token")
             
     
 
