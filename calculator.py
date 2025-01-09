@@ -15,7 +15,7 @@ class BinOp(AST):
 @dataclass
 class Number(AST):
     val: str
-    
+
 @dataclass
 class UnOp(AST):
     op: str
@@ -49,7 +49,7 @@ class NumberToken(Token):
 @dataclass
 class OperatorToken(Token):
     op: str
-    
+
 
 def lex(s: str) -> Iterator[Token]:
     i = 0
@@ -72,7 +72,7 @@ def lex(s: str) -> Iterator[Token]:
                 case '+' | '*' | '/' | '^' | '-' | '(' | ')':
                     i = i + 1
                     yield OperatorToken(t)
-                    
+      
 def parse(s: str) -> AST:
     t = peekable(lex(s))
 
@@ -88,7 +88,7 @@ def parse(s: str) -> AST:
                     ast = BinOp('-', ast, parse_mul())
                 case _:
                     return ast
-        
+ 
     def parse_mul():
         ast = parse_exponentiation()
         while True:
@@ -111,7 +111,7 @@ def parse(s: str) -> AST:
                     ast = BinOp("^", ast, parse_exponentiation())
                 case _:
                     return ast
-    
+
     def parse_atom():
         match t.peek(None):
             case NumberToken(v):
@@ -129,8 +129,6 @@ def parse(s: str) -> AST:
                 return ast
             case _:
                 raise ValueError("Unexpected Token")
-            
-    
 
     return parse_add()
 
