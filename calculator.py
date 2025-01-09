@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from collections.abc import Iterator
+from more_itertools import peekable
 
 @dataclass
 class AST:
@@ -49,8 +50,7 @@ class NumberToken(Token):
 class OperatorToken(Token):
     op: str
     
-    
-from collections.abc import Iterator
+
 def lex(s: str) -> Iterator[Token]:
     i = 0
     while True:
@@ -74,7 +74,6 @@ def lex(s: str) -> Iterator[Token]:
                     yield OperatorToken(t)
                     
 def parse(s: str) -> AST:
-    from more_itertools import peekable
     t = peekable(lex(s))
 
     def parse_add():
