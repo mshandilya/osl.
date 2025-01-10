@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from collections.abc import Iterator
 from more_itertools import peekable
+from graphviz import Digraph
 
 @dataclass
 class AST:
@@ -14,20 +15,20 @@ class BinOp(AST):
 
 @dataclass
 class Number(AST):
-    val: str
+    val: int | float
 
 @dataclass
 class UnOp(AST):
     op: str
     right: AST
 
+class ParseErr(Exception):
+    pass
 
-expr = BinOp("+", Number("2"), BinOp("*", Number("3"), Number("4")))
-print(expr)
 
-def e(tree: AST) -> float:
+def e(tree: AST) -> int | float:
     match tree:
-        case Number(val): return float(val)
+        case Number(val): return val
         case BinOp("+", left, right): return e(left) + e(right)
         case BinOp("*", left, right): return e(left) * e(right)
         case BinOp("/", left, right): return e(left) / e(right)
@@ -36,9 +37,9 @@ def e(tree: AST) -> float:
         case UnOp("-", right): return -e(right)
          
 
-print(e(expr))
-
-
+# expr = BinOp("+", Number("2"), BinOp("*", Number("3"), Number("4")))
+# print(expr)
+# print(e(expr))
 class Token:
     pass
 
@@ -72,19 +73,37 @@ def lex(s: str) -> Iterator[Token]:
                 case '+' | '*' | '/' | '^' | '-' | '(' | ')':
                     i = i + 1
                     yield OperatorToken(t)
+                case _:
+                    raise ParseErr(f"Unexpected character: {t} at position {i}")
       
 def parse(s: str) -> AST:
     t = peekable(lex(s))
+    i = 0
+    
+    def consume(expected_type=None, expected_value=None):
+        nonlocal i  # Track the current index
+        token = next(t, None)
+        if token is None:
+            raise ParseErr(f"Unexpected end of input at index {i}")
+        if expected_type and not isinstance(token, expected_type):
+            raise ParseErr(f"Expected {expected_type.__name__} at index {i}, got {type(token).__name__}")
+        if expected_value and getattr(token, "op", None) != expected_value:
+            raise ParseErr(f"Expected '{expected_value}' at index {i}, got '{token.op}'")
+        i += len(str(token.val if isinstance(token, NumberToken) else token.op))
+        return token
+    
+    def peek():
+        return t.peek(None)
 
     def parse_add():
         ast = parse_mul()
         while True:
-            match t.peek(None):
+            match peek():
                 case OperatorToken('+'):
-                    next(t)
+                    consume()
                     ast = BinOp('+', ast, parse_mul())
                 case OperatorToken('-'):
-                    next(t)
+                    consume()
                     ast = BinOp('-', ast, parse_mul())
                 case _:
                     return ast
@@ -92,12 +111,12 @@ def parse(s: str) -> AST:
     def parse_mul():
         ast = parse_exponentiation()
         while True:
-            match t.peek(None):
+            match peek():
                 case OperatorToken('*'):
-                    next(t)
+                    consume()
                     ast = BinOp("*", ast, parse_exponentiation())
                 case OperatorToken('/'):
-                    next(t)
+                    consume()
                     ast = BinOp("/", ast, parse_exponentiation())
                 case _:
                     return ast
@@ -105,32 +124,57 @@ def parse(s: str) -> AST:
     def parse_exponentiation():
         ast = parse_atom()
         while True:
-            match t.peek(None):
+            match peek():
                 case OperatorToken('^'):
-                    next(t)
+                    consume()
                     ast = BinOp("^", ast, parse_exponentiation())
                 case _:
                     return ast
 
     def parse_atom():
-        match t.peek(None):
+        match peek():
             case NumberToken(v):
-                next(t)
-                return Number(v)
+                consume()
+                val = float(v) if '.' in v else int(v)
+                return Number(val)
             case OperatorToken('-'):
-                next(t)
+                consume()
                 return UnOp("-", parse_atom())
             case OperatorToken('('):
-                next(t)
+                start_index = i
+                consume()
                 ast = parse_add()
-                if t.peek(None) != OperatorToken(')'):
-                    raise ValueError("Expected closing bracket")
-                next(t)
+                if peek() != OperatorToken(')'):
+                    raise ParseErr(f"Expected closing parenthesis at index {i} (opened at index {start_index})")
+                consume()
                 return ast
             case _:
-                raise ValueError("Unexpected Token")
+                raise ParseErr(f"Unexpected token at index {i}")
 
     return parse_add()
+
+
+def visualize_ast(tree: AST, dot=None, parent=None, node_id=0):
+    if dot is None:
+        dot = Digraph()
+        dot.attr("node", shape="circle")
+
+    current_id = str(node_id)
+
+    if isinstance(tree, Number):
+        dot.node(current_id, label=str(tree.val))
+    elif isinstance(tree, BinOp):
+        dot.node(current_id, label=tree.op)
+        visualize_ast(tree.left, dot, current_id, node_id * 2 + 1)
+        visualize_ast(tree.right, dot, current_id, node_id * 2 + 2)
+    elif isinstance(tree, UnOp):
+        dot.node(current_id, label=tree.op)
+        visualize_ast(tree.right, dot, current_id, node_id * 2 + 1)
+
+    if parent is not None:
+        dot.edge(parent, current_id)
+
+    return dot
 
 print(parse("2"))
 print(parse("2+3"))
@@ -139,9 +183,6 @@ print()
 print(e(parse("2 + 3*5")))
 print()
 
-# expr = BinOp("+", Number("2"), BinOp("*", Number("3"), BinOp("^", Number("5"), Number("2"))))
-# print(expr)
-# print(e(expr))
 print(parse("2 + 3*5^2"))
 print(e(parse("2 + 3*5^2")))
 print()
@@ -197,9 +238,45 @@ print(e(parse("2 +-3")))
 print()
 print(parse("-(5-2)"))
 print(e(parse("-(5-2)")))
-# print()
-# print(parse("-((4*5-(4/5))")) # Will throw error "Expected closing bracket"
-# print(e(parse("-((4*5-(4/5))")))
 print()
 print(parse("-((4*5)-(4/5))"))
 print(e(parse("-((4*5)-(4/5))")))
+ast = parse("-((4*5)-(4/5))")
+dot = visualize_ast(ast)
+dot.render("ast", format="png", cleanup=True)
+
+try:
+    print()
+    print("-((4*5-(4/5))")
+    print(parse("-((4*5-(4/5))")) # Will throw error "Expected closing bracket"
+    print(e(parse("-((4*5-(4/5))")))
+except Exception as e:
+    print(e)
+    print()
+
+try:
+    print()
+    print("2 +")
+    print(parse("2 +")) # Will throw error "Unexpected end of input"
+    print(e(parse("2 +")))
+except Exception as e:
+    print(e)
+    print()
+
+try:
+    print()
+    print("2 + * 3")
+    print(parse("2 + * 3")) # Will throw error "Expected Token, got OperatorToken"
+    print(e(parse("2 + * 3")))
+except Exception as e:
+    print(e)
+    print()
+    
+try:
+    print()
+    print("2 + $ 3")
+    print(parse("2 + $ 3"))
+    print(e(parse("2 + $ 3")))
+except Exception as e:
+    print(e)
+    print()
