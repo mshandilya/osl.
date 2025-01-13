@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from collections.abc import Iterator
 from more_itertools import peekable
-from graphviz import Digraph
+from graphviz import Digraph # type: ignore
 
 @dataclass
 class AST:
