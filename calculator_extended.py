@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from collections.abc import Iterator
 from more_itertools import peekable
+from pprint import pprint
 from graphviz import Digraph # type: ignore
 
 @dataclass
@@ -214,190 +215,139 @@ def parse(s: str) -> AST:
     return parse_if()
 
 
-def visualize_ast(tree: AST, dot=None, parent=None, node_id=0) -> Digraph:
-    """
-    Visualizes the AST using Graphviz.
+"""
 
-    Args:
-        tree: The AST to visualize.
-        dot: The Digraph instance (created if None).
-        parent: The parent node ID (None for the root).
-        node_id: The current node ID (unique for each node).
+"""
+unique_id = 0
 
-    Returns:
-        The Digraph instance.
-    """
+def get_unique_id():
+    global unique_id
+    unique_id += 1
+    return str(unique_id)
+
+def visualize_ast(tree: AST, dot=None, parent=None):
     if dot is None:
         dot = Digraph()
         dot.attr("node", shape="circle")
 
-    current_id = str(node_id)
+    current_id = get_unique_id()
 
     if isinstance(tree, Number):
-        label = f"Number: {tree.val}"
-        dot.node(current_id, label=label, shape="ellipse")
+        dot.node(current_id, label=str(tree.val))
+        
     elif isinstance(tree, BinOp):
-        label = f"BinOp: {tree.op}"
-        dot.node(current_id, label=label)
-        visualize_ast(tree.left, dot, current_id, node_id * 2 + 1)
-        visualize_ast(tree.right, dot, current_id, node_id * 2 + 2)
+        dot.node(current_id, label=tree.op)
+        visualize_ast(tree.left, dot, current_id)
+        visualize_ast(tree.right, dot, current_id)
+        
     elif isinstance(tree, UnOp):
-        label = f"UnOp: {tree.op}"
-        dot.node(current_id, label=label)
-        visualize_ast(tree.right, dot, current_id, node_id * 2 + 1)
+        dot.node(current_id, label=tree.op)
+        visualize_ast(tree.right, dot, current_id)
+        
     elif isinstance(tree, If):
-        dot.node(current_id, label="If")
-
-        # Create child nodes for Condition, Then, and Else
-        condition_id = str(node_id * 2 + 1)
-        then_id = str(node_id * 2 + 2)
-        else_id = str(node_id * 2 + 3)
-
-        # Add labels for Condition, Then, Else branches
-        dot.node(condition_id, label="Condition", shape="diamond")
-        dot.node(then_id, label="Then", shape="box")
-        dot.node(else_id, label="Else", shape="box")
-
-        # Draw edges from the If node to these branches
-        dot.edge(current_id, condition_id, label="condition")
-        dot.edge(current_id, then_id, label="then")
-        dot.edge(current_id, else_id, label="else")
-
-        # Visualize subtrees
-        visualize_ast(tree.condition, dot, condition_id, node_id * 4 + 1)
-        visualize_ast(tree.then_body, dot, then_id, node_id * 4 + 2)
-        visualize_ast(tree.else_body, dot, else_id, node_id * 4 + 3)
+    
+        dot.node(current_id, label="if")
+        
+        condition_id = get_unique_id()
+        dot.node(condition_id, label="condition", shape="diamond")
+        dot.edge(current_id, condition_id)
+        visualize_ast(tree.condition, dot, condition_id)
+        
+        then_id = get_unique_id()
+        dot.node(then_id, label="then", shape="box")
+        dot.edge(current_id, then_id)
+        visualize_ast(tree.then_body, dot, then_id)
+        
+        else_id = get_unique_id()
+        dot.node(else_id, label="else", shape="box")
+        dot.edge(current_id, else_id)
+        visualize_ast(tree.else_body, dot, else_id)
 
     if parent is not None:
         dot.edge(parent, current_id)
 
     return dot
 
+def unit_test(expr: str, expected_value, results):
+    print(f"Expression: {expr}")
+    try:
+        ast = parse(expr)
+        pprint(ast)
+        result = e(ast)
+        print(f"Evaluated Result: {result}")
+        if result != expected_value:
+            error_msg = f"Test failed for expression: {expr}. Expected {expected_value}, but got {result}."
+            results.append(("FAILED", expr, error_msg))
+            print(error_msg)
+            print()
+        else:
+            results.append(("PASSED", expr, None))
+            print("Test passed!\n")
+    except Exception as ep:
+        error_msg = f"Error evaluating expression: {expr}. Exception: {ep}"
+        results.append(("ERROR", expr, error_msg))
+        print(error_msg)
+        print()
 
-print(parse("2"))
-print(parse("2+3"))
-print(parse("2+3*5"))
-print()
-print(e(parse("2 + 3*5")))
-print()
+log = []
 
-print(parse("2 + 3*5^2"))
-print(e(parse("2 + 3*5^2")))
-print()
-print(parse("2 + 3*5^2 - 3"))
-print(e(parse("2 + 3*5^2 - 3")))
-print()
+unit_test("2", 2, log)
+unit_test("2+3", 5, log)
+unit_test("2+3*5", 17, log)
+unit_test("2 + 3*5", 17, log)
+unit_test("2 + 3*5^2", 77, log)
+unit_test("2 + 3*5^2 - 3", 74, log)
+unit_test("2 + 3*5^2 - 3 / 2", 75.5, log)
+unit_test("2.5 + 3.5", 6.0, log)
+unit_test("2^3^2", 512, log)
+unit_test("2.5^3^2", 3814.697265625, log)
+unit_test("3 + 2*3.5^4/2", 153.0625, log)
+unit_test("2-3-5-6", -12, log)
+unit_test("2/3/5", 0.13333333333333333, log)
+unit_test("((2+3)*5)/5", 5.0, log)
+unit_test("3-(5-6)", 4, log)
+unit_test("3*(5-6^3)", -633, log)
+unit_test("2- -2", 4, log)
+unit_test("2- -(3 - 1)", 4, log)
+unit_test("5*-5", -25, log)
+unit_test("-5*5", -25, log)
+unit_test("2 +-3", -1, log)
+unit_test("-(5-2)", -3, log)
+unit_test("-((4*5)-(4/5))", -19.2, log)
+unit_test("if 2 < 3 then 2 else 3 end", 2, log)
+unit_test("if 2 < 3 then 0+5 else 1*6 end", 5, log)
 
-print(e(parse("2 + 3*5^2 - 3 / 2")))
-print()
-# decimal numbers
-print(parse("2.5 + 3.5"))
-print(e(parse("2.5 + 3.5")))
-print()
-print(parse("2^3^2"))
-print(e(parse("2^3^2")))
-print()
-# mix of decimal and exponentiation
-print(parse("2.5^3^2"))
-print(e(parse("2.5^3^2")))
-print()
-print(parse("3 + 2*3.5^25/5"))
-print(e(parse("3 + 2*3.5^4/2")))
-print()
-print(parse("2-3-5-6"))
-print(e(parse("2-3-5-6")))
-print()
-print(parse("2/3/5"))
-print(e(parse("2/3/5")))
-print()
-# take brackets into account
-print(parse("((2+3)*5)/5"))
-print(e(parse("((2+3)*5)/5")))
-print()
-print(parse("3-(5-6)"))
-print(e(parse("3-(5-6)")))
-print()
-print(parse("3*(5-6^3)"))
-print(e(parse("3*(5-6^3)")))
-print()
-print(parse("2- -2"))
-print(e(parse("2- -2")))
-print()
-print(parse("2- -(3 - 1)"))
-print(e(parse("2- -(3 - 1)")))
-print(parse("5*-5"))
-print(e(parse("5*-5")))
-print()
-print(parse("-5*5"))
-print(e(parse("-5*5")))
-print()
-print(parse("2 +-3"))
-print(e(parse("2 +-3")))
-print()
-print(parse("-(5-2)"))
-print(e(parse("-(5-2)")))
-print()
-print(parse("-((4*5)-(4/5))"))
-print(e(parse("-((4*5)-(4/5))")))
-ast = parse("-((4*5)-(4/5))")
-dot = visualize_ast(ast)
-dot.render("ast", format="png", cleanup=True)
-
-try:
-    print()
-    print("-((4*5-(4/5))")
-    print(parse("-((4*5-(4/5))")) # Will throw error "Expected closing bracket"
-    print(e(parse("-((4*5-(4/5))")))
-except Exception as ep:
-    print(ep)
-    print()
-
-try:
-    print()
-    print("2 +")
-    print(parse("2 +")) # Will throw error "Unexpected end of input"
-    print(e(parse("2 +")))
-except Exception as ep:
-    print(ep)
-    print()
-
-try:
-    print()
-    print("2 + * 3")
-    print(parse("2 + * 3")) # Will throw error "Expected Token, got OperatorToken"
-    print(e(parse("2 + * 3")))
-except Exception as ep:
-    print(ep)
-    print()
-    
-try:
-    print()
-    print("2 + $ 3")
-    print(parse("2 + $ 3"))
-    print(e(parse("2 + $ 3")))
-except Exception as ep:
-    print(ep)
-    print()
-    
-print()
-print(parse("if 2 < 3 then 2 else 3 end"))
-print(e(parse("if 2 < 3 then 2 else 3 end")))
-
-print()
-print(parse("if 2 < 3 then 0+5 else 1*6 end"))
-ast = parse("if 2 < 3 then 0+5 else 1*6 end")
-dot = visualize_ast(ast)
-dot.render("ast_cond", format="png", cleanup=True)
-print(e(parse("if 2 < 3 then 0+5 else 1*6 end")))
+exp = "2<3<2"
+unit_test(exp, False, log)
 
 exp = "if 2 < 3 then if 4 > 5 then 1 else if 6 <= 7 then 8 else 9 end end else 10 end"
-print()
-print(parse(exp))
-print(e(parse(exp)))
+unit_test(exp, 8, log)
+
+exp = "1 < 2 <= 3 == 4"
+unit_test(exp, False, log)
+
+print("\nTest Summary:")
+for status, expr, error_msg in log:
+    if status == "PASSED":
+        print(f"PASSED: {expr}")
+    else:
+        print(f"{status}: {expr}")
+        if error_msg:
+            print(f"  -> {error_msg}")
+
+exp = "if 2 < 3 then if 4 > 5 then 1 else if 6 <= 7 then 8 else 9 end end else 10 end"
 ast = parse(exp)
 dot = visualize_ast(ast)
 dot.render("ast_nested_cond", format="png", cleanup=True)
 
-print()
-print(parse("1 < 2 <= 3 == 4"))
-print(e(parse("1 < 2 <= 3 == 4")))
+ast = parse("-((4*5)-(4/5))")
+dot = visualize_ast(ast)
+dot.render("ast", format="png", cleanup=True)
+
+ast = parse("if 2 < 3 then 0+5 else 1*6 end")
+dot = visualize_ast(ast)
+dot.render("ast_cond", format="png", cleanup=True)
+
+ast = parse(exp)
+dot = visualize_ast(ast)
+dot.render("ast_comparison", format="png", cleanup=True)
