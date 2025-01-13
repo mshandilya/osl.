@@ -25,8 +25,14 @@ class UnOp(AST):
 class ParseErr(Exception):
     pass
 
+@dataclass
+class If(AST):
+    condition: AST
+    then_body: AST
+    else_body: AST
 
-def e(tree: AST) -> int | float:
+
+def e(tree: AST) -> int | float | bool:
     match tree:
         case Number(val): return val
         case BinOp("+", left, right): return e(left) + e(right)
@@ -34,6 +40,13 @@ def e(tree: AST) -> int | float:
         case BinOp("/", left, right): return e(left) / e(right)
         case BinOp("^", left, right): return e(left) ** e(right)
         case BinOp("-", left, right): return e(left) - e(right)
+        case BinOp("<", left, right): return e(left) < e(right)
+        case BinOp(">", left, right): return e(left) > e(right)
+        case BinOp("<=", left, right): return e(left) <= e(right)
+        case BinOp(">=", left, right): return e(left) >= e(right)
+        case BinOp("==", left, right): return e(left) == e(right)
+        case BinOp("!=", left, right): return e(left) != e(right)
+        case If(condition, then_body, else_body): return e(then_body) if e(condition) else e(else_body)
         case UnOp("-", right): return -e(right)
          
 
@@ -50,6 +63,10 @@ class NumberToken(Token):
 @dataclass
 class OperatorToken(Token):
     op: str
+    
+@dataclass
+class KeyWordToken(Token):
+    op: str
 
 
 def lex(s: str) -> Iterator[Token]:
@@ -61,7 +78,15 @@ def lex(s: str) -> Iterator[Token]:
         if i >= len(s):
             return
 
-        if s[i].isdigit():
+        if s[i].isalpha():
+            t = s[i]
+            i = i + 1
+            while i < len(s) and s[i].isalpha():
+                t = t + s[i]
+                i = i + 1
+            yield KeyWordToken(t)
+        
+        elif s[i].isdigit():
             t = s[i]
             i = i + 1
             while i < len(s) and (s[i].isdigit() or s[i] == '.'):
@@ -69,12 +94,17 @@ def lex(s: str) -> Iterator[Token]:
                 i = i + 1
             yield NumberToken(t)
         else:
-            match t := s[i]:
-                case '+' | '*' | '/' | '^' | '-' | '(' | ')':
-                    i = i + 1
-                    yield OperatorToken(t)
-                case _:
-                    raise ParseErr(f"Unexpected character: {t} at position {i}")
+            # Handle multi-character operators first
+            if s[i:i+2] in {"<=", ">=", "==", "!="}:
+                yield OperatorToken(s[i:i+2])
+                i += 2
+            else:
+                match t := s[i]:
+                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>':
+                        i = i + 1
+                        yield OperatorToken(t)
+                    case _:
+                        raise ParseErr(f"Unexpected character: {t} at position {i}")
       
 def parse(s: str) -> AST:
     t = peekable(lex(s))
@@ -94,7 +124,37 @@ def parse(s: str) -> AST:
     
     def peek():
         return t.peek(None)
-
+    
+    def parse_if():
+        match t.peek(None):
+            case KeyWordToken("if"):
+                consume(KeyWordToken, "if")
+                condition = parse_if()
+                if peek() != KeyWordToken("then"):
+                    raise ParseErr(f"Expected 'then' at index {i}")
+                consume(KeyWordToken, "then")
+                then_body = parse_if()
+                if peek() != KeyWordToken("else"):
+                    raise ParseErr(f"Expected 'else' at index {i}")
+                consume(KeyWordToken, "else")
+                else_body = parse_if()
+                if peek() != KeyWordToken("end"):
+                    raise ParseErr(f"Expected 'end' at index {i}")
+                consume(KeyWordToken, "end")  # Consume the 'end' token
+                return If(condition, then_body, else_body)
+            case _:
+                return parse_comparison()
+            
+    def parse_comparison():
+        ast = parse_add()
+        while True:
+            match peek():
+                case OperatorToken(op) if op in {"<", ">", "<=", ">=", "==", "!="}:
+                    consume()
+                    ast = BinOp(op, ast, parse_add())
+                case _:
+                    return ast
+    
     def parse_add():
         ast = parse_mul()
         while True:
@@ -151,10 +211,22 @@ def parse(s: str) -> AST:
             case _:
                 raise ParseErr(f"Unexpected token at index {i}")
 
-    return parse_add()
+    return parse_if()
 
 
-def visualize_ast(tree: AST, dot=None, parent=None, node_id=0):
+def visualize_ast(tree: AST, dot=None, parent=None, node_id=0) -> Digraph:
+    """
+    Visualizes the AST using Graphviz.
+
+    Args:
+        tree: The AST to visualize.
+        dot: The Digraph instance (created if None).
+        parent: The parent node ID (None for the root).
+        node_id: The current node ID (unique for each node).
+
+    Returns:
+        The Digraph instance.
+    """
     if dot is None:
         dot = Digraph()
         dot.attr("node", shape="circle")
@@ -162,19 +234,45 @@ def visualize_ast(tree: AST, dot=None, parent=None, node_id=0):
     current_id = str(node_id)
 
     if isinstance(tree, Number):
-        dot.node(current_id, label=str(tree.val))
+        label = f"Number: {tree.val}"
+        dot.node(current_id, label=label, shape="ellipse")
     elif isinstance(tree, BinOp):
-        dot.node(current_id, label=tree.op)
+        label = f"BinOp: {tree.op}"
+        dot.node(current_id, label=label)
         visualize_ast(tree.left, dot, current_id, node_id * 2 + 1)
         visualize_ast(tree.right, dot, current_id, node_id * 2 + 2)
     elif isinstance(tree, UnOp):
-        dot.node(current_id, label=tree.op)
+        label = f"UnOp: {tree.op}"
+        dot.node(current_id, label=label)
         visualize_ast(tree.right, dot, current_id, node_id * 2 + 1)
+    elif isinstance(tree, If):
+        dot.node(current_id, label="If")
+
+        # Create child nodes for Condition, Then, and Else
+        condition_id = str(node_id * 2 + 1)
+        then_id = str(node_id * 2 + 2)
+        else_id = str(node_id * 2 + 3)
+
+        # Add labels for Condition, Then, Else branches
+        dot.node(condition_id, label="Condition", shape="diamond")
+        dot.node(then_id, label="Then", shape="box")
+        dot.node(else_id, label="Else", shape="box")
+
+        # Draw edges from the If node to these branches
+        dot.edge(current_id, condition_id, label="condition")
+        dot.edge(current_id, then_id, label="then")
+        dot.edge(current_id, else_id, label="else")
+
+        # Visualize subtrees
+        visualize_ast(tree.condition, dot, condition_id, node_id * 4 + 1)
+        visualize_ast(tree.then_body, dot, then_id, node_id * 4 + 2)
+        visualize_ast(tree.else_body, dot, else_id, node_id * 4 + 3)
 
     if parent is not None:
         dot.edge(parent, current_id)
 
     return dot
+
 
 print(parse("2"))
 print(parse("2+3"))
@@ -250,8 +348,8 @@ try:
     print("-((4*5-(4/5))")
     print(parse("-((4*5-(4/5))")) # Will throw error "Expected closing bracket"
     print(e(parse("-((4*5-(4/5))")))
-except Exception as e:
-    print(e)
+except Exception as ep:
+    print(ep)
     print()
 
 try:
@@ -259,8 +357,8 @@ try:
     print("2 +")
     print(parse("2 +")) # Will throw error "Unexpected end of input"
     print(e(parse("2 +")))
-except Exception as e:
-    print(e)
+except Exception as ep:
+    print(ep)
     print()
 
 try:
@@ -268,8 +366,8 @@ try:
     print("2 + * 3")
     print(parse("2 + * 3")) # Will throw error "Expected Token, got OperatorToken"
     print(e(parse("2 + * 3")))
-except Exception as e:
-    print(e)
+except Exception as ep:
+    print(ep)
     print()
     
 try:
@@ -277,6 +375,29 @@ try:
     print("2 + $ 3")
     print(parse("2 + $ 3"))
     print(e(parse("2 + $ 3")))
-except Exception as e:
-    print(e)
+except Exception as ep:
+    print(ep)
     print()
+    
+print()
+print(parse("if 2 < 3 then 2 else 3 end"))
+print(e(parse("if 2 < 3 then 2 else 3 end")))
+
+print()
+print(parse("if 2 < 3 then 0+5 else 1*6 end"))
+ast = parse("if 2 < 3 then 0+5 else 1*6 end")
+dot = visualize_ast(ast)
+dot.render("ast_cond", format="png", cleanup=True)
+print(e(parse("if 2 < 3 then 0+5 else 1*6 end")))
+
+exp = "if 2 < 3 then if 4 > 5 then 1 else if 6 <= 7 then 8 else 9 end end else 10 end"
+print()
+print(parse(exp))
+print(e(parse(exp)))
+ast = parse(exp)
+dot = visualize_ast(ast)
+dot.render("ast_nested_cond", format="png", cleanup=True)
+
+print()
+print(parse("1 < 2 <= 3 == 4"))
+print(e(parse("1 < 2 <= 3 == 4")))
