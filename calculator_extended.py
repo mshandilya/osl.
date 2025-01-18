@@ -32,7 +32,6 @@ class If(AST):
     then_body: AST
     else_body: AST
 
-
 def e(tree: AST) -> int | float | bool:
     match tree:
         case Number(val): return val
@@ -47,13 +46,10 @@ def e(tree: AST) -> int | float | bool:
         case BinOp(">=", left, right): return e(left) >= e(right)
         case BinOp("==", left, right): return e(left) == e(right)
         case BinOp("!=", left, right): return e(left) != e(right)
+        case UnOp("\u221a", right): return e(right) ** 0.5 # Square root Symbol
         case If(condition, then_body, else_body): return e(then_body) if e(condition) else e(else_body)
         case UnOp("-", right): return -e(right)
          
-
-# expr = BinOp("+", Number("2"), BinOp("*", Number("3"), Number("4")))
-# print(expr)
-# print(e(expr))
 class Token:
     pass
 
@@ -73,7 +69,7 @@ class KeyWordToken(Token):
 def lex(s: str) -> Iterator[Token]:
     i = 0
     while True:
-        while i < len(s) and s[i].isspace():
+        while i < len(s) and (s[i].isspace() or s[i] == '\n'):
             i = i + 1
 
         if i >= len(s):
@@ -101,7 +97,7 @@ def lex(s: str) -> Iterator[Token]:
                 i += 2
             else:
                 match t := s[i]:
-                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>':
+                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>' | '\u221a':
                         i = i + 1
                         yield OperatorToken(t)
                     case _:
@@ -201,6 +197,9 @@ def parse(s: str) -> AST:
             case OperatorToken('-'):
                 consume()
                 return UnOp("-", parse_atom())
+            case OperatorToken('\u221a'):
+                consume()
+                return UnOp("\u221a", parse_atom())
             case OperatorToken('('):
                 start_index = i
                 consume()
@@ -215,11 +214,7 @@ def parse(s: str) -> AST:
     return parse_if()
 
 
-"""
-
-"""
 unique_id = 0
-
 def get_unique_id():
     global unique_id
     unique_id += 1
@@ -314,14 +309,43 @@ unit_test("-5*5", -25, log)
 unit_test("2 +-3", -1, log)
 unit_test("-(5-2)", -3, log)
 unit_test("-((4*5)-(4/5))", -19.2, log)
+unit_test("\u221a(4)", 2, log)
+
+exp_sq = "\u221a(4 + 12) + \u221a(9)"
+ast = parse(exp_sq)
+dot = visualize_ast(ast)
+dot.render("ast_sqrt", format="png", cleanup=True)
+unit_test(exp_sq, 7.0, log)
+
+exp_cond1 = """
+if 2 < 3 then
+    0 + 5
+else
+    1 * 6
+end
+"""
 unit_test("if 2 < 3 then 2 else 3 end", 2, log)
-unit_test("if 2 < 3 then 0+5 else 1*6 end", 5, log)
+unit_test(exp_cond1, 5, log)
 
 exp = "2<3<2"
 unit_test(exp, False, log)
 
-exp = "if 2 < 3 then if 4 > 5 then 1 else if 6 <= 7 then 8 else 9 end end else 10 end"
-unit_test(exp, 8, log)
+exp_cond = """
+if 2 < 3 then 
+    if 4 > 5 then 
+        1 
+    else 
+        if 6 <= 7 then 
+            8 
+        else 
+            9 
+        end 
+    end 
+else 
+    10 
+end
+"""
+unit_test(exp_cond, 8, log)
 
 exp = "1 < 2 <= 3 == 4"
 unit_test(exp, False, log)
@@ -335,8 +359,7 @@ for status, expr, error_msg in log:
         if error_msg:
             print(f"  -> {error_msg}")
 
-exp = "if 2 < 3 then if 4 > 5 then 1 else if 6 <= 7 then 8 else 9 end end else 10 end"
-ast = parse(exp)
+ast = parse(exp_cond)
 dot = visualize_ast(ast)
 dot.render("ast_nested_cond", format="png", cleanup=True)
 
@@ -344,10 +367,6 @@ ast = parse("-((4*5)-(4/5))")
 dot = visualize_ast(ast)
 dot.render("ast", format="png", cleanup=True)
 
-ast = parse("if 2 < 3 then 0+5 else 1*6 end")
+ast = parse(exp_cond1)
 dot = visualize_ast(ast)
 dot.render("ast_cond", format="png", cleanup=True)
-
-ast = parse(exp)
-dot = visualize_ast(ast)
-dot.render("ast_comparison", format="png", cleanup=True)
