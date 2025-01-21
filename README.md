@@ -14,7 +14,7 @@ dot.render("ast_cond", format="png", cleanup=True)
 ```
 
 <div align = "center">
-    <img src = "https://github.com/guntas-13/CS327-Compilers/blob/master/images/ast_cond.png" style="width: 50%">
+    <img src = "./images/ast_cond.png" style="width: 50%">
 </div>
 
 ```python
@@ -39,7 +39,7 @@ dot.render("ast_nested_cond", format="png", cleanup=True)
 ```
 
 <div align = "center">
-    <img src = "https://github.com/guntas-13/CS327-Compilers/blob/master/images/ast_nested_cond.png" style="width: 50%">
+    <img src = "./images/ast_nested_cond.png" style="width: 50%">
 </div>
 
 ```python
@@ -52,5 +52,5 @@ dot.render("ast_sqrt", format="png", cleanup=True)
 &radic;(4 + 12) + &radic;(9)
 
 <div align = "center">
-    <img src = "https://github.com/guntas-13/CS327-Compilers/blob/master/images/ast_sqrt.png" style="width: 20%">
+    <img src = "./images/ast_sqrt.png" style="width: 20%">
 </div>
