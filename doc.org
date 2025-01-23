@@ -1,0 +1,14 @@
+
+* Heading
+
+#+begin_src python
+def e(tree: AST) -> float:
+    match tree:
+        case Number(val): return float(val)
+        case BinOp("+", left, right): return e(left) + e(right)
+        case BinOp("*", left, right): return e(left) * e(right)
+        case BinOp("/", left, right): return e(left) / e(right)
+        case BinOp("^", left, right): return e(left) ** e(right)
+        case BinOp("-", left, right): return e(left) - e(right)
+        case UnOp("-", right): return -e(right)
+#+end_src

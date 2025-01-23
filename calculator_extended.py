@@ -17,6 +17,10 @@ class BinOp(AST):
 @dataclass
 class Number(AST):
     val: int | float
+    
+@dataclass
+class StringLiteral(AST):
+    val: str
 
 @dataclass
 class UnOp(AST):
@@ -69,7 +73,7 @@ class KeyWordToken(Token):
 def lex(s: str) -> Iterator[Token]:
     i = 0
     while True:
-        while i < len(s) and (s[i].isspace() or s[i] == '\n'):
+        while i < len(s) and s[i].isspace(): # newlines, spaces, tabs handled
             i = i + 1
 
         if i >= len(s):
@@ -370,3 +374,6 @@ dot.render("ast", format="png", cleanup=True)
 ast = parse(exp_cond1)
 dot = visualize_ast(ast)
 dot.render("ast_cond", format="png", cleanup=True)
+
+# program = open("program.txt", "r").read()
+# print(program)
