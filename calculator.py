@@ -21,30 +21,56 @@ class Number(AST):
     val: str
 
 @dataclass
+class Var(AST):
+    val: str
+
+@dataclass 
+class Let(AST):
+    v: str
+    e: AST
+    f: AST
+
+@dataclass
 class If(AST):
     condition_: AST
     then_: AST
     else_: AST
 
-def e(tree: AST) -> float:
+def lookup(v, env) -> float:
+    for vname, vval in reversed(env):
+        if vname == v:
+            return vval
+    raise ValueError(f"Variable {v} not found")
+
+def e(tree: AST, env = None) -> float:
+    if env is None:
+        env = []
+
     match tree:
+        case Var(v): return lookup(v, env)
         case Number(v): return float(v)
-        case BinOp("+", l, r): return e(l) + e(r)
-        case BinOp("-", l, r): return e(l) - e(r)
-        case BinOp("*", l, r): return e(l) * e(r)
-        case BinOp("/", l, r): return e(l) / e(r)
-        case BinOp("^", l, r): return e(l) ** e(r)
-        case BinOp("<", l, r): return e(l) < e(r)
-        case BinOp(">", l, r): return e(l) > e(r)
-        case BinOp("<=", l, r): return e(l) <= e(r)
-        case BinOp(">=", l, r): return e(l) >= e(r)
-        case BinOp("==", l, r): return e(l) == e(r)
-        case UnOp("-", v): return -e(v)
+        case Let(v,x,y):
+            valx = e(x, env)
+            env.append((v, valx))
+            valy = e(y, env)
+            env.pop()
+            return valy
+        case BinOp("+", l, r): return e(l, env) + e(r, env)
+        case BinOp("-", l, r): return e(l, env) - e(r, env)
+        case BinOp("*", l, r): return e(l, env) * e(r, env)
+        case BinOp("/", l, r): return e(l, env) / e(r, env)
+        case BinOp("^", l, r): return e(l, env) ** e(r, env)
+        case BinOp("<", l, r): return e(l, env) < e(r, env)
+        case BinOp(">", l, r): return e(l, env) > e(r, env)
+        case BinOp("<=", l, r): return e(l, env) <= e(r, env)
+        case BinOp(">=", l, r): return e(l, env) >= e(r, env)
+        case BinOp("==", l, r): return e(l, env) == e(r, env)
+        case UnOp("-", v): return -e(v, env)
         case If(c, t, e_):
-            if e(c):
-                return e(t)
+            if e(c, env):
+                return e(t, env)
             else:
-                return e(e_)
+                return e(e_, env)
 
 class Token:
     pass
@@ -60,6 +86,10 @@ class OperatorToken(Token):
 @dataclass
 class KeywordToken(Token):
     k: str
+
+@dataclass
+class VarToken(Token):
+    val: str
 
 from collections.abc import Iterator
 def lex(s: str) -> Iterator[Token]:
@@ -77,8 +107,10 @@ def lex(s: str) -> Iterator[Token]:
             while i < len(s) and s[i].isalpha():
                 t = t + s[i]
                 i = i + 1
-            # To do: Check for valid keywords
-            yield KeywordToken(t)
+            if t in {'if', 'then', 'else', 'let', 'in', 'be', 'end'}:
+                yield KeywordToken(t)
+            else:
+                yield VarToken(t)
 
         elif s[i].isdigit():
             t = s[i]
@@ -121,6 +153,21 @@ def parse(s: str) -> AST:
         else:
             next(t)
 
+    def parse_let():
+        match t.peek(None):
+            case KeywordToken('let'):
+                next(t)
+                v = t.peek(None)
+                next(t)
+                expect(KeywordToken('be'))
+                v1 = parse_let()
+                expect(KeywordToken('in'))
+                v2 = parse_let()
+                expect(KeywordToken('end'))
+                return Let(v.val, v1, v2) # V is a VarToken, and we want the first argument of Let to be a string (variable name)
+            case _:
+                return parse_if()
+
     def parse_if():
         match t.peek(None):
             case KeywordToken('if'):
@@ -132,8 +179,8 @@ def parse(s: str) -> AST:
                 else_= parse_if()
                 return If(condition_, then_, else_)
             case _:
-                if(type(t.peek(None)) == KeywordToken):
-                    raise SyntaxError(f"{t.peek(None)} is not a valid keyword")
+                # if(type(t.peek(None)) == KeywordToken):
+                #     raise SyntaxError(f"{t.peek(None)} is not a valid keyword")
                 return parse_comp()
 
     # We want least precedence for < and >
@@ -213,8 +260,12 @@ def parse(s: str) -> AST:
                 return UnOp("-", parse_atom())
             case OperatorToken(')'):
                 raise SyntaxError("Expected '('")
+            case VarToken(v):
+                next(t)
+                print("thius",Var(v))
+                return Var(v)
 
-    return parse_if()
+    return parse_let()
 
 def evall(s: str, val) -> AST:
     print("Calculate:", s)
@@ -228,6 +279,17 @@ def evall(s: str, val) -> AST:
 # Tests
 
 # print(parse("2"))
+
+# expr_t4 = Let("a", Number("3"), BinOp("+", Var("a"), Var("a")))
+# expr_t5 = Let("a", Number("3"),
+# 		Let("b", BinOp("+", Var("a"), Number("2")),
+# 		    BinOp("+", Var("a"), Var("b"))))
+
+# print(e(expr_t4))
+# print(e(expr_t5))
+
+# for t in lex("let a be 3 in a + a end"):
+#     print(t)
 
 evall("2+3+5", 10)
 
@@ -363,6 +425,12 @@ evall('''if 2<3 then
             5 
         else 
             6''', 14)
+
+evall("let a be 3 in a + 2 end", 5)
+
+evall("let a be 3 in a end", 3)
+
+evall("let a be 3 in a+a end", 6)
 
 print("All tests passed!")
 
