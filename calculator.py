@@ -27,8 +27,23 @@ class Var(AST):
 @dataclass 
 class Let(AST):
     v: str
+    e1: AST
+    e2: AST
+
+@dataclass
+class LetMut(AST):
+    v: str
+    e1: AST
+    e2: AST
+
+@dataclass
+class Put(AST):
+    v: str
     e: AST
-    f: AST
+
+@dataclass
+class Get(AST):
+    v: str
 
 @dataclass
 class If(AST):
@@ -36,25 +51,60 @@ class If(AST):
     then_: AST
     else_: AST
 
-def lookup(v, env) -> float:
-    for vname, vval in reversed(env):
-        if vname == v:
-            return vval
-    raise ValueError(f"Variable {v} not found")
+class Environment:
+    envs: list
+    def __init__(self):
+        self.envs = [{}]
+
+    def enter_scope(self):
+        self.envs.append({})
+
+    def exit_scope(self):
+        self.envs.pop()
+
+    def add(self, v, val):
+        assert v not in self.envs[-1], f"Variable {v} already exists"
+        self.envs[-1][v] = val
+    
+    def get(self, v):
+        for env in reversed(self.envs):
+            if v in env:
+                return env[v]
+        raise ValueError(f"Variable {v} not found")
+    
+    def update(self, v, val):
+        # Think: If the variable is not in the current local environment, should I create a new variable or update the variable present in the parent environment?
+        for env in reversed(self.envs):
+            if v in env:
+                env[v] = val
+                return
+        raise ValueError(f"Variable {v} not found")
 
 def e(tree: AST, env = None) -> float:
     if env is None:
-        env = []
+        env = Environment() # create a new object of class Environment
 
     match tree:
-        case Var(v): return lookup(v, env)
+        case Var(v): return env.get(v)
         case Number(v): return float(v)
         case Let(v,x,y):
             valx = e(x, env)
-            env.append((v, valx))
+            env.enter_scope()
+            env.add(v, valx)
             valy = e(y, env)
-            env.pop()
+            env.exit_scope()
             return valy
+        case LetMut(v,x,y):
+            valx = e(x, env)
+            env.enter_scope()
+            env.add(v, valx)
+            valy = e(y, env)
+            env.exit_scope()
+            return valy
+        case Put(v, x):
+            env.update(v, e(x, env))
+            return env.get(v)
+        case Get(v): return env.get(v)
         case BinOp("+", l, r): return e(l, env) + e(r, env)
         case BinOp("-", l, r): return e(l, env) - e(r, env)
         case BinOp("*", l, r): return e(l, env) * e(r, env)
@@ -262,7 +312,6 @@ def parse(s: str) -> AST:
                 raise SyntaxError("Expected '('")
             case VarToken(v):
                 next(t)
-                print("thius",Var(v))
                 return Var(v)
 
     return parse_let()
@@ -432,8 +481,27 @@ evall("let a be 3 in a end", 3)
 
 evall("let a be 3 in a+a end", 6)
 
+evall("let a be 3 in let b be a+2 in a+b end end", 8)
+
+evall('''let a be let c be 2 
+                  in c 
+                  end 
+        in 
+            let a be a+2
+            in a+a 
+            end 
+        end''', 8)
+
 print("All tests passed!")
 
-# print(e(parse("9*8/3*5")))
+
+e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
+
+print(e(e1))
 
 # print(e(parse("(2^3)^5")))
+
+# Strings
+# True False, booleans
+# Functions
+# Lists
