@@ -318,7 +318,7 @@ unit_test("\u221a(4)", 2, log)
 exp_sq = "\u221a(4 + 12) + \u221a(9)"
 ast = parse(exp_sq)
 dot = visualize_ast(ast)
-dot.render("ast_sqrt", format="png", cleanup=True)
+dot.render("./imgaes/ast_sqrt", format="png", cleanup=True)
 unit_test(exp_sq, 7.0, log)
 
 exp_cond1 = """
@@ -365,15 +365,15 @@ for status, expr, error_msg in log:
 
 ast = parse(exp_cond)
 dot = visualize_ast(ast)
-dot.render("ast_nested_cond", format="png", cleanup=True)
+dot.render("./imgaes/ast_nested_cond", format="png", cleanup=True)
 
 ast = parse("-((4*5)-(4/5))")
 dot = visualize_ast(ast)
-dot.render("ast", format="png", cleanup=True)
+dot.render("./imgaes/ast", format="png", cleanup=True)
 
 ast = parse(exp_cond1)
 dot = visualize_ast(ast)
-dot.render("ast_cond", format="png", cleanup=True)
+dot.render("./imgaes/ast_cond", format="png", cleanup=True)
 
 # program = open("program.txt", "r").read()
 # print(program)
