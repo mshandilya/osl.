@@ -146,6 +146,10 @@ def resolve(program: AST, env: Environment = None) -> AST:
             rr = resolve(r, env)
             return BinOp(op, rl, rr)
 
+        case UnOp(op, v):
+            rv = resolve(v, env)
+            return UnOp(op, rv)
+
 def e(tree: AST, env = None) -> float:
     if env is None:
         env = Environment() # create a new object of class Environment
@@ -384,7 +388,7 @@ def parse(s: str) -> AST:
 
 def evall(s: str, val) -> AST:
     print("Calculate:", s)
-    pprint(parse(s))
+    # pprint(parse(s))
     result = resolve(parse(s))
     print(result)
     # if(result != val):
