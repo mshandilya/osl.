@@ -3,6 +3,13 @@ from collections.abc import Iterator
 from more_itertools import peekable
 from pprint import pprint
 from graphviz import Digraph # type: ignore
+from typing import List
+
+cnt = 0
+def fresh():
+    global cnt
+    cnt = cnt + 1
+    return cnt
 
 @dataclass
 class AST:
@@ -16,44 +23,165 @@ class BinOp(AST):
 
 @dataclass
 class Number(AST):
-    val: int | float
-    
-@dataclass
-class StringLiteral(AST):
-    val: str
+    val: int | float 
 
 @dataclass
 class UnOp(AST):
     op: str
     right: AST
-
-class ParseErr(Exception):
-    pass
-
+    
 @dataclass
 class If(AST):
     condition: AST
     then_body: AST
     else_body: AST
+@dataclass
+class Let(AST):
+    var: AST
+    e1: AST
+    e2: AST
+    
+@dataclass
+class LetMut(AST):
+    var: str
+    e1: str
+    e2: str
+    
+@dataclass
+class Variable(AST):
+    varName: str
+    id: int = None
+    
+    def make(name):
+        return Variable(name, fresh())
+    
+class Environment:
+    envs: List
+    
+    def __init__(self):
+        self.envs = [{}]
+    
+    def enter_scope(self):
+        self.envs.append({})
+    
+    def exit_scope(self):
+        assert self.envs
+        self.envs.pop()
+    
+    def add(self, var, val):
+        assert var not in self.envs[-1], f"Variable {var} already defined"
+        self.envs[-1][var] = val
+    
+    def get(self, var):
+        for env in reversed(self.envs):
+            if var in env:
+                return env[var]
+        raise ValueError(f"Variable {var} not defined")
+    
+    def update(self, var, val):
+        for env in reversed(self.envs):
+            if var in env:
+                env[var] = val
+                return
+        raise ValueError(f"Variable {var} not defined")
 
-def e(tree: AST) -> int | float | bool:
+def resolve(program: AST, env: Environment = None) -> AST:
+    if env is None:
+        env = Environment()
+    
+    def resolve_(program: AST) -> AST:
+        return resolve(program, env)
+
+    match program:
+        case Variable(varName, _):
+            return Variable(varName, env.get(varName)) # This ask too! why sir did env.get(varName)
+        
+        case Number(_) as N:
+            return N
+        
+        case Let(Variable(varName, _), e1, e2):
+            re1 = resolve_(e1)
+            env.enter_scope()
+            env.add(varName, i := fresh())
+            re2 = resolve_(e2)
+            env.exit_scope()
+            return Let(Variable(varName, i), re1, re2)
+        
+        case BinOp(op, left, right):
+            le = resolve_(left)
+            ri = resolve_(right)
+            return BinOp(op, le, ri)
+        case UnOp(op, right):
+            ri = resolve_(right)
+            return UnOp(op, ri)
+        
+
+
+def e(tree: AST, env: Environment = None) -> int | float | bool:
+    if env is None:
+        env = Environment()
+        
+    def e_(tree: AST):
+        return e(tree, env)
+    
     match tree:
-        case Number(val): return val
-        case BinOp("+", left, right): return e(left) + e(right)
-        case BinOp("*", left, right): return e(left) * e(right)
-        case BinOp("/", left, right): return e(left) / e(right)
-        case BinOp("^", left, right): return e(left) ** e(right)
-        case BinOp("-", left, right): return e(left) - e(right)
-        case BinOp("<", left, right): return e(left) < e(right)
-        case BinOp(">", left, right): return e(left) > e(right)
-        case BinOp("<=", left, right): return e(left) <= e(right)
-        case BinOp(">=", left, right): return e(left) >= e(right)
-        case BinOp("==", left, right): return e(left) == e(right)
-        case BinOp("!=", left, right): return e(left) != e(right)
-        case UnOp("\u221a", right): return e(right) ** 0.5 # Square root Symbol
-        case If(condition, then_body, else_body): return e(then_body) if e(condition) else e(else_body)
-        case UnOp("-", right): return -e(right)
-         
+        case Number(val):
+            return float(val) if '.' in val else int(val)
+            # return val
+        
+        case Variable(varName): 
+            return env.get(varName)
+        
+        case Let(Variable(varName) as v, e1, e2):
+            v1 = e_(e1)
+            env.enter_scope()
+            env.add(varName, v1) # CHECK THIS OUT ONCE! v or varName
+            v2 = e_(e2)
+            env.exit_scope()
+            return v2
+        
+        case BinOp("+", left, right): return e_(left) + e_(right)
+        case BinOp("*", left, right): return e_(left) * e_(right)
+        case BinOp("/", left, right): return e_(left) / e_(right)
+        case BinOp("^", left, right): return e_(left) ** e_(right)
+        case BinOp("-", left, right): return e_(left) - e_(right)
+        case BinOp("<", left, right): return e_(left) < e_(right)
+        case BinOp(">", left, right): return e_(left) > e_(right)
+        case BinOp("<=", left, right): return e_(left) <= e_(right)
+        case BinOp(">=", left, right): return e_(left) >= e_(right)
+        case BinOp("=", left, right): return e_(left) == e_(right)
+        case BinOp("!=", left, right): return e_(left) != e_(right)
+        case BinOp("%", left, right): return e_(left) % e_(right)
+        case UnOp("\u221a", right): return e_(right) ** 0.5 # Square root Symbol
+        case If(condition, then_body, else_body): 
+            if e_(condition):
+                return e_(then_body) 
+            else:
+                e_(else_body)
+                
+        case UnOp("-", right): return -e_(right)
+
+exp = Let(Variable("a"), Number("3"),
+		Let(Variable("b"), BinOp("+", Variable("a"), Number("2")),
+		    BinOp("+", Variable("a"), Variable("b"))))
+
+# exp = Let(Variable("a"), Number("3"), BinOp("+", Variable("a"), Variable("a")))
+
+pprint(exp)
+print()
+pprint(resolve(exp))
+pprint(e(exp))
+pprint(e(resolve(exp)))
+
+exit()
+
+class ParseErr(Exception):
+    pass
+
+@dataclass
+class StringLiteral(AST):
+    val: str
+             
 class Token:
     pass
 
@@ -68,6 +196,10 @@ class OperatorToken(Token):
 @dataclass
 class KeyWordToken(Token):
     op: str
+    
+@dataclass
+class VariableToken(Token):
+    var: str
 
 
 def lex(s: str) -> Iterator[Token]:
@@ -96,12 +228,12 @@ def lex(s: str) -> Iterator[Token]:
             yield NumberToken(t)
         else:
             # Handle multi-character operators first
-            if s[i:i+2] in {"<=", ">=", "==", "!="}:
+            if s[i:i+2] in {"<=", ">=", "!="}:
                 yield OperatorToken(s[i:i+2])
                 i += 2
             else:
                 match t := s[i]:
-                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>' | '\u221a':
+                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>' | '=' | '%' | '\u221a':
                         i = i + 1
                         yield OperatorToken(t)
                     case _:
@@ -315,9 +447,9 @@ unit_test("-((4*5)-(4/5))", -19.2, log)
 unit_test("\u221a(4)", 2, log)
 
 exp_sq = "\u221a(4 + 12) + \u221a(9)"
-ast = parse(exp_sq)
-dot = visualize_ast(ast)
-dot.render("./imgaes/ast_sqrt", format="png", cleanup=True)
+# ast = parse(exp_sq)
+# dot = visualize_ast(ast)
+# dot.render("./imgaes/ast_sqrt", format="png", cleanup=True)
 unit_test(exp_sq, 7.0, log)
 
 exp_cond1 = """
@@ -362,17 +494,17 @@ for status, expr, error_msg in log:
         if error_msg:
             print(f"  -> {error_msg}")
 
-ast = parse(exp_cond)
-dot = visualize_ast(ast)
-dot.render("./imgaes/ast_nested_cond", format="png", cleanup=True)
+# ast = parse(exp_cond)
+# dot = visualize_ast(ast)
+# dot.render("./imgaes/ast_nested_cond", format="png", cleanup=True)
 
-ast = parse("-((4*5)-(4/5))")
-dot = visualize_ast(ast)
-dot.render("./imgaes/ast", format="png", cleanup=True)
+# ast = parse("-((4*5)-(4/5))")
+# dot = visualize_ast(ast)
+# dot.render("./imgaes/ast", format="png", cleanup=True)
 
-ast = parse(exp_cond1)
-dot = visualize_ast(ast)
-dot.render("./imgaes/ast_cond", format="png", cleanup=True)
+# ast = parse(exp_cond1)
+# dot = visualize_ast(ast)
+# dot.render("./imgaes/ast_cond", format="png", cleanup=True)
 
 # program = open("program.txt", "r").read()
 # print(program)
