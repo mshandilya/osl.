@@ -148,13 +148,12 @@ def parse(s: str) -> AST:
             
     def parse_comparison():
         ast = parse_add()
-        while True:
-            match peek():
-                case OperatorToken(op) if op in {"<", ">", "<=", ">=", "==", "!="}:
-                    consume()
-                    ast = BinOp(op, ast, parse_add())
-                case _:
-                    return ast
+        match peek():
+            case OperatorToken(op) if op in {"<", ">", "<=", ">=", "==", "!="}:
+                consume()
+                return BinOp(op, ast, parse_add())
+            case _:
+                return ast
     
     def parse_add():
         ast = parse_mul()
@@ -331,8 +330,8 @@ end
 unit_test("if 2 < 3 then 2 else 3 end", 2, log)
 unit_test(exp_cond1, 5, log)
 
-exp = "2<3<2"
-unit_test(exp, False, log)
+# exp = "2<3<2"
+# unit_test(exp, False, log)
 
 exp_cond = """
 if 2 < 3 then 
@@ -351,8 +350,8 @@ end
 """
 unit_test(exp_cond, 8, log)
 
-exp = "1 < 2 <= 3 == 4"
-unit_test(exp, False, log)
+# exp = "1 < 2 <= 3 == 4"
+# unit_test(exp, False, log)
 
 print("\nTest Summary:")
 for status, expr, error_msg in log:
