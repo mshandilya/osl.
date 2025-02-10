@@ -95,6 +95,7 @@ def resolve(program: AST, env: Environment = None) -> AST:
     match program:
         case Variable(varName, _):
             return Variable(varName, env.get(varName)) # This ask too! why sir did env.get(varName)
+            # return env.get(varName)
         
         case Number(_) as N:
             return N
@@ -126,16 +127,16 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
     
     match tree:
         case Number(val):
-            return float(val) if '.' in val else int(val)
-            # return val
+            # return float(val) if '.' in val else int(val)
+            return val
         
-        case Variable(varName): 
-            return env.get(varName)
+        case Variable(varName, i): 
+            return env.get(f"{varName}:{i}")
         
-        case Let(Variable(varName) as v, e1, e2):
+        case Let(Variable(varName, i), e1, e2):
             v1 = e_(e1)
             env.enter_scope()
-            env.add(varName, v1) # CHECK THIS OUT ONCE! v or varName
+            env.add(f"{varName}:{i}", v1) # CHECK THIS OUT ONCE! v or varName
             v2 = e_(e2)
             env.exit_scope()
             return v2
@@ -161,19 +162,6 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
                 
         case UnOp("-", right): return -e_(right)
 
-exp = Let(Variable("a"), Number("3"),
-		Let(Variable("b"), BinOp("+", Variable("a"), Number("2")),
-		    BinOp("+", Variable("a"), Variable("b"))))
-
-# exp = Let(Variable("a"), Number("3"), BinOp("+", Variable("a"), Variable("a")))
-
-pprint(exp)
-print()
-pprint(resolve(exp))
-pprint(e(exp))
-pprint(e(resolve(exp)))
-
-exit()
 
 class ParseErr(Exception):
     pass
@@ -199,7 +187,7 @@ class KeyWordToken(Token):
     
 @dataclass
 class VariableToken(Token):
-    var: str
+    varName: str
 
 
 def lex(s: str) -> Iterator[Token]:
@@ -217,7 +205,10 @@ def lex(s: str) -> Iterator[Token]:
             while i < len(s) and s[i].isalpha():
                 t = t + s[i]
                 i = i + 1
-            yield KeyWordToken(t)
+            if t in {"if", "then", "else", "end", "let", "be", "in"}:
+                yield KeyWordToken(t)
+            else:
+                yield VariableToken(t)
         
         elif s[i].isdigit():
             t = s[i]
@@ -228,7 +219,7 @@ def lex(s: str) -> Iterator[Token]:
             yield NumberToken(t)
         else:
             # Handle multi-character operators first
-            if s[i:i+2] in {"<=", ">=", "!="}:
+            if s[i:i+2] in {"<=", ">=", "!=", ":="}:
                 yield OperatorToken(s[i:i+2])
                 i += 2
             else:
@@ -238,6 +229,8 @@ def lex(s: str) -> Iterator[Token]:
                         yield OperatorToken(t)
                     case _:
                         raise ParseErr(f"Unexpected character: {t} at position {i}")
+         
+      
       
 def parse(s: str) -> AST:
     t = peekable(lex(s))
@@ -250,16 +243,30 @@ def parse(s: str) -> AST:
             raise ParseErr(f"Unexpected end of input at index {i}")
         if expected_type and not isinstance(token, expected_type):
             raise ParseErr(f"Expected {expected_type.__name__} at index {i}, got {type(token).__name__}")
-        if expected_value and getattr(token, "op", None) != expected_value:
-            raise ParseErr(f"Expected '{expected_value}' at index {i}, got '{token.op}'")
-        i += len(str(token.val if isinstance(token, NumberToken) else token.op))
+        if expected_value and getattr(token, "op", None) != expected_value and getattr(token, "varName", None) != expected_value:
+            raise ParseErr(f"Expected '{expected_value}' at index {i}, got '{getattr(token, 'op', getattr(token, 'varName', None))}'")
+        i += len(str(token.val if isinstance(token, NumberToken) else getattr(token, "op", getattr(token, "varName", ""))))
         return token
     
     def peek():
         return t.peek(None)
     
+    def parse_let():
+        match peek():
+            case KeyWordToken("let"):
+                consume(KeyWordToken, "let")
+                var = consume(VariableToken)
+                consume(KeyWordToken, "be")
+                e1 = parse_let()
+                consume(KeyWordToken, "in")
+                e2 = parse_let()
+                consume(KeyWordToken, "end")
+                return Let(Variable(var.varName), e1, e2)
+            case _:
+                return parse_if()
+    
     def parse_if():
-        match t.peek(None):
+        match peek():
             case KeyWordToken("if"):
                 consume(KeyWordToken, "if")
                 condition = parse_if()
@@ -281,7 +288,7 @@ def parse(s: str) -> AST:
     def parse_comparison():
         ast = parse_add()
         match peek():
-            case OperatorToken(op) if op in {"<", ">", "<=", ">=", "==", "!="}:
+            case OperatorToken(op) if op in {"<", ">", "<=", ">=", "=", "!="}:
                 consume()
                 return BinOp(op, ast, parse_add())
             case _:
@@ -329,6 +336,11 @@ def parse(s: str) -> AST:
                 consume()
                 val = float(v) if '.' in v else int(v)
                 return Number(val)
+            
+            case VariableToken(varName):
+                consume()
+                return Variable(varName)
+            
             case OperatorToken('-'):
                 consume()
                 return UnOp("-", parse_atom())
@@ -346,7 +358,36 @@ def parse(s: str) -> AST:
             case _:
                 raise ParseErr(f"Unexpected token at index {i}")
 
-    return parse_if()
+    return parse_let()
+
+
+
+exp = Let(Variable("a"), Number("3"),
+		Let(Variable("b"), BinOp("+", Variable("a"), Number("2")),
+		    BinOp("+", Variable("a"), Variable("b"))))
+
+# exp = Let(Variable("a"), Number("3"), BinOp("+", Variable("a"), Variable("a")))
+
+expL = "let a be 3 in let b be a + 2 in a + b end end"
+# expL = "let a be 3 in a + a end"
+
+pprint(exp)
+print()
+for l in lex(expL):
+    print(l)
+print()
+pprint(resolve(exp))
+print()
+pprint(parse(expL))
+print()
+pprint(resolve(parse(expL)))
+print()
+print(e(parse(expL)))
+print(e(resolve(parse(expL))))
+# print(e(exp))
+# print(e(resolve(exp)))
+
+exit()
 
 
 unique_id = 0
