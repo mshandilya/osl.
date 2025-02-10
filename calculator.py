@@ -437,21 +437,21 @@ evall("2+3-5", 0)
 
 evall("2-3+5", 4)
 
-evall("2-3-5", -6)
+evall("2-3-5", -6) #amb - for now
 
 evall("2+3/5", 2.6)
 
-evall("100/10/2", 5)
+evall("100/10/2", 5) #amb
 
 evall("10+2^5", 42)
 
-evall("2^3^2", 512)
+evall("2^3^2", 512) #amb
 
 evall("2^3+2", 10)
 
 evall("10.3+2.6", 12.9)
 
-evall("2+3/5-3.1", -0.5)
+evall("2+3/5-3.1", -0.5) #amb
 
 evall("2+-3", -1)
 
@@ -465,7 +465,7 @@ evall("-3 --2", -1)
 
 evall("--2", 2)
 
-evall("3*-2+5", -1)
+evall("3*-2+5", -1) #amb
 
 evall("2*(3+2)", 10)
 
@@ -533,7 +533,7 @@ evall("3*(1+2)", 9)
 
 evall("(1-3)*(1+2)", -6)
 
-evall("2+10>3+9", 0)
+evall("2+10>3+9", 0) #amb
 
 evall("2+11>3+9", 1)
 
@@ -596,3 +596,4 @@ e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp(
 # # True False, booleans
 # # Functions
 # # Lists
+# # Support for a list of params
