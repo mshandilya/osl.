@@ -149,6 +149,12 @@ def resolve(program: AST, env: Environment = None) -> AST:
         case UnOp(op, v):
             rv = resolve(v, env)
             return UnOp(op, rv)
+        
+        case If(c,t,e):
+            rc = resolve(c)
+            rt = resolve(t)
+            re = resolve(e)
+            return If(rc,rt,re)
 
 def e(tree: AST, env = None) -> float:
     if env is None:
