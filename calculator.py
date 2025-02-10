@@ -161,26 +161,26 @@ def e(tree: AST, env = None) -> float:
         env = Environment() # create a new object of class Environment
 
     match tree:
-        case Var(v): return env.get(v)
+        case Var(name_, id_): return env.get(f"{name_}:{id_}")
         case Number(v): return float(v)
-        case Let(v,x,y):
+        case Let(Var(name_, id_),x,y):
             valx = e(x, env)
             env.enter_scope()
-            env.add(v, valx)
+            env.add(f"{name_}:{id_}", valx)
             valy = e(y, env)
             env.exit_scope()
             return valy
-        case LetMut(v,x,y):
-            valx = e(x, env)
-            env.enter_scope()
-            env.add(v, valx)
-            valy = e(y, env)
-            env.exit_scope()
-            return valy
-        case Put(v, x):
-            env.update(v, e(x, env))
-            return env.get(v)
-        case Get(v): return env.get(v)
+        # case LetMut(v,x,y):
+        #     valx = e(x, env)
+        #     env.enter_scope()
+        #     env.add(v, valx)
+        #     valy = e(y, env)
+        #     env.exit_scope()
+        #     return valy
+        # case Put(v, x):
+        #     env.update(v, e(x, env))
+        #     return env.get(v)
+        # case Get(v): return env.get(v)
         case BinOp("+", l, r): return e(l, env) + e(r, env)
         case BinOp("-", l, r): return e(l, env) - e(r, env)
         case BinOp("*", l, r): return e(l, env) * e(r, env)
@@ -394,12 +394,12 @@ def parse(s: str) -> AST:
 
 def evall(s: str, val) -> AST:
     print("Calculate:", s)
-    # pprint(parse(s))
-    result = resolve(parse(s))
+    pprint(resolve(parse(s)))
+    result = e(resolve(parse(s)))
     print(result)
-    # if(result != val):
-    #     raise ValueError(f"\n-----------------------\nTest failed for {s}:\nExpected {val} got {result}")
-    # print("-----------------------")
+    if(result != val):
+        raise ValueError(f"\n-----------------------\nTest failed for {s}:\nExpected {val} got {result}")
+    print("-----------------------")
 
 # Tests
 
@@ -571,8 +571,8 @@ evall('''if 2<3 then
             6''', 14)
 
 evall("let a be 3 in a + 2 end", 5)
-pprint(parse("let a be 3 in a + 2 end"))
-pprint(resolve(parse("let a be 3 in a + 2 end")))
+# pprint(parse("let a be 3 in a + 2 end"))
+# pprint(resolve(parse("let a be 3 in a + 2 end")))
 
 evall("let a be 3 in a end", 3)
 
@@ -594,10 +594,17 @@ evall('''let a be let c be 2
 
 evall("let a be 3 in if a<3 then 2 else 5 end", 5)
 
+evall("let a be 3 in let a be 4 in a+a end end", 8)
+
+# print(parse("let a be 3 in if a<3 then 2 else 5 end"))
+# print(resolve(parse("let a be 3 in if a<3 then 2 else 5 end")))
+# print(e(resolve(parse("let a be 3 in if a<3 then 2 else 5 end"))))
+
+# print(e(resolve(parse("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6")))) # This is working
 # print("All tests passed!")
 
 
-e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
+# e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
 
 # # print(e(e1))
 
