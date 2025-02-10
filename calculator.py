@@ -150,10 +150,10 @@ def resolve(program: AST, env: Environment = None) -> AST:
             rv = resolve(v, env)
             return UnOp(op, rv)
         
-        case If(c,t,e):
-            rc = resolve(c)
-            rt = resolve(t)
-            re = resolve(e)
+        case If(c,t,e): # check this
+            rc = resolve(c, env)
+            rt = resolve(t, env)
+            re = resolve(e, env)
             return If(rc,rt,re)
 
 def e(tree: AST, env = None) -> float:
@@ -589,7 +589,12 @@ evall('''let a be let c be 2
             end 
         end''', 8)
 
-print("All tests passed!")
+# print(parse("let a be 3 in a+3 end"))
+# print(parse("let a be 3 in if a<3 then 2 else 5 end"))
+
+evall("let a be 3 in if a<3 then 2 else 5 end", 5)
+
+# print("All tests passed!")
 
 
 e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
