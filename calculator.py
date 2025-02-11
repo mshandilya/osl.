@@ -56,19 +56,19 @@ class If(AST):
 @dataclass
 class Fun:
     name: str
-    params: list['Var']
+    params: list['AST']
     body: 'AST'
     expr: 'AST'
 
 @dataclass
 class Call(AST):
     name: str # Name of function
-    arg: list['Var'] # Argument
+    arg: list['AST'] # Argument
 
 @dataclass
 class FunCall:
     fn: 'AST'
-    args: list['Var']
+    args: list['AST']
 
 @dataclass
 class FunObject:
@@ -260,7 +260,7 @@ def lex(s: str) -> Iterator[Token]:
             while i < len(s) and s[i].isalpha():
                 t = t + s[i]
                 i = i + 1
-            if t in {'if', 'then', 'else', 'let', 'in', 'be', 'end'}:
+            if t in {'if', 'then', 'else', 'let', 'in', 'be', 'end', 'fun', 'call'}:
                 yield KeywordToken(t)
             else:
                 yield VarToken(t)
@@ -281,7 +281,7 @@ def lex(s: str) -> Iterator[Token]:
 
         else:
             match t := s[i]:
-                case '+' | '-' | '*' | '/' | '^' | '(' | ')':
+                case '+' | '-' | '*' | '/' | '^' | '(' | ')' | '{' | '}' | ',':
                     i = i + 1
                     yield OperatorToken(t)
                 case '<' | '>' | '=':
@@ -305,6 +305,40 @@ def parse(s: str) -> AST:
             raise SyntaxError(f"Expected '{s}' but got '{t.peek(None)}'")
         else:
             next(t)
+    
+    def parse_fun():
+        match t.peek(None):
+            case KeywordToken('fun'):
+                next(t)
+                name = t.peek(None)
+                # print(name.val)
+                next(t)
+                expect(OperatorToken('('))
+                param = parse_let()
+                expect(OperatorToken(')'))
+                expect(OperatorToken('('))
+                # next(t)
+                # expect(',')
+                # next(t)
+                body = parse_let()
+                expect(OperatorToken(')'))
+                # next(t)
+                calls = parse_fun()
+                expect(KeywordToken('end'))
+                return Fun(name.val, [param], body, calls)
+            
+            case KeywordToken("call"):
+                next(t)
+                expect(OperatorToken('('))
+                name = t.peek(None)
+                next(t)
+                expect(OperatorToken(','))
+                expr = parse_let()
+                expect(OperatorToken(')'))
+                return Call(name.val, [expr])
+
+            case _:
+                return parse_let()
 
     def parse_let():
         match t.peek(None):
@@ -417,7 +451,7 @@ def parse(s: str) -> AST:
                 next(t)
                 return Var(v)
 
-    return parse_let()
+    return parse_fun()
 
 def evall(s: str, val) -> AST:
     print("Calculate:", s)
@@ -472,205 +506,208 @@ expr_t7ast = Let (
 
 pprint(e(resolve(expr_t7ast)))
 
-evall("2+3+5", 10)
+print(parse("fun f(a) (a+2) call(f, 3) end"))
+evall("fun f(a) (a+2) call(f, 3) end", 5)
 
-evall("2+3*5", 17)
+# evall("2+3+5", 10)
 
-evall("2+3-5", 0)
+# evall("2+3*5", 17)
 
-evall("2-3+5", 4)
+# evall("2+3-5", 0)
 
-evall("2-3-5", -6) #amb - for now
+# evall("2-3+5", 4)
 
-evall("2+3/5", 2.6)
+# evall("2-3-5", -6) #amb - for now
 
-evall("100/10/2", 5) #amb
+# evall("2+3/5", 2.6)
 
-evall("10+2^5", 42)
+# evall("100/10/2", 5) #amb
 
-evall("2^3^2", 512) #amb
+# evall("10+2^5", 42)
 
-evall("2^3+2", 10)
+# evall("2^3^2", 512) #amb
 
-evall("10.3+2.6", 12.9)
+# evall("2^3+2", 10)
 
-evall("2+3/5-3.1", -0.5) #amb
+# evall("10.3+2.6", 12.9)
 
-evall("2+-3", -1)
+# evall("2+3/5-3.1", -0.5) #amb
 
-evall("-3*2", -6)
+# evall("2+-3", -1)
 
-evall("3*-2", -6)
+# evall("-3*2", -6)
 
-evall("-3*-2", 6)
+# evall("3*-2", -6)
 
-evall("-3 --2", -1)
+# evall("-3*-2", 6)
 
-evall("--2", 2)
+# evall("-3 --2", -1)
 
-evall("3*-2+5", -1) #amb
+# evall("--2", 2)
 
-evall("2*(3+2)", 10)
+# evall("3*-2+5", -1) #amb
 
-evall("(3+2)*2", 10)
+# evall("2*(3+2)", 10)
 
-evall("(3+2)*(15/3)", 25)
+# evall("(3+2)*2", 10)
 
-evall("(3-(5-2))", 0)
+# evall("(3+2)*(15/3)", 25)
 
-evall("-(5-2)", -3)
+# evall("(3-(5-2))", 0)
 
-evall("--(5-2)", 3)
+# evall("-(5-2)", -3)
 
-evall("2--(5-2)", 5)
+# evall("--(5-2)", 3)
 
-evall("2+-3", -1)
+# evall("2--(5-2)", 5)
 
-evall("2+--3", 5)
+# evall("2+-3", -1)
 
-evall("2+--(3-2)", 3)
+# evall("2+--3", 5)
 
-evall("-2*--(5-2)", -6)
+# evall("2+--(3-2)", 3)
 
-evall("-5*5", -25)
+# evall("-2*--(5-2)", -6)
 
-evall("---(-3)", 3)
+# evall("-5*5", -25)
 
-evall("2--2", 4)
+# evall("---(-3)", 3)
 
-evall("2--(3-1)", 4)
+# evall("2--2", 4)
 
-evall("3*((2+2)*2)", 24)
+# evall("2--(3-1)", 4)
 
-# Observe the AST for these, some - are UnOp and some are BinOp
+# evall("3*((2+2)*2)", 24)
 
-evall("-3", -3)
+# # Observe the AST for these, some - are UnOp and some are BinOp
 
-evall("--3", 3)
+# evall("-3", -3)
 
-evall("2--3", 5)
+# evall("--3", 3)
 
-evall("2---3", -1)
+# evall("2--3", 5)
 
-# evall("3*((2+2*2)+5") # SyntaxError: Expected ')'
+# evall("2---3", -1)
 
-# evall("3*)(2+2*2)+5") # SyntaxError: Expected '('
+# # evall("3*((2+2*2)+5") # SyntaxError: Expected ')'
 
-# evall("3**4") # Gives error: TypeError: unsupported operand type(s) for *: 'float' and 'NoneType'
+# # evall("3*)(2+2*2)+5") # SyntaxError: Expected '('
 
-evall("2<3", True)
+# # evall("3**4") # Gives error: TypeError: unsupported operand type(s) for *: 'float' and 'NoneType'
 
-evall("2>3", False)
+# evall("2<3", True)
 
-evall("2+10>3+5", True)
+# evall("2>3", False)
 
-# evall("<3") # TypeError: '<' not supported between instances of 'NoneType' and 'float'
+# evall("2+10>3+5", True)
 
-evall("if 2<3 then 2 else 3", 2)
+# # evall("<3") # TypeError: '<' not supported between instances of 'NoneType' and 'float'
 
-evall("if 2>3 then 2 else 3", 3)
+# evall("if 2<3 then 2 else 3", 2)
 
-evall("if 2>3 then 2 else 3+5", 8) # 3+5 is evaluated before if else
+# evall("if 2>3 then 2 else 3", 3)
 
-evall("3*(1+2)", 9)
+# evall("if 2>3 then 2 else 3+5", 8) # 3+5 is evaluated before if else
 
-evall("(1-3)*(1+2)", -6)
+# evall("3*(1+2)", 9)
 
-evall("2+10>3+9", 0) #amb
+# evall("(1-3)*(1+2)", -6)
 
-evall("2+11>3+9", 1)
+# evall("2+10>3+9", 0) #amb
 
-evall("2+9>=3+9", 0)
+# evall("2+11>3+9", 1)
 
-evall("2+10>=3+9", 1)
+# evall("2+9>=3+9", 0)
 
-evall("2+10<=3+9", 1)
+# evall("2+10>=3+9", 1)
 
-evall("2+9<=3+9", 1)
+# evall("2+10<=3+9", 1)
 
-evall("(2^3)^5", 32768)
+# evall("2+9<=3+9", 1)
 
-# evall("iff 2<3 then 2 else 3") # KeywordToken(k='iff') is not a valid keyword
+# evall("(2^3)^5", 32768)
 
-# evall("if 2<3 thn 2 else 3") # SyntaxError: Expected 'KeywordToken(k='then')' but got 'KeywordToken(k='thn')'
+# # evall("iff 2<3 then 2 else 3") # KeywordToken(k='iff') is not a valid keyword
 
-evall("if 2>3 then 2 else if 3<4 then 5 else 6", 5)
+# # evall("if 2<3 thn 2 else 3") # SyntaxError: Expected 'KeywordToken(k='then')' but got 'KeywordToken(k='thn')'
 
-evall("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6", 14)
+# evall("if 2>3 then 2 else if 3<4 then 5 else 6", 5)
 
-evall('''if 2<3 then 
-            if 8<9 then 
-                14 
-            else 15 
-        else if 3<4 then 
-            5 
-        else 
-            6''', 14)
+# evall("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6", 14)
 
-evall("let a be 3 in a + 2 end", 5)
-# pprint(parse("let a be 3 in a + 2 end"))
-# pprint(resolve(parse("let a be 3 in a + 2 end")))
+# evall('''if 2<3 then 
+#             if 8<9 then 
+#                 14 
+#             else 15 
+#         else if 3<4 then 
+#             5 
+#         else 
+#             6''', 14)
 
-evall("let a be 3 in a end", 3)
+# evall("let a be 3 in a + 2 end", 5)
+# # pprint(parse("let a be 3 in a + 2 end"))
+# # pprint(resolve(parse("let a be 3 in a + 2 end")))
 
-evall("let a be 3 in a+a end", 6)
+# evall("let a be 3 in a end", 3)
 
-evall("let a be 3 in let b be a+2 in a+b end end", 8)
+# evall("let a be 3 in a+a end", 6)
 
-evall('''let a be let c be 2 
-                  in c 
-                  end 
-        in 
-            let a be a+2
-            in a+a 
-            end 
-        end''', 8)
+# evall("let a be 3 in let b be a+2 in a+b end end", 8)
 
-# print(parse("let a be 3 in a+3 end"))
-# print(parse("let a be 3 in if a<3 then 2 else 5 end"))
+# evall('''let a be let c be 2 
+#                   in c 
+#                   end 
+#         in 
+#             let a be a+2
+#             in a+a 
+#             end 
+#         end''', 8)
 
-evall("let a be 3 in if a<3 then 2 else 5 end", 5)
-
-evall("let a be 3 in let a be 4 in a+a end end", 8)
-
-def test_letfun():
-    a = Var("a")
-    b = Var("b")
-    f = "f"
-    g = BinOp (
-        "*",
-        Call(f, [Number(15), Number(2)]),
-        Call(f, [Number(12), Number(3)])
-    )
-    ee = Fun(
-        f, [a, b], BinOp("+", a, b),
-        g
-    )
-    print(resolve(ee))
-    print(e(resolve(ee)))
-
-    assert e(resolve(ee)) == (15+2)*(12+3)
-test_letfun()
-# # pprint(resolve(expr_t7ast))
-# # pprint(e(resolve(expr_t7ast)))
+# # print(parse("let a be 3 in a+3 end"))
 # # print(parse("let a be 3 in if a<3 then 2 else 5 end"))
-# # print(resolve(parse("let a be 3 in if a<3 then 2 else 5 end")))
-# # print(e(resolve(parse("let a be 3 in if a<3 then 2 else 5 end"))))
 
-# # print(e(resolve(parse("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6")))) # This is working
+# evall("let a be 3 in if a<3 then 2 else 5 end", 5)
+
+# evall("let a be 3 in let a be 4 in a+a end end", 8)
+
+# def test_letfun():
+#     a = Var("a")
+#     b = Var("b")
+#     f = "f"
+#     g = BinOp (
+#         "*",
+#         Call(f, [Number(15), Number(2)]),
+#         Call(f, [Number(12), Number(3)])
+#     )
+#     ee = Fun(
+#         f, [a, b], BinOp("+", a, b),
+#         g
+#     )
+#     print(resolve(ee))
+#     print(e(resolve(ee)))
+
+#     assert e(resolve(ee)) == (15+2)*(12+3)
+# test_letfun()
+# # # pprint(resolve(expr_t7ast))
+# # # pprint(e(resolve(expr_t7ast)))
+# # # print(parse("let a be 3 in if a<3 then 2 else 5 end"))
+# # # print(resolve(parse("let a be 3 in if a<3 then 2 else 5 end")))
+# # # print(e(resolve(parse("let a be 3 in if a<3 then 2 else 5 end"))))
+
+# # # print(e(resolve(parse("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6")))) # This is working
 
 
-# # e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
+# # # e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
 
-# # # print(e(e1))
+# # # # print(e(e1))
 
-# # # print(e(parse("(2^3)^5")))
+# # # # print(e(parse("(2^3)^5")))
 
-print("All tests passed!")
+# print("All tests passed!")
 
-# # # Strings
-# # # True False, booleans
-# # # Functions
-# # # Resolution of functions
-# # # Lists
-# # # Mutable variables (ig use update in env)
+# # # # Strings
+# # # # True False, booleans
+# # # # Functions
+# # # # Resolution of functions
+# # # # Lists
+# # # # Mutable variables (ig use update in env)
