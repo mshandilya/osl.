@@ -4,6 +4,9 @@ from more_itertools import peekable
 from pprint import pprint
 from graphviz import Digraph # type: ignore
 from typing import List
+import sys
+
+sys.setrecursionlimit(10000)
 
 cnt = 0
 def fresh():
@@ -46,15 +49,32 @@ class LetMut(AST):
     var: str
     e1: str
     e2: str
-    
+
 @dataclass
 class Variable(AST):
     varName: str
     id: int = None
     
-    def make(name):
-        return Variable(name, fresh())
+    # def make(name):
+    #     return Variable(name, fresh())
+
+@dataclass
+class LetFun(AST):
+    name: AST   # considering functions as first-class just like variables else it'll be str
+    params: List[AST]
+    body: AST
+    expr: AST
+
+@dataclass
+class CallFun(AST):
+    fn: AST     # considering functions as first-class just like variables else it'll be str
+    args: List[AST]
     
+@dataclass
+class FunObj:
+    params: List[AST]
+    body: AST
+
 class Environment:
     envs: List
     
@@ -108,6 +128,25 @@ def resolve(program: AST, env: Environment = None) -> AST:
             env.exit_scope()
             return Let(Variable(varName, i), re1, re2)
         
+        case LetFun(Variable(varName, _), params, body, expr):
+            env.enter_scope()
+            env.add(varName, i := fresh())
+            env.enter_scope()
+            new_params = []
+            for param in params:
+                env.add(param.varName, j := fresh())
+                new_params.append(Variable(param.varName, j))
+            new_body = resolve_(body)
+            env.exit_scope()
+            new_expr = resolve_(expr)
+            env.exit_scope()
+            return LetFun(Variable(varName, i), new_params, new_body, new_expr)
+        
+        case CallFun(fn, args):
+            rfn = resolve_(fn)
+            rargs = [resolve_(arg) for arg in args]
+            return CallFun(rfn, rargs)
+        
         case BinOp(op, left, right):
             le = resolve_(left)
             ri = resolve_(right)
@@ -115,6 +154,12 @@ def resolve(program: AST, env: Environment = None) -> AST:
         case UnOp(op, right):
             ri = resolve_(right)
             return UnOp(op, ri)
+        
+        case If(op, left, right):
+            op = resolve_(op)
+            le = resolve_(left)
+            ri = resolve_(right)
+            return If(op, le, ri)
         
 
 
@@ -127,8 +172,8 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
     
     match tree:
         case Number(val):
-            # return float(val) if '.' in val else int(val)
-            return val
+            return float(val) if '.' in val else int(val)
+            # return val
         
         case Variable(varName, i): 
             return env.get(f"{varName}:{i}")
@@ -136,11 +181,35 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
         case Let(Variable(varName, i), e1, e2):
             v1 = e_(e1)
             env.enter_scope()
-            env.add(f"{varName}:{i}", v1) # CHECK THIS OUT ONCE! v or varName
+            env.add(f"{varName}:{i}", v1)
             v2 = e_(e2)
             env.exit_scope()
             return v2
         
+        case LetFun(Variable(varName, i), params, body, expr):
+            env.enter_scope()
+            # print(Variable(varName, i))
+            env.add(f"{varName}:{i}", FunObj(params, body))
+            # print(env.envs)
+            rexpr = e_(expr)
+            env.exit_scope()
+            return rexpr
+        
+        case CallFun(Variable(varName, i), args):
+            # print(Variable(varName, i))
+            fun = env.get(f"{varName}:{i}")
+            rargs = []
+            for arg in args:
+                rargs.append(e_(arg))
+            
+            env.enter_scope()
+            for param, arg in zip(fun.params, rargs):
+                env.add(f"{param.varName}:{param.id}", arg)
+            
+            rbody = e_(fun.body)
+            env.exit_scope()
+            return rbody
+            
         case BinOp("+", left, right): return e_(left) + e_(right)
         case BinOp("*", left, right): return e_(left) * e_(right)
         case BinOp("/", left, right): return e_(left) / e_(right)
@@ -153,15 +222,102 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
         case BinOp("=", left, right): return e_(left) == e_(right)
         case BinOp("!=", left, right): return e_(left) != e_(right)
         case BinOp("%", left, right): return e_(left) % e_(right)
+        case BinOp("||", left, right): return e_(left) or e_(right)
+        
+        case UnOp("-", right): return -e_(right)
         case UnOp("\u221a", right): return e_(right) ** 0.5 # Square root Symbol
+        
         case If(condition, then_body, else_body): 
             if e_(condition):
                 return e_(then_body) 
             else:
-                e_(else_body)
-                
-        case UnOp("-", right): return -e_(right)
+                return e_(else_body)
 
+
+exp = LetFun(Variable("f"), 
+             [Variable("x")], 
+             BinOp("+", Variable("x"), Number("1")), 
+             CallFun(Variable("f"), [Number("2")]))
+
+# letFunc f(x) be
+#     x + 1
+# in
+# f(2)
+
+exp = LetFun(Variable("fact"), 
+             [Variable("n")], 
+             If(BinOp("=", Variable("n"), Number("0")),
+                Number("1"),
+                Let(Variable("x"), 
+                    CallFun(Variable("fact"), [BinOp("-", Variable("n"), Number("1"))]), 
+                    BinOp("*", Variable("n"), Variable("x")))
+                ),
+             CallFun(Variable("fact"), [Number("5")]))
+
+# letFunc fact(n) be
+#     if n = 0 then
+#         1
+#     else
+#         let x be fact(n - 1) in
+#         n * x
+# in
+# fact(5)
+
+
+## PROJECT EULER 1
+exp = LetFun(Variable("func"),
+             [Variable("x"), Variable("s")],
+             If(BinOp("=", Variable("x"), Number("1000")),
+                Variable("s"),
+                If(BinOp("||", BinOp("=", BinOp("%", Variable("x"), Number("3")), Number("0")), BinOp("=", BinOp("%", Variable("x"), Number("5")), Number("0"))),
+                   CallFun(Variable("func"), [BinOp("+", Variable("x"), Number("1")), BinOp("+", Variable("s"), Variable("x"))]),
+                   CallFun(Variable("func"), [BinOp("+", Variable("x"), Number("1")), Variable("s")])
+                   )
+                ),
+             CallFun(Variable("func"), [Number("0"), Number("0")]))
+
+# letFunc func(x, s) be
+#     if x = 1000 then
+#         s
+#     else if x % 3 = 0 || x % 5 = 0 then
+#         func(x + 1, s + x)
+#     else
+#         func(x + 1, s)
+# in
+# func(0, 0)
+
+
+## PROJECT EULER 2
+exp = LetFun(Variable("fib_sum"),
+             [Variable("a"), Variable("b"), Variable("s")],
+             If(BinOp(">=", Variable("a"), Number("4000000")),
+                Variable("s"),
+                If(BinOp("=", BinOp("%", Variable("a"), Number("2")), Number("0")),
+                   CallFun(Variable("fib_sum"), [Variable("b"), BinOp("+", Variable("a"), Variable("b")), BinOp("+", Variable("s"), Variable("a"))]),
+                   CallFun(Variable("fib_sum"), [Variable("b"), BinOp("+", Variable("a"), Variable("b")), Variable("s")])
+                   )
+                ),
+             CallFun(Variable("fib_sum"), [Number("0"), Number("1"), Number("0")]))
+
+# letFunc fib(a, b, s) be
+#     if a >= 4000000 then
+#         s
+#     else if a % 2 = 0 then
+#         fib(b, a + b, s + a)
+#     else
+#         fib(b, a + b, s)
+# in
+# fib(0, 1, 0)
+
+
+pprint(exp)
+print()
+res_exp = resolve(exp)
+pprint(res_exp)
+print()
+pprint(e(res_exp))
+
+exit()
 
 class ParseErr(Exception):
     pass
