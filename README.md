@@ -26,18 +26,18 @@ def resolve(program: AST, env: Environment = None) -> AST:
 
     match program:
         case LetFun(Variable(varName, _), params, body, expr):
-                    env.enter_scope()
-                    env.add(varName, i := fresh())
-                    env.enter_scope()
-                    new_params = []
-                    for param in params:
-                        env.add(param.varName, j := fresh())
-                        new_params.append(Variable(param.varName, j))
-                    new_body = resolve_(body)
-                    env.exit_scope()
-                    new_expr = resolve_(expr)
-                    env.exit_scope()
-                    return LetFun(Variable(varName, i), new_params, new_body, new_expr)
+            env.enter_scope()
+            env.add(varName, i := fresh())
+            env.enter_scope()
+            new_params = []
+            for param in params:
+                env.add(param.varName, j := fresh())
+                new_params.append(Variable(param.varName, j))
+            new_body = resolve_(body)
+            env.exit_scope()
+            new_expr = resolve_(expr)
+            env.exit_scope()
+            return LetFun(Variable(varName, i), new_params, new_body, new_expr)
 
         case CallFun(fn, args):
             rfn = resolve_(fn)
