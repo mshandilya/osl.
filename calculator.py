@@ -55,25 +55,25 @@ class If(AST):
 
 @dataclass
 class Fun:
-    name: 'AST'
-    params: 'AST'
+    name: str
+    params: list['Var']
     body: 'AST'
     expr: 'AST'
 
 @dataclass
 class Call(AST):
     name: str # Name of function
-    arg: AST # Argument
+    arg: list['Var'] # Argument
 
-# @dataclass
-# class FunCall:
-#     fn: 'AST'
-#     args: List['AST']
+@dataclass
+class FunCall:
+    fn: 'AST'
+    args: list['Var']
 
-# @dataclass
-# class FunObject:
-#     params: List['AST']
-#     body: 'AST'
+@dataclass
+class FunObject:
+    params: 'AST'
+    body: 'AST'
 
 cnt = 0
 def cntr():
@@ -129,17 +129,22 @@ def resolve(program: AST, env: Environment = None) -> AST:
             env.exit_scope()
             return Let(Var(name, i), re1, re2)
         
-        case Fun(f, Var(name, _), body, expr):
+        case Fun(f, params, body, expr):
             env.enter_scope()
-            env.add(name, i := cntr())
+            rparams = []
+            for param in params:
+                env.add(param.name, i := cntr())
+                rparams.append(Var(param.name, i))
             rbody = resolve(body, env)
             env.exit_scope()
             rexpr = resolve(expr, env)
-            return Fun(f, Var(name, i), rbody, rexpr)
+            return Fun(f, rparams, rbody, rexpr)
 
         case Call(f, x):
-            xr = resolve(x, env)
-            return Call(f, xr)
+            xrl = []
+            for arg in x:
+                xrl.append(resolve(arg, env))
+            return Call(f, xrl)
 
         case BinOp(op, l, r):
             rl = resolve(l, env)
@@ -197,6 +202,28 @@ def e(tree: AST, env = None) -> float:
                 return e(t, env)
             else:
                 return e(e_, env)
+        case Fun(f,a,b,c):
+            env.enter_scope()
+            env.add(f"Fun:{f}",FunObject(a,b))
+            x = e(c, env)
+            env.exit_scope()
+            return x
+        case Call(f,x):
+            fn = env.get(f"Fun:{f}")
+            argl = []
+            for arg in x:
+                argl.append(e(arg, env))
+            env.enter_scope()
+            for param, arg in zip(fn.params, argl):
+                env.add(f"{param.name}:{param.id}", arg)
+            # arg = e(x, env)
+            # env.enter_scope()
+            # env.add(f"{fn.params.name}:{fn.params.id}", arg)
+            # env.add(f"{a.name}:{a.id}", e(x, env))
+            # y = e(b, env)
+            y = e(fn.body, env)
+            env.exit_scope()
+            return y
 
 class Token:
     pass
@@ -396,6 +423,7 @@ def evall(s: str, val) -> AST:
     print("Calculate:", s)
     pprint(resolve(parse(s)))
     result = e(resolve(parse(s)))
+    print()
     print(result)
     if(result != val):
         raise ValueError(f"\n-----------------------\nTest failed for {s}:\nExpected {val} got {result}")
@@ -416,24 +444,33 @@ def evall(s: str, val) -> AST:
 # for t in lex("let a be 3 in a + a end"):
 #     print(t)
 
+sf = Fun (
+            "g",
+            [Var("z")],
+            BinOp("+",Var("z"), Number(10)),
+            Call("g", [Number("2")]))
+
+pprint(resolve(sf))
+pprint(e(resolve(sf)))
+
 expr_t7ast = Let (
     Var("x"),
     Number("5"),
     Fun (
         "f",
-        Var("y"),
+        [Var("y")],
         Var("x"),
         Fun (
             "g",
-            Var("z"),
+            [Var("z")],
             Let (
                 Var("x"),
                 Number("6"),
-                Call("f", Var("x"))
+                Call("f", [Var("x")])
             ),
-            Call("g", Number("0")))))
+            Call("g", [Number("0")]))))
 
-pprint(resolve(expr_t7ast))
+pprint(e(resolve(expr_t7ast)))
 
 evall("2+3+5", 10)
 
@@ -596,22 +633,44 @@ evall("let a be 3 in if a<3 then 2 else 5 end", 5)
 
 evall("let a be 3 in let a be 4 in a+a end end", 8)
 
-# print(parse("let a be 3 in if a<3 then 2 else 5 end"))
-# print(resolve(parse("let a be 3 in if a<3 then 2 else 5 end")))
-# print(e(resolve(parse("let a be 3 in if a<3 then 2 else 5 end"))))
+def test_letfun():
+    a = Var("a")
+    b = Var("b")
+    f = "f"
+    g = BinOp (
+        "*",
+        Call(f, [Number(15), Number(2)]),
+        Call(f, [Number(12), Number(3)])
+    )
+    ee = Fun(
+        f, [a, b], BinOp("+", a, b),
+        g
+    )
+    print(resolve(ee))
+    print(e(resolve(ee)))
 
-# print(e(resolve(parse("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6")))) # This is working
-# print("All tests passed!")
+    assert e(resolve(ee)) == (15+2)*(12+3)
+test_letfun()
+# # pprint(resolve(expr_t7ast))
+# # pprint(e(resolve(expr_t7ast)))
+# # print(parse("let a be 3 in if a<3 then 2 else 5 end"))
+# # print(resolve(parse("let a be 3 in if a<3 then 2 else 5 end")))
+# # print(e(resolve(parse("let a be 3 in if a<3 then 2 else 5 end"))))
+
+# # print(e(resolve(parse("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6")))) # This is working
 
 
-# e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
+# # e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
 
-# # print(e(e1))
+# # # print(e(e1))
 
-# # print(e(parse("(2^3)^5")))
+# # # print(e(parse("(2^3)^5")))
 
-# # Strings
-# # True False, booleans
-# # Functions
-# # Lists
-# # Support for a list of params
+print("All tests passed!")
+
+# # # Strings
+# # # True False, booleans
+# # # Functions
+# # # Resolution of functions
+# # # Lists
+# # # Mutable variables (ig use update in env)
