@@ -172,8 +172,8 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
     
     match tree:
         case Number(val):
-            return float(val) if '.' in val else int(val)
-            # return val
+            # return float(val) if '.' in val else int(val)
+            return val
         
         case Variable(varName, i): 
             return env.get(f"{varName}:{i}")
@@ -223,6 +223,7 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
         case BinOp("!=", left, right): return e_(left) != e_(right)
         case BinOp("%", left, right): return e_(left) % e_(right)
         case BinOp("||", left, right): return e_(left) or e_(right)
+        case BinOp("&&", left, right): return e_(left) and e_(right)
         
         case UnOp("-", right): return -e_(right)
         case UnOp("\u221a", right): return e_(right) ** 0.5 # Square root Symbol
@@ -233,91 +234,6 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             else:
                 return e_(else_body)
 
-
-exp = LetFun(Variable("f"), 
-             [Variable("x")], 
-             BinOp("+", Variable("x"), Number("1")), 
-             CallFun(Variable("f"), [Number("2")]))
-
-# letFunc f(x) be
-#     x + 1
-# in
-# f(2)
-
-exp = LetFun(Variable("fact"), 
-             [Variable("n")], 
-             If(BinOp("=", Variable("n"), Number("0")),
-                Number("1"),
-                Let(Variable("x"), 
-                    CallFun(Variable("fact"), [BinOp("-", Variable("n"), Number("1"))]), 
-                    BinOp("*", Variable("n"), Variable("x")))
-                ),
-             CallFun(Variable("fact"), [Number("5")]))
-
-# letFunc fact(n) be
-#     if n = 0 then
-#         1
-#     else
-#         let x be fact(n - 1) in
-#         n * x
-# in
-# fact(5)
-
-
-## PROJECT EULER 1
-exp = LetFun(Variable("func"),
-             [Variable("x"), Variable("s")],
-             If(BinOp("=", Variable("x"), Number("1000")),
-                Variable("s"),
-                If(BinOp("||", BinOp("=", BinOp("%", Variable("x"), Number("3")), Number("0")), BinOp("=", BinOp("%", Variable("x"), Number("5")), Number("0"))),
-                   CallFun(Variable("func"), [BinOp("+", Variable("x"), Number("1")), BinOp("+", Variable("s"), Variable("x"))]),
-                   CallFun(Variable("func"), [BinOp("+", Variable("x"), Number("1")), Variable("s")])
-                   )
-                ),
-             CallFun(Variable("func"), [Number("0"), Number("0")]))
-
-# letFunc func(x, s) be
-#     if x = 1000 then
-#         s
-#     else if x % 3 = 0 || x % 5 = 0 then
-#         func(x + 1, s + x)
-#     else
-#         func(x + 1, s)
-# in
-# func(0, 0)
-
-
-## PROJECT EULER 2
-exp = LetFun(Variable("fib_sum"),
-             [Variable("a"), Variable("b"), Variable("s")],
-             If(BinOp(">=", Variable("a"), Number("4000000")),
-                Variable("s"),
-                If(BinOp("=", BinOp("%", Variable("a"), Number("2")), Number("0")),
-                   CallFun(Variable("fib_sum"), [Variable("b"), BinOp("+", Variable("a"), Variable("b")), BinOp("+", Variable("s"), Variable("a"))]),
-                   CallFun(Variable("fib_sum"), [Variable("b"), BinOp("+", Variable("a"), Variable("b")), Variable("s")])
-                   )
-                ),
-             CallFun(Variable("fib_sum"), [Number("0"), Number("1"), Number("0")]))
-
-# letFunc fib(a, b, s) be
-#     if a >= 4000000 then
-#         s
-#     else if a % 2 = 0 then
-#         fib(b, a + b, s + a)
-#     else
-#         fib(b, a + b, s)
-# in
-# fib(0, 1, 0)
-
-
-pprint(exp)
-print()
-res_exp = resolve(exp)
-pprint(res_exp)
-print()
-pprint(e(res_exp))
-
-exit()
 
 class ParseErr(Exception):
     pass
@@ -345,102 +261,163 @@ class KeyWordToken(Token):
 class VariableToken(Token):
     varName: str
 
+@dataclass
+class FunCallToken(Token):
+    funName: str
+
 
 def lex(s: str) -> Iterator[Token]:
     i = 0
+    prev_token = None
+
     while True:
-        while i < len(s) and s[i].isspace(): # newlines, spaces, tabs handled
-            i = i + 1
+        while i < len(s) and s[i].isspace():
+            i += 1
 
         if i >= len(s):
             return
 
         if s[i].isalpha():
-            t = s[i]
-            i = i + 1
+            start = i
             while i < len(s) and s[i].isalpha():
-                t = t + s[i]
-                i = i + 1
-            if t in {"if", "then", "else", "end", "let", "be", "in"}:
-                yield KeyWordToken(t)
+                i += 1
+            name = s[start:i]
+
+            if name in {"if", "then", "else", "end", "let", "in", "letFunc"}:
+                prev_token = KeyWordToken(name)
+                yield prev_token
+
+            # If preceded by `letFunc`, it's a function definition
+            elif isinstance(prev_token, KeyWordToken) and prev_token.op == "letFunc":
+                prev_token = VariableToken(name)
+                yield prev_token
+
+            # If followed by '(', it's a function call
+            elif i < len(s) and s[i] == "(":
+                prev_token = FunCallToken(name)
+                yield prev_token
+
             else:
-                yield VariableToken(t)
-        
+                prev_token = VariableToken(name)
+                yield prev_token
+
         elif s[i].isdigit():
-            t = s[i]
-            i = i + 1
+            start = i
             while i < len(s) and (s[i].isdigit() or s[i] == '.'):
-                t = t + s[i]
-                i = i + 1
-            yield NumberToken(t)
+                i += 1
+            prev_token = NumberToken(s[start:i])
+            yield prev_token
+
         else:
-            # Handle multi-character operators first
-            if s[i:i+2] in {"<=", ">=", "!=", ":="}:
-                yield OperatorToken(s[i:i+2])
+            if s[i:i+2] in {"<=", ">=", "!=", "||", "&&"}:
+                prev_token = OperatorToken(s[i:i+2])
+                yield prev_token
+                i += 2
+            elif s[i:i+2] == ":=":
+                prev_token = KeyWordToken(":=")
+                yield prev_token
                 i += 2
             else:
-                match t := s[i]:
-                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>' | '=' | '%' | '\u221a':
-                        i = i + 1
-                        yield OperatorToken(t)
+                match s[i]:
+                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>' | '=' | '%' | '\u221a' | "," | "{" | "}":
+                        prev_token = OperatorToken(s[i])
+                        yield prev_token
+                        i += 1
                     case _:
-                        raise ParseErr(f"Unexpected character: {t} at position {i}")
-         
-      
+                        raise ParseErr(f"Unexpected character: {s[i]} at position {i}")
+
       
 def parse(s: str) -> AST:
     t = peekable(lex(s))
     i = 0
     
     def consume(expected_type=None, expected_value=None):
-        nonlocal i  # Track the current index
+        nonlocal i
         token = next(t, None)
         if token is None:
             raise ParseErr(f"Unexpected end of input at index {i}")
         if expected_type and not isinstance(token, expected_type):
             raise ParseErr(f"Expected {expected_type.__name__} at index {i}, got {type(token).__name__}")
-        if expected_value and getattr(token, "op", None) != expected_value and getattr(token, "varName", None) != expected_value:
-            raise ParseErr(f"Expected '{expected_value}' at index {i}, got '{getattr(token, 'op', getattr(token, 'varName', None))}'")
-        i += len(str(token.val if isinstance(token, NumberToken) else getattr(token, "op", getattr(token, "varName", ""))))
+        if expected_value:
+            actual_value = getattr(token, "op", None) or getattr(token, "varName", None) or getattr(token, "val", None)
+            if actual_value != expected_value:
+                raise ParseErr(f"Expected '{expected_value}' at index {i}, got '{actual_value}'")
+        i += 1
         return token
     
     def peek():
         return t.peek(None)
     
+    def parse_func():
+        match peek():
+            case KeyWordToken("letFunc"):
+                consume(KeyWordToken, "letFunc")
+                func_name = consume(VariableToken)
+                
+                consume(OperatorToken, "(")
+                args = []
+                if peek() != OperatorToken(")"):
+                    while True:
+                        args.append(parse_let())
+                        if peek() == OperatorToken(","):
+                            consume(OperatorToken, ",")
+                        else:
+                            break
+                consume(OperatorToken, ")")
+                
+                consume(OperatorToken, "{")
+                body = parse_func()
+                consume(OperatorToken, "}")
+                
+                consume(KeyWordToken, "in")
+                call = parse_func()
+                print(call)
+                consume(KeyWordToken, "end")
+                return LetFun(Variable(func_name.varName), args, body, call)
+            
+            case _:
+                return parse_let()
+              
     def parse_let():
         match peek():
             case KeyWordToken("let"):
                 consume(KeyWordToken, "let")
-                var = consume(VariableToken)
-                consume(KeyWordToken, "be")
-                e1 = parse_let()
+                var = Variable(consume(VariableToken).varName)
+                consume(KeyWordToken, ":=")
+                e1 = parse_func()
                 consume(KeyWordToken, "in")
-                e2 = parse_let()
+                e2 = parse_func()
                 consume(KeyWordToken, "end")
-                return Let(Variable(var.varName), e1, e2)
+                return Let(var, e1, e2)
             case _:
                 return parse_if()
-    
+        
     def parse_if():
         match peek():
             case KeyWordToken("if"):
                 consume(KeyWordToken, "if")
-                condition = parse_if()
-                if peek() != KeyWordToken("then"):
-                    raise ParseErr(f"Expected 'then' at index {i}")
+                condition = parse_func()
                 consume(KeyWordToken, "then")
-                then_body = parse_if()
-                if peek() != KeyWordToken("else"):
-                    raise ParseErr(f"Expected 'else' at index {i}")
+                then_body = parse_func()
                 consume(KeyWordToken, "else")
-                else_body = parse_if()
-                if peek() != KeyWordToken("end"):
-                    raise ParseErr(f"Expected 'end' at index {i}")
-                consume(KeyWordToken, "end")  # Consume the 'end' token
+                else_body = parse_func()
                 return If(condition, then_body, else_body)
             case _:
-                return parse_comparison()
-            
+                return parse_bool()
+    
+    def parse_bool():
+        ast = parse_comparison()
+        while True:
+            match peek():
+                case OperatorToken("||"):
+                    consume()
+                    ast = BinOp("||", ast, parse_comparison())
+                case OperatorToken("&&"):
+                    consume()
+                    ast = BinOp("&&", ast, parse_comparison())
+                case _:
+                    return ast
+
     def parse_comparison():
         ast = parse_add()
         match peek():
@@ -460,6 +437,9 @@ def parse(s: str) -> AST:
                 case OperatorToken('-'):
                     consume()
                     ast = BinOp('-', ast, parse_mul())
+                case OperatorToken("%"):
+                    consume()
+                    ast = BinOp("%", ast, parse_mul())
                 case _:
                     return ast
  
@@ -497,24 +477,37 @@ def parse(s: str) -> AST:
                 consume()
                 return Variable(varName)
             
+            case FunCallToken(_):
+                fn_name = consume(FunCallToken).funName
+                consume(OperatorToken, "(")
+                args = []
+                if peek() != OperatorToken(")"):
+                    while True:
+                        args.append(parse_let())
+                        if peek() == OperatorToken(","):
+                            consume(OperatorToken, ",")
+                        else:
+                            break
+                consume(OperatorToken, ")")
+                return CallFun(Variable(fn_name), args)
+            
             case OperatorToken('-'):
                 consume()
                 return UnOp("-", parse_atom())
+            
             case OperatorToken('\u221a'):
                 consume()
                 return UnOp("\u221a", parse_atom())
-            case OperatorToken('('):
-                start_index = i
+            
+            case OperatorToken("("):
                 consume()
                 ast = parse_add()
-                if peek() != OperatorToken(')'):
-                    raise ParseErr(f"Expected closing parenthesis at index {i} (opened at index {start_index})")
-                consume()
+                consume(OperatorToken, ")")
                 return ast
             case _:
                 raise ParseErr(f"Unexpected token at index {i}")
 
-    return parse_let()
+    return parse_func()
 
 
 
@@ -527,181 +520,143 @@ exp = Let(Variable("a"), Number("3"),
 expL = "let a be 3 in let b be a + 2 in a + b end end"
 # expL = "let a be 3 in a + a end"
 
-pprint(exp)
-print()
-for l in lex(expL):
-    print(l)
-print()
-pprint(resolve(exp))
-print()
-pprint(parse(expL))
-print()
-pprint(resolve(parse(expL)))
-print()
-print(e(parse(expL)))
-print(e(resolve(parse(expL))))
-# print(e(exp))
-# print(e(resolve(exp)))
+exp = LetFun(Variable("f"), 
+             [Variable("x")], 
+             BinOp("+", Variable("x"), Number("1")), 
+             CallFun(Variable("f"), [Number("2")]))
 
-exit()
+# letFunc f(x) be
+#     x + 1
+# in
+# f(2)
+
+exp = LetFun(Variable("fact"), 
+             [Variable("n")], 
+             If(BinOp("=", Variable("n"), Number("0")),
+                Number("1"),
+                Let(Variable("x"), 
+                    CallFun(Variable("fact"), [BinOp("-", Variable("n"), Number("1"))]), 
+                    BinOp("*", Variable("n"), Variable("x")))
+                ),
+             CallFun(Variable("fact"), [Number("5")]))
 
 
-unique_id = 0
-def get_unique_id():
-    global unique_id
-    unique_id += 1
-    return str(unique_id)
+## PROJECT EULER 1
+exp = LetFun(Variable("func"),
+             [Variable("x"), Variable("s")],
+             If(BinOp("=", Variable("x"), Number("1000")),
+                Variable("s"),
+                If(BinOp("||", BinOp("=", BinOp("%", Variable("x"), Number("3")), Number("0")), BinOp("=", BinOp("%", Variable("x"), Number("5")), Number("0"))),
+                   CallFun(Variable("func"), [BinOp("+", Variable("x"), Number("1")), BinOp("+", Variable("s"), Variable("x"))]),
+                   CallFun(Variable("func"), [BinOp("+", Variable("x"), Number("1")), Variable("s")])
+                   )
+                ),
+             CallFun(Variable("func"), [Number("0"), Number("0")]))
 
-def visualize_ast(tree: AST, dot=None, parent=None):
-    if dot is None:
-        dot = Digraph()
-        dot.attr("node", shape="circle")
 
-    current_id = get_unique_id()
+## PROJECT EULER 2
+exp = LetFun(Variable("fib_sum"),
+             [Variable("a"), Variable("b"), Variable("s")],
+             If(BinOp(">=", Variable("a"), Number("4000000")),
+                Variable("s"),
+                If(BinOp("=", BinOp("%", Variable("a"), Number("2")), Number("0")),
+                   CallFun(Variable("fib_sum"), [Variable("b"), BinOp("+", Variable("a"), Variable("b")), BinOp("+", Variable("s"), Variable("a"))]),
+                   CallFun(Variable("fib_sum"), [Variable("b"), BinOp("+", Variable("a"), Variable("b")), Variable("s")])
+                   )
+                ),
+             CallFun(Variable("fib_sum"), [Number("0"), Number("1"), Number("0")]))
 
-    if isinstance(tree, Number):
-        dot.node(current_id, label=str(tree.val))
-        
-    elif isinstance(tree, BinOp):
-        dot.node(current_id, label=tree.op)
-        visualize_ast(tree.left, dot, current_id)
-        visualize_ast(tree.right, dot, current_id)
-        
-    elif isinstance(tree, UnOp):
-        dot.node(current_id, label=tree.op)
-        visualize_ast(tree.right, dot, current_id)
-        
-    elif isinstance(tree, If):
-    
-        dot.node(current_id, label="if")
-        
-        condition_id = get_unique_id()
-        dot.node(condition_id, label="condition", shape="diamond")
-        dot.edge(current_id, condition_id)
-        visualize_ast(tree.condition, dot, condition_id)
-        
-        then_id = get_unique_id()
-        dot.node(then_id, label="then", shape="box")
-        dot.edge(current_id, then_id)
-        visualize_ast(tree.then_body, dot, then_id)
-        
-        else_id = get_unique_id()
-        dot.node(else_id, label="else", shape="box")
-        dot.edge(current_id, else_id)
-        visualize_ast(tree.else_body, dot, else_id)
+# pprint(exp)
+# print()
+# res_exp = resolve(exp)
+# pprint(res_exp)
+# print()
+# pprint(e(res_exp))
 
-    if parent is not None:
-        dot.edge(parent, current_id)
-
-    return dot
-
-def unit_test(expr: str, expected_value, results):
-    print(f"Expression: {expr}")
-    try:
-        ast = parse(expr)
-        pprint(ast)
-        result = e(ast)
-        print(f"Evaluated Result: {result}")
-        if result != expected_value:
-            error_msg = f"Test failed for expression: {expr}. Expected {expected_value}, but got {result}."
-            results.append(("FAILED", expr, error_msg))
-            print(error_msg)
-            print()
-        else:
-            results.append(("PASSED", expr, None))
-            print("Test passed!\n")
-    except Exception as ep:
-        error_msg = f"Error evaluating expression: {expr}. Exception: {ep}"
-        results.append(("ERROR", expr, error_msg))
-        print(error_msg)
-        print()
-
-log = []
-
-unit_test("2", 2, log)
-unit_test("2+3", 5, log)
-unit_test("2+3*5", 17, log)
-unit_test("2 + 3*5", 17, log)
-unit_test("2 + 3*5^2", 77, log)
-unit_test("2 + 3*5^2 - 3", 74, log)
-unit_test("2 + 3*5^2 - 3 / 2", 75.5, log)
-unit_test("2.5 + 3.5", 6.0, log)
-unit_test("2^3^2", 512, log)
-unit_test("2.5^3^2", 3814.697265625, log)
-unit_test("3 + 2*3.5^4/2", 153.0625, log)
-unit_test("2-3-5-6", -12, log)
-unit_test("2/3/5", 0.13333333333333333, log)
-unit_test("((2+3)*5)/5", 5.0, log)
-unit_test("3-(5-6)", 4, log)
-unit_test("3*(5-6^3)", -633, log)
-unit_test("2- -2", 4, log)
-unit_test("2- -(3 - 1)", 4, log)
-unit_test("5*-5", -25, log)
-unit_test("-5*5", -25, log)
-unit_test("2 +-3", -1, log)
-unit_test("-(5-2)", -3, log)
-unit_test("-((4*5)-(4/5))", -19.2, log)
-unit_test("\u221a(4)", 2, log)
-
-exp_sq = "\u221a(4 + 12) + \u221a(9)"
-# ast = parse(exp_sq)
-# dot = visualize_ast(ast)
-# dot.render("./imgaes/ast_sqrt", format="png", cleanup=True)
-unit_test(exp_sq, 7.0, log)
-
-exp_cond1 = """
-if 2 < 3 then
-    0 + 5
-else
-    1 * 6
+# Euler Problem 1
+exp = """
+letFunc func(x, s)
+{
+     if x = 1000 then
+         s
+     else if x % 3 = 0 || x % 5 = 0 then
+         func(x + 1, s + x)
+     else
+         func(x + 1, s)
+}
+in
+func(0, 0)
 end
 """
-unit_test("if 2 < 3 then 2 else 3 end", 2, log)
-unit_test(exp_cond1, 5, log)
 
-# exp = "2<3<2"
-# unit_test(exp, False, log)
-
-exp_cond = """
-if 2 < 3 then 
-    if 4 > 5 then 
-        1 
-    else 
-        if 6 <= 7 then 
-            8 
-        else 
-            9 
-        end 
-    end 
-else 
-    10 
+# Euler Problem 2
+exp = """
+letFunc fib(a, b, s)
+{
+    if a >= 4000000 then
+        s
+    else if a % 2 = 0 then
+        fib(b, a + b, s + a)
+    else
+        fib(b, a + b, s)
+}
+in
+fib(0, 1, 0)
 end
 """
-unit_test(exp_cond, 8, log)
 
-# exp = "1 < 2 <= 3 == 4"
-# unit_test(exp, False, log)
+# Factorial
+exp = """
+letFunc fact(n)
+{
+    if n = 0 then
+        1
+    else
+        let x := fact(n - 1) in
+        n * x
+        end
+}
+in
+fact(5)
+end
+"""
 
-print("\nTest Summary:")
-for status, expr, error_msg in log:
-    if status == "PASSED":
-        print(f"PASSED: {expr}")
-    else:
-        print(f"{status}: {expr}")
-        if error_msg:
-            print(f"  -> {error_msg}")
+# Fixed this -> added CallFun at the highest precedence in parse_atom()
+exp = """
+letFunc f(a)
+{
+    a + a
+}
+in
+f(2) + f(3)
+end
+"""
 
-# ast = parse(exp_cond)
-# dot = visualize_ast(ast)
-# dot.render("./imgaes/ast_nested_cond", format="png", cleanup=True)
+exp = """
+let x := 5 in
+letFunc f(y) {
+    x
+} 
+in
+letFunc g(z) { 
+    let x := 6 
+    in f(z)
+    end
+}
+in
+g(0)
+end
+end
+end
+"""
 
-# ast = parse("-((4*5)-(4/5))")
-# dot = visualize_ast(ast)
-# dot.render("./imgaes/ast", format="png", cleanup=True)
+for t in lex(exp):
+    print(t)
 
-# ast = parse(exp_cond1)
-# dot = visualize_ast(ast)
-# dot.render("./imgaes/ast_cond", format="png", cleanup=True)
-
-# program = open("program.txt", "r").read()
-# print(program)
+pprint(parse(exp))
+print()
+rexp = resolve(parse(exp))
+pprint(rexp)
+print()
+print(e(rexp))
+# exit()

@@ -45,7 +45,34 @@ def resolve(program: AST, env: Environment = None) -> AST:
             return CallFun(rfn, rargs)
 ```
 
+# Updated - Lexer, Parser Added!
+
+Add new token for call - the lexer checks if previously yielded token is `KeyWordToken(letFun)` then the next expected token is the function variable in the definition i.e `VariableToken(<func-name>)`, otherwise it's a `FunCallToken(<func-name>)`.
+
+```python
+@dataclass
+class FunCallToken(Token):
+    funName: str
+```
+
 ## Project Euler Q1
+
+```python
+exp = """
+letFunc func(x, s)
+{
+     if x = 1000 then
+         s
+     else if x % 3 = 0 || x % 5 = 0 then
+         func(x + 1, s + x)
+     else
+         func(x + 1, s)
+}
+in
+func(0, 0)
+end
+"""
+```
 
 ```python
 ## PROJECT EULER 1
@@ -59,16 +86,6 @@ exp = LetFun(Variable("func"),
                    )
                 ),
              CallFun(Variable("func"), [Number("0"), Number("0")]))
-
-# letFunc func(x, s) be
-#     if x = 1000 then
-#         s
-#     else if x % 3 = 0 || x % 5 = 0 then
-#         func(x + 1, s + x)
-#     else
-#         func(x + 1, s)
-# in
-# func(0, 0)
 ```
 
 <div align = "center">
@@ -76,6 +93,23 @@ exp = LetFun(Variable("func"),
 </div>
 
 ## Project Euler Q2
+
+```python
+exp = """
+letFunc fib(a, b, s)
+{
+    if a >= 4000000 then
+        s
+    else if a % 2 = 0 then
+        fib(b, a + b, s + a)
+    else
+        fib(b, a + b, s)
+}
+in
+fib(0, 1, 0)
+end
+"""
+```
 
 ```python
 ## PROJECT EULER 2
@@ -89,20 +123,59 @@ exp = LetFun(Variable("fib_sum"),
                    )
                 ),
              CallFun(Variable("fib_sum"), [Number("0"), Number("1"), Number("0")]))
-
-# letFunc fib(a, b, s) be
-#     if a >= 4000000 then
-#         s
-#     else if a % 2 = 0 then
-#         fib(b, a + b, s + a)
-#     else
-#         fib(b, a + b, s)
-# in
-# fib(0, 1, 0)
 ```
 
 <div align = "center">
     <img src = "./images/Q2.png" style="width: 100%">
+</div>
+
+## Factorial Code
+
+```python
+exp = """
+letFunc fact(n)
+{
+    if n = 0 then
+        1
+    else
+        let x := fact(n - 1) in
+        n * x
+        end
+}
+in
+fact(5)
+end
+"""
+```
+
+<div align = "center">
+    <img src = "./images/QFactorial.png" style="width: 100%">
+</div>
+
+## Static Scoping
+
+```python
+exp = """
+let x := 5 in
+letFunc f(y) {
+    x
+}
+in
+letFunc g(z) {
+    let x := 6
+    in f(z)
+    end
+}
+in
+g(0)
+end
+end
+end
+"""
+```
+
+<div align = "center">
+    <img src = "./images/Static.png" style="width: 100%">
 </div>
 
 ## Older Versions
