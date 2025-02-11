@@ -5,8 +5,8 @@ from colorama import Fore, Style
 def unit_test(expr: str, expected_value, results):
     print(f"Expression: {expr}")
     try:
-        # ast = resolve(parse(expr))
-        ast = parse(expr)
+        ast = resolve(parse(expr))
+        # ast = parse(expr)
         pprint(ast)
         result = e(ast)
         print(f"Evaluated Result: {result}")
