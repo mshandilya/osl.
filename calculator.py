@@ -3,6 +3,9 @@ from typing import List
 
 from dataclasses import dataclass
 
+import sys
+sys.setrecursionlimit(10000)
+
 class AST:
     pass
 
@@ -190,6 +193,7 @@ def e(tree: AST, env = None) -> float:
         case BinOp("-", l, r): return e(l, env) - e(r, env)
         case BinOp("*", l, r): return e(l, env) * e(r, env)
         case BinOp("/", l, r): return e(l, env) / e(r, env)
+        case BinOp("%", l, r): return e(l, env) % e(r, env)
         case BinOp("^", l, r): return e(l, env) ** e(r, env)
         case BinOp("<", l, r): return e(l, env) < e(r, env)
         case BinOp(">", l, r): return e(l, env) > e(r, env)
@@ -281,7 +285,7 @@ def lex(s: str) -> Iterator[Token]:
 
         else:
             match t := s[i]:
-                case '+' | '-' | '*' | '/' | '^' | '(' | ')' | '{' | '}' | ',':
+                case '+' | '-' | '*' | '/' | '%' | '^' | '(' | ')' | '{' | '}' | ',':
                     i = i + 1
                     yield OperatorToken(t)
                 case '<' | '>' | '=':
@@ -373,7 +377,7 @@ def parse(s: str) -> AST:
         match t.peek(None):
             case KeywordToken('if'):
                 next(t)
-                condition_= parse_if()
+                condition_= parse_fun()
                 expect(KeywordToken("then"))
                 then_= parse_fun()
                 expect(KeywordToken("else"))
@@ -430,6 +434,9 @@ def parse(s: str) -> AST:
                 case OperatorToken('/'):
                     next(t)
                     ast = BinOp("/", ast, parse_exp())
+                case OperatorToken('%'):
+                    next(t)
+                    ast = BinOp("%", ast, parse_exp())
                 case _:
                     return ast
 
@@ -492,57 +499,70 @@ def evall(s: str, val) -> AST:
 # for t in lex("let a be 3 in a + a end"):
 #     print(t)
 
-sf = Fun (
-            "g",
-            [Var("z")],
-            BinOp("+",Var("z"), Number(10)),
-            Call("g", [Number("2")]))
+# sf = Fun (
+#             "g",
+#             [Var("z")],
+#             BinOp("+",Var("z"), Number(10)),
+#             Call("g", [Number("2")]))
 
-pprint(resolve(sf))
-pprint(e(resolve(sf)))
+# pprint(resolve(sf))
+# pprint(e(resolve(sf)))
 
-expr_t7ast = Let (
-    Var("x"),
-    Number("5"),
-    Fun (
-        "f",
-        [Var("y")],
-        Var("x"),
-        Fun (
-            "g",
-            [Var("z")],
-            Let (
-                Var("x"),
-                Number("6"),
-                Call("f", [Var("x")])
-            ),
-            Call("g", [Number("0")]))))
+# expr_t7ast = Let (
+#     Var("x"),
+#     Number("5"),
+#     Fun (
+#         "f",
+#         [Var("y")],
+#         Var("x"),
+#         Fun (
+#             "g",
+#             [Var("z")],
+#             Let (
+#                 Var("x"),
+#                 Number("6"),
+#                 Call("f", [Var("x")])
+#             ),
+#             Call("g", [Number("0")]))))
 
-pprint(e(resolve(expr_t7ast)))
+# pprint(e(resolve(expr_t7ast)))
 
-# print(parse("fun f(a, b) is a+b in call(f, 3, 2) end"))
-evall("fun f(a, b) is a+b in call(f, 3, 2) end", 5)
+# # print(parse("fun f(a, b) is a+b in call(f, 3, 2) end"))
+# evall("fun f(a, b) is a+b in call(f, 3, 2) end", 5)
 
-print(e(resolve(parse("fun f(a, b) is if a<b then a+b else a-b in call(f, 3, 2) end"))))
-# evall("fun f(a, b) is if a<b then a+b else a-b in call(f, 3, 2) end", 1)
+# print(e(resolve(parse("fun f(a, b) is if a<b then a+b else a-b in call(f, 3, 2) end"))))
+# # evall("fun f(a, b) is if a<b then a+b else a-b in call(f, 3, 2) end", 1)
 
-evall('''
-let x be 5 in
-  fun f(y) is x in
-    fun g(z) is let x be 6 in call(f, z) end in
-      call(g, 0)
-    end
-  end
-end
-''', 5)
+# evall('''
+# let x be 5 in
+#   fun f(y) is x in
+#     fun g(z) is let x be 6 in call(f, z) end in
+#       call(g, 0)
+#     end
+#   end
+# end
+# ''', 5)
 
-# Factorial implementation is osl
-pprint(resolve(parse("fun fact(n) is if n==0 then 1 else let x be call(fact, n-1) in x*n end in call(fact, 3) end")))
-pprint(e(resolve(parse("fun fact(n) is if n==0 then 1 else let x be call(fact, n-1) in x*n end in call(fact, 3) end"))))
+# # Factorial implementation is osl
+# pprint(resolve(parse("fun fact(n) is if n==0 then 1 else let x be call(fact, n-1) in x*n end in call(fact, 3) end")))
+# pprint(e(resolve(parse("fun fact(n) is if n==0 then 1 else let x be call(fact, n-1) in x*n end in call(fact, 3) end"))))
 
-# Fibonacci implementation is osl
-pprint(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end")))
-pprint(e(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end"))))
+# # Fibonacci implementation is osl
+# pprint(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end")))
+# pprint(e(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end"))))
+
+# Finding the sum of first 10 natural numbers
+# pprint(e(resolve(parse("fun f(n, sum) is if n==10 then sum else call(f, n+1, sum+n) in call(f, 0, 0) end"))))
+
+# Project Euler Q1
+# pprint(parse("fun f(n, sum) is if n==1000 then sum else if n%3==0 then call(f, n+1, sum+n) else if n%5==0 then call(f, n+1, sum+n) else call(f, n+1, sum) in call(f, 10,0) end"))
+pprint(resolve(parse("fun f(n, sum) is if n==1000 then sum else if n%3==0 then call(f, n+1, sum+n) else if n%5==0 then call(f, n+1, sum+n) else call(f, n+1, sum) in call(f, 0, 0) end")))
+pprint(e(resolve(parse("fun f(n, sum) is if n==1000 then sum else if n%3==0 then call(f, n+1, sum+n) else if n%5==0 then call(f, n+1, sum+n) else call(f, n+1, sum) in call(f, 0, 0) end"))))
+
+# Project Euler Q2 - to do
+# pprint(resolve(parse("fun fib(n, sum) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end")))
+# pprint(e(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end"))))
+
 
 # evall("2+3+5", 10)
 
