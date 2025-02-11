@@ -260,7 +260,7 @@ def lex(s: str) -> Iterator[Token]:
             while i < len(s) and s[i].isalpha():
                 t = t + s[i]
                 i = i + 1
-            if t in {'if', 'then', 'else', 'let', 'in', 'be', 'end', 'fun', 'call'}:
+            if t in {'if', 'then', 'else', 'let', 'in', 'be', 'end', 'fun', 'call', 'is'}:
                 yield KeywordToken(t)
             else:
                 yield VarToken(t)
@@ -314,18 +314,24 @@ def parse(s: str) -> AST:
                 # print(name.val)
                 next(t)
                 expect(OperatorToken('('))
-                param = parse_let()
-                expect(OperatorToken(')'))
-                expect(OperatorToken('('))
+                param_list = []
+                while True:
+                    param_list.append(parse_let())
+                    if t.peek(None) == OperatorToken(')'):
+                        next(t)
+                        break;
+                    expect(OperatorToken(','))
+                # expect(OperatorToken(')'))
+                expect(KeywordToken('is'))
                 # next(t)
                 # expect(',')
                 # next(t)
                 body = parse_let()
-                expect(OperatorToken(')'))
+                expect(KeywordToken('in'))
                 # next(t)
                 calls = parse_fun()
                 expect(KeywordToken('end'))
-                return Fun(name.val, [param], body, calls)
+                return Fun(name.val, param_list, body, calls)
             
             case KeywordToken("call"):
                 next(t)
@@ -333,9 +339,17 @@ def parse(s: str) -> AST:
                 name = t.peek(None)
                 next(t)
                 expect(OperatorToken(','))
-                expr = parse_let()
-                expect(OperatorToken(')'))
-                return Call(name.val, [expr])
+                args_list = []
+                while True:
+                    args_list.append(parse_let())
+                    if t.peek(None) == OperatorToken(')'):
+                        next(t)
+                        break;
+                    expect(OperatorToken(','))
+
+                # expr = parse_let()
+                # expect(OperatorToken(')'))
+                return Call(name.val, args_list)
 
             case _:
                 return parse_let()
@@ -506,8 +520,8 @@ expr_t7ast = Let (
 
 pprint(e(resolve(expr_t7ast)))
 
-print(parse("fun f(a) (a+2) call(f, 3) end"))
-evall("fun f(a) (a+2) call(f, 3) end", 5)
+# print(parse("fun f(a, b) is a+b in call(f, 3, 2) end"))
+evall("fun f(a, b) is a+b in call(f, 3, 2) end", 5)
 
 # evall("2+3+5", 10)
 
