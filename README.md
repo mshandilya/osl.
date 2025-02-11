@@ -178,6 +178,14 @@ end
     <img src = "./images/Static.png" style="width: 100%">
 </div>
 
+## Unit Tests
+
+Color coded `unit_tests.py` for better readability.
+
+<div align = "center">
+    <img src = "./images/unit.png" style="width: 100%">
+</div>
+
 ## Older Versions
 
 ```python
