@@ -260,7 +260,7 @@ def lex(s: str) -> Iterator[Token]:
             while i < len(s) and s[i].isalpha():
                 t = t + s[i]
                 i = i + 1
-            if t in {'if', 'then', 'else', 'let', 'in', 'be', 'end', 'fun', 'call', 'is'}:
+            if t in {'if', 'then', 'else', 'let', 'in', 'be', 'end', 'fun', 'call', 'is', 'ret'}:
                 yield KeywordToken(t)
             else:
                 yield VarToken(t)
@@ -361,7 +361,7 @@ def parse(s: str) -> AST:
                 v = t.peek(None)
                 next(t)
                 expect(KeywordToken('be'))
-                v1 = parse_let()
+                v1 = parse_fun()
                 expect(KeywordToken('in'))
                 v2 = parse_fun()
                 expect(KeywordToken('end'))
@@ -375,9 +375,9 @@ def parse(s: str) -> AST:
                 next(t)
                 condition_= parse_if()
                 expect(KeywordToken("then"))
-                then_= parse_if()
+                then_= parse_fun()
                 expect(KeywordToken("else"))
-                else_= parse_if()
+                else_= parse_fun()
                 return If(condition_, then_, else_)
             case _:
                 # if(type(t.peek(None)) == KeywordToken):
@@ -523,7 +523,8 @@ pprint(e(resolve(expr_t7ast)))
 # print(parse("fun f(a, b) is a+b in call(f, 3, 2) end"))
 evall("fun f(a, b) is a+b in call(f, 3, 2) end", 5)
 
-print(e(resolve(parse("fun f(a, b) is a+b in call(f, 3, 2) end"))))
+print(e(resolve(parse("fun f(a, b) is if a<b then a+b else a-b in call(f, 3, 2) end"))))
+# evall("fun f(a, b) is if a<b then a+b else a-b in call(f, 3, 2) end", 1)
 
 evall('''
 let x be 5 in
@@ -534,6 +535,14 @@ let x be 5 in
   end
 end
 ''', 5)
+
+# Factorial implementation is osl
+pprint(resolve(parse("fun fact(n) is if n==0 then 1 else let x be call(fact, n-1) in x*n end in call(fact, 3) end")))
+pprint(e(resolve(parse("fun fact(n) is if n==0 then 1 else let x be call(fact, n-1) in x*n end in call(fact, 3) end"))))
+
+# Fibonacci implementation is osl
+pprint(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end")))
+pprint(e(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end"))))
 
 # evall("2+3+5", 10)
 
@@ -714,26 +723,26 @@ end
 
 #     assert e(resolve(ee)) == (15+2)*(12+3)
 # test_letfun()
-# # # pprint(resolve(expr_t7ast))
-# # # pprint(e(resolve(expr_t7ast)))
-# # # print(parse("let a be 3 in if a<3 then 2 else 5 end"))
-# # # print(resolve(parse("let a be 3 in if a<3 then 2 else 5 end")))
-# # # print(e(resolve(parse("let a be 3 in if a<3 then 2 else 5 end"))))
+# # # # pprint(resolve(expr_t7ast))
+# # # # pprint(e(resolve(expr_t7ast)))
+# # # # print(parse("let a be 3 in if a<3 then 2 else 5 end"))
+# # # # print(resolve(parse("let a be 3 in if a<3 then 2 else 5 end")))
+# # # # print(e(resolve(parse("let a be 3 in if a<3 then 2 else 5 end"))))
 
-# # # print(e(resolve(parse("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6")))) # This is working
+# # # # print(e(resolve(parse("if 2<3 then if 8<9 then 14 else 15 else if 3<4 then 5 else 6")))) # This is working
 
 
-# # # e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
+# # # # e1 = LetMut("b", Number("2"), Let("a", BinOp("+", Number("1"), Get("b")), BinOp("+", Get("a"), Number("6"))))
 
-# # # # print(e(e1))
+# # # # # print(e(e1))
 
-# # # # print(e(parse("(2^3)^5")))
+# # # # # print(e(parse("(2^3)^5")))
 
 # print("All tests passed!")
 
-# # # # Strings
-# # # # True False, booleans
-# # # # Functions
-# # # # Resolution of functions
-# # # # Lists
-# # # # Mutable variables (ig use update in env)
+# # # # # Strings
+# # # # # True False, booleans
+# # # # # Functions
+# # # # # Resolution of functions
+# # # # # Lists
+# # # # # Mutable variables (ig use update in env)
