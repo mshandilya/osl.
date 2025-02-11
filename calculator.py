@@ -315,7 +315,6 @@ def parse(s: str) -> AST:
             case KeywordToken('fun'):
                 next(t)
                 name = t.peek(None)
-                # print(name.val)
                 next(t)
                 expect(OperatorToken('('))
                 param_list = []
@@ -325,35 +324,12 @@ def parse(s: str) -> AST:
                         next(t)
                         break;
                     expect(OperatorToken(','))
-                # expect(OperatorToken(')'))
                 expect(KeywordToken('is'))
-                # next(t)
-                # expect(',')
-                # next(t)
                 body = parse_fun()
                 expect(KeywordToken('in'))
-                # next(t)
                 calls = parse_fun()
                 expect(KeywordToken('end'))
                 return Fun(name.val, param_list, body, calls)
-            
-            case KeywordToken("call"):
-                next(t)
-                expect(OperatorToken('('))
-                name = t.peek(None)
-                next(t)
-                expect(OperatorToken(','))
-                args_list = []
-                while True:
-                    args_list.append(parse_let())
-                    if t.peek(None) == OperatorToken(')'):
-                        next(t)
-                        break;
-                    expect(OperatorToken(','))
-
-                # expr = parse_let()
-                # expect(OperatorToken(')'))
-                return Call(name.val, args_list)
 
             case _:
                 return parse_let()
@@ -471,6 +447,20 @@ def parse(s: str) -> AST:
             case VarToken(v):
                 next(t)
                 return Var(v)
+            case KeywordToken("call"):
+                next(t)
+                expect(OperatorToken('('))
+                name = t.peek(None)
+                next(t)
+                expect(OperatorToken(','))
+                args_list = []
+                while True:
+                    args_list.append(parse_let())
+                    if t.peek(None) == OperatorToken(')'):
+                        next(t)
+                        break;
+                    expect(OperatorToken(','))
+                return Call(name.val, args_list)
 
     return parse_fun()
 
@@ -551,18 +541,42 @@ def evall(s: str, val) -> AST:
 # pprint(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end")))
 # pprint(e(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end"))))
 
+# pprint(resolve(parse("fun fib(a, b, sum) is if a==10 then sum else if a%2 then call(fib, b, a+b, sum+a) else call(fib, b, a+b, sum) in call(fib, 0, 1, 0) end")))
 # Finding the sum of first 10 natural numbers
 # pprint(e(resolve(parse("fun f(n, sum) is if n==10 then sum else call(f, n+1, sum+n) in call(f, 0, 0) end"))))
 
 # Project Euler Q1
-# pprint(parse("fun f(n, sum) is if n==1000 then sum else if n%3==0 then call(f, n+1, sum+n) else if n%5==0 then call(f, n+1, sum+n) else call(f, n+1, sum) in call(f, 10,0) end"))
-pprint(resolve(parse("fun f(n, sum) is if n==1000 then sum else if n%3==0 then call(f, n+1, sum+n) else if n%5==0 then call(f, n+1, sum+n) else call(f, n+1, sum) in call(f, 0, 0) end")))
-pprint(e(resolve(parse("fun f(n, sum) is if n==1000 then sum else if n%3==0 then call(f, n+1, sum+n) else if n%5==0 then call(f, n+1, sum+n) else call(f, n+1, sum) in call(f, 0, 0) end"))))
+peq1 = '''
+        fun f(n, sum) is 
+            if n==1000 then sum 
+            else if n%3==0 then call(f, n+1, sum+n) 
+            else if n%5==0 then call(f, n+1, sum+n) 
+            else call(f, n+1, sum) 
+        in call(f, 0, 0) end
+        '''
 
-# Project Euler Q2 - to do
-# pprint(resolve(parse("fun fib(n, sum) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end")))
-# pprint(e(resolve(parse("fun fib(n) is if n==0 then 0 else if n==1 then 1 else let x be call(fib, n-1) in let y be call(fib, n-2) in x+y end end in call(fib, 10) end"))))
+pprint(resolve(parse(peq1)))
+pprint(e(resolve(parse(peq1))))
 
+# Project Euler Q2
+peq2 = '''
+        fun fib(a, b, sum) is 
+            if a>4000000 then sum 
+            else if a%2 then call(fib, b, a+b, sum+a) 
+            else call(fib, b, a+b, sum) 
+        in call(fib, 0, 1, 0) end
+        '''
+pprint(resolve(parse(peq2)))
+pprint(e(resolve(parse(peq2))))
+
+expr_t6 = """
+fun dbl(a) is a + a
+in
+  call(dbl,2) + call(dbl,3)
+end
+"""
+pprint(resolve(parse(expr_t6)))
+pprint(e(resolve(parse(expr_t6))))
 
 # evall("2+3+5", 10)
 
