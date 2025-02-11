@@ -326,7 +326,7 @@ def parse(s: str) -> AST:
                 # next(t)
                 # expect(',')
                 # next(t)
-                body = parse_let()
+                body = parse_fun()
                 expect(KeywordToken('in'))
                 # next(t)
                 calls = parse_fun()
@@ -363,7 +363,7 @@ def parse(s: str) -> AST:
                 expect(KeywordToken('be'))
                 v1 = parse_let()
                 expect(KeywordToken('in'))
-                v2 = parse_let()
+                v2 = parse_fun()
                 expect(KeywordToken('end'))
                 return Let(Var(v.val), v1, v2) # V is a VarToken, and we want the first argument of Let to be a string (variable name)
             case _:
@@ -522,6 +522,18 @@ pprint(e(resolve(expr_t7ast)))
 
 # print(parse("fun f(a, b) is a+b in call(f, 3, 2) end"))
 evall("fun f(a, b) is a+b in call(f, 3, 2) end", 5)
+
+print(e(resolve(parse("fun f(a, b) is a+b in call(f, 3, 2) end"))))
+
+evall('''
+let x be 5 in
+  fun f(y) is x in
+    fun g(z) is let x be 6 in call(f, z) end in
+      call(g, 0)
+    end
+  end
+end
+''', 5)
 
 # evall("2+3+5", 10)
 
