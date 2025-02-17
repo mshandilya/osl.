@@ -673,7 +673,9 @@ letFunc f(x)
 }
 in
 let g := f in
-g(3)
+let h := g in
+h(3)
+end
 end
 end
 """
