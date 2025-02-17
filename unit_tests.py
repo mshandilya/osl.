@@ -164,6 +164,39 @@ end
 unit_test(exp, 5, log)
 
 
+exp = """
+letFunc f(x)
+{
+    x ^ 2
+}
+in
+letFunc g(f, y)
+{
+    f(y) + y
+}
+in
+g(f, 3)
+end
+end
+"""
+
+unit_test(exp, 12, log)
+
+
+exp = """
+letFunc f(x)
+{
+    x * 7
+}
+in
+let g := f in
+g(3)
+end
+end
+"""
+
+unit_test(exp, 21, log)
+
 print("\nTest Summary:")
 passed_count = 0
 for status, expr, error_msg in log:

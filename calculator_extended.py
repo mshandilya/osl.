@@ -650,6 +650,67 @@ end
 end
 """
 
+exp = """
+letFunc f(x)
+{
+    x ^ 2
+}
+in
+letFunc g(f, y)
+{
+    f(y) + y
+}
+in
+g(f, 3)
+end
+end
+"""
+
+exp = """
+letFunc f(x)
+{
+    x * 7
+}
+in
+let g := f in
+g(3)
+end
+end
+"""
+
+# exp = """
+# letFunc g()
+# {
+#     let x := 5 in
+#     letFunc f()
+#     {
+#         let x := 6 in
+#         x
+#         end
+#     }
+#     in
+#     f()
+#     end
+#     x
+#     end
+# }
+# in
+# g()
+# end
+# """
+
+# Wanted something like this -> but need print statement
+# def g():
+#     x = 5
+#     def f():
+#         x = 6
+#         print(x)
+    
+#     f()
+#     print(x)
+
+# g()
+
 for t in lex(exp):
     print(t)
 
