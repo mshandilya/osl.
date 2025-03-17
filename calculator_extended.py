@@ -614,6 +614,21 @@ print(f(g(2)));
 g(3);
 """
 
+exp = """
+let x := 5;
+letFunc f(y) 
+{
+    return x;
+}
+
+letFunc g(z)
+{
+    let x := 6;
+    return f(z);   
+}
+g(0);
+"""
+
 print(exp)
 print()
 
