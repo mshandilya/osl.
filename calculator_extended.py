@@ -8,6 +8,41 @@ import sys
 
 sys.setrecursionlimit(10000)
 
+class Environment:
+    envs: List
+    
+    def __init__(self):
+        self.envs = [{}]
+    
+    def enter_scope(self):
+        self.envs.append({})
+    
+    def exit_scope(self):
+        assert self.envs
+        self.envs.pop()
+    
+    def add(self, var, val):
+        assert var not in self.envs[-1], f"Variable {var} already defined"
+        self.envs[-1][var] = val
+    
+    def get(self, var):
+        for env in reversed(self.envs):
+            if var in env:
+                return env[var]
+        raise ValueError(f"Variable {var} not defined")
+    
+    def update(self, var, val):
+        for env in reversed(self.envs):
+            if var in env:
+                env[var] = val
+                return
+        raise ValueError(f"Variable {var} not defined")
+    
+    def copy(self):
+        new_env = Environment()
+        new_env.envs = [dict(scope) for scope in self.envs]
+        return new_env
+
 cnt = 0
 def fresh():
     global cnt
@@ -72,6 +107,7 @@ class CallFun(AST):
 class FunObj:
     params: List[AST]
     body: AST
+    env: Environment
     
 @dataclass
 class Statements(AST):
@@ -131,13 +167,13 @@ def lex(s: str) -> Iterator[Token]:
         if i >= len(s):
             return
 
-        if s[i].isalpha():
+        if s[i].isalpha() or s[i] == '_':
             start = i
-            while i < len(s) and s[i].isalpha():
+            while i < len(s) and (s[i].isalpha() or s[i].isdigit() or s[i] == '_'):
                 i += 1
-            name = s[start:i]
+                name = s[start:i]
 
-            if name in {"if", "then", "else", "end", "let", "in", "letFunc", "print", "return"}:
+            if name in {"if", "then", "else", "end", "var", "in", "letFunc", "print", "return"}:
                 prev_token = KeyWordToken(name)
                 yield prev_token
 
@@ -163,22 +199,16 @@ def lex(s: str) -> Iterator[Token]:
             yield prev_token
 
         else:
-            if s[i:i+2] in {"<=", ">=", "!=", "||", "&&"}:
+            if s[i:i+2] in {"<=", ">=", "!=", "||", "&&", ":="}:
                 prev_token = OperatorToken(s[i:i+2])
                 yield prev_token
                 i += 2
-            elif s[i:i+2] == ":=":
-                prev_token = OperatorToken(":=")
+            elif s[i] in {'+', '*', '/', '^', '-', '(', ')', '<', '>', '=', '%', '\u221a', ",", "{", "}", ";"}:
+                prev_token = OperatorToken(s[i])
                 yield prev_token
-                i += 2
+                i += 1
             else:
-                match s[i]:
-                    case '+' | '*' | '/' | '^' | '-' | '(' | ')' | '<' | '>' | '=' | '%' | '\u221a' | "," | "{" | "}" | ";":
-                        prev_token = OperatorToken(s[i])
-                        yield prev_token
-                        i += 1
-                    case _:
-                        raise ParseErr(f"Unexpected character: {s[i]} at position {i}")
+                raise ParseErr(f"Unexpected character: {s[i]} at position {i}")
 
       
 def parse(s: str) -> AST:
@@ -212,7 +242,7 @@ def parse(s: str) -> AST:
         match peek():
             case KeyWordToken("letFunc"):
                 return parse_func()
-            case KeyWordToken("let"):
+            case KeyWordToken("var"):
                 return parse_let()
             case _:
                 return parse_statement()
@@ -237,7 +267,7 @@ def parse(s: str) -> AST:
         return LetFun(Variable(func_name.varName), args, body)
     
     def parse_let():
-        consume(KeyWordToken, "let")
+        consume(KeyWordToken, "var")
         var = Variable(consume(VariableToken).varName)
         e1 = None
         if peek() == OperatorToken(":="):
@@ -277,8 +307,11 @@ def parse(s: str) -> AST:
         condition = parse_expression()
         consume(KeyWordToken, "then")
         then_body = parse_statement()
-        consume(KeyWordToken, "else")
-        else_body = parse_statement()
+        if peek() == KeyWordToken("else"):
+            consume(KeyWordToken, "else")
+            else_body = parse_statement()
+        else:
+            else_body = None
         return If(condition, then_body, else_body)
     
     def parse_block():
@@ -398,36 +431,6 @@ def parse(s: str) -> AST:
     return parse_program()
 
 
-class Environment:
-    envs: List
-    
-    def __init__(self):
-        self.envs = [{}]
-    
-    def enter_scope(self):
-        self.envs.append({})
-    
-    def exit_scope(self):
-        assert self.envs
-        self.envs.pop()
-    
-    def add(self, var, val):
-        assert var not in self.envs[-1], f"Variable {var} already defined"
-        self.envs[-1][var] = val
-    
-    def get(self, var):
-        for env in reversed(self.envs):
-            if var in env:
-                return env[var]
-        raise ValueError(f"Variable {var} not defined")
-    
-    def update(self, var, val):
-        for env in reversed(self.envs):
-            if var in env:
-                env[var] = val
-                return
-        raise ValueError(f"Variable {var} not defined")
-
 def resolve(program: AST, env: Environment = None) -> AST:
     if env is None:
         env = Environment()
@@ -482,11 +485,11 @@ def resolve(program: AST, env: Environment = None) -> AST:
             ri = resolve_(right)
             return UnOp(op, ri)
         
-        case If(op, left, right):
-            op = resolve_(op)
-            le = resolve_(left)
-            ri = resolve_(right)
-            return If(op, le, ri)
+        case If(condition, then_body, else_body):
+            condition = resolve_(condition)
+            then_body = resolve_(then_body)
+            else_body = resolve_(else_body) if else_body else None
+            return If(condition, then_body, else_body)
         
         case PrintStmt(expr):
             return PrintStmt(resolve_(expr))
@@ -511,7 +514,9 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
         case Number(val):
             return val
         
-        case Variable(varName, i): 
+        case Variable(varName, i):
+            # pprint(env.envs)
+            # print("------------------------------------------------")
             return env.get(f"{varName}:{i}")
         
         case Let(Variable(varName, i), e1):
@@ -520,19 +525,22 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             return v1
         
         case LetFun(Variable(varName, i), params, body):
-            env.add(f"{varName}:{i}", FunObj(params, body))
+            # Closure -> Copy of Environment taken along
+            funObj = FunObj(params, body, env.copy())
+            env.add(f"{varName}:{i}", funObj)
             return None
         
         case CallFun(Variable(varName, i), args):
             fun = env.get(f"{varName}:{i}")
             rargs = [e_(arg) for arg in args]
             
-            env.enter_scope()
+            # use the environment that was copied when the function was defined
+            call_env = fun.env.copy()
+            call_env.enter_scope()
             for param, arg in zip(fun.params, rargs):
-                env.add(f"{param.varName}:{param.id}", arg)
+                call_env.add(f"{param.varName}:{param.id}", arg)
             
-            rbody = e_(fun.body)
-            env.exit_scope()
+            rbody = e(fun.body, call_env)
             return rbody
         
         case Statements(stmts):
@@ -575,11 +583,11 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             if e_(condition):
                 return e_(then_body) 
             else:
-                return e_(else_body)
+                return e_(else_body) if else_body else None
 
 
 exp = """
-let x := 5;
+var x := 5;
 letFunc f(y) 
 {
     return x;
@@ -588,20 +596,20 @@ print(x);
 print(f(2));
 letFunc g(z) 
 { 
-    let x := 6;
+    var x := 6;
     return f(z);
 }
 print(g(0));
 """
 
 exp = """
-let x := 5;
+var x := 5;
 letFunc f(y) 
 {
     return y ^ 2;
 }
 {
-    let x := 6;
+    var x := 6;
     return f(x);
 }
 print(f(x));
@@ -611,22 +619,51 @@ letFunc g(z)
     return f(z);
 }
 print(f(g(2)));
-g(3);
+print(g(3));
 """
 
 exp = """
-let x := 5;
-letFunc f(y) 
+letFunc f1()
 {
-    return x;
+    letFunc f2()
+    {
+        var x := 10;
+        return x;
+    }
+    return f2;
+}
+var msg := f1();
+msg();
+"""
+
+exp = """
+letFunc f1()
+{
+    var x := 10;
+    letFunc f2()
+    {
+        return x;
+    }
+    return f2;
+}
+var msg := f1();
+msg();
+"""
+
+exp = """
+var x := 6;
+
+letFunc F(x)
+{
+    letFunc G()
+    {
+        return x;
+    }
+    return G;
 }
 
-letFunc g(z)
-{
-    let x := 6;
-    return f(z);   
-}
-g(0);
+var y := F(5);
+y() * y();
 """
 
 print(exp)

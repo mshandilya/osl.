@@ -1,5 +1,99 @@
 # CS327-Compilers
 
+## Overall Grammar
+
+```
+program → declaration* EOF;
+
+declaration → funDecl | varDecl | statement;
+funDecl → "letFunc" IDENTIFIER "(" parameters? ")" block;
+varDecl → "var" IDENTIFIER (":=" expression)? ";";
+statement → ifStmt | printStmt | returnStmt | block | expressionStmt;
+
+ifStmt → "if" expression statement ("else" statement)?;
+printStmt → "print" expression ";";
+returnStmt → "return" expression ";";
+block → "{" declaration* "}";
+
+expressionStmt → expression ";";
+
+parameters → IDENTIFIER ("," IDENTIFIER)*;
+```
+
+## Addition of Closures
+
+```python
+@dataclass
+class FunObj:
+    params: List[AST]
+    body: AST
+    env: Environment
+
+def e(tree: AST, env: Environment = None) -> int | float | bool:
+
+    match tree:
+        case LetFun(Variable(varName, i), params, body):
+                # Closure -> Copy of Environment taken along
+                funObj = FunObj(params, body, env.copy())
+                env.add(f"{varName}:{i}", funObj)
+                return None
+
+        case CallFun(Variable(varName, i), args):
+            fun = env.get(f"{varName}:{i}")
+            rargs = [e_(arg) for arg in args]
+
+            # use the environment that was copied when the function was defined
+            call_env = fun.env.copy()
+            call_env.enter_scope()
+            for param, arg in zip(fun.params, rargs):
+                call_env.add(f"{param.varName}:{param.id}", arg)
+
+            rbody = e(fun.body, call_env)
+            return rbody
+```
+
+```python
+exp = """
+letFunc f1()
+{
+    var x := 10;
+    letFunc f2()
+    {
+        return x;
+    }
+    return f2;
+}
+var msg := f1();
+msg();
+"""
+```
+
+<div align = "center">
+    <img src = "./images/closure.png" style="width: 100%">
+</div>
+
+```python
+exp = """
+var x := 6;
+
+letFunc F(x)
+{
+    letFunc G()
+    {
+        return x;
+    }
+    return G;
+}
+
+var y := F(5);
+y() * y();
+"""
+```
+
+<div align = "center">
+    <img src = "./images/closure1.png" style="width: 100%">
+</div>
+
 ## Functions as First-Class Objects (like variables)
 
 ```python
@@ -26,18 +120,18 @@ def resolve(program: AST, env: Environment = None) -> AST:
 
     match program:
         case LetFun(Variable(varName, _), params, body, expr):
-            env.enter_scope()
-            env.add(varName, i := fresh())
-            env.enter_scope()
-            new_params = []
-            for param in params:
-                env.add(param.varName, j := fresh())
-                new_params.append(Variable(param.varName, j))
-            new_body = resolve_(body)
-            env.exit_scope()
-            new_expr = resolve_(expr)
-            env.exit_scope()
-            return LetFun(Variable(varName, i), new_params, new_body, new_expr)
+                    env.enter_scope()
+                    env.add(varName, i := fresh())
+                    env.enter_scope()
+                    new_params = []
+                    for param in params:
+                        env.add(param.varName, j := fresh())
+                        new_params.append(Variable(param.varName, j))
+                    new_body = resolve_(body)
+                    env.exit_scope()
+                    new_expr = resolve_(expr)
+                    env.exit_scope()
+                    return LetFun(Variable(varName, i), new_params, new_body, new_expr)
 
         case CallFun(fn, args):
             rfn = resolve_(fn)
