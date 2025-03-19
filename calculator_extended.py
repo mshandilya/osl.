@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from collections.abc import Iterator
 from more_itertools import peekable
 from pprint import pprint
-from graphviz import Digraph # type: ignore
 from typing import List, Optional
 import sys
 
@@ -73,6 +72,11 @@ class If(AST):
     condition: AST
     then_body: AST
     else_body: AST
+
+@dataclass
+class IfUnM(AST):
+    condition: AST
+    then_body: AST
 @dataclass
 class Let(AST):
     var: AST
@@ -88,9 +92,6 @@ class LetMut(AST):
 class Variable(AST):
     varName: str
     id: int = None
-    
-    # def make(name):
-    #     return Variable(name, fresh())
 
 @dataclass
 class LetFun(AST):
@@ -173,7 +174,7 @@ def lex(s: str) -> Iterator[Token]:
                 i += 1
                 name = s[start:i]
 
-            if name in {"if", "then", "else", "end", "var", "in", "letFunc", "print", "return"}:
+            if name in {"if", "else", "var", "in", "letFunc", "print", "return"}:
                 prev_token = KeyWordToken(name)
                 yield prev_token
 
@@ -305,14 +306,12 @@ def parse(s: str) -> AST:
     def parse_if():
         consume(KeyWordToken, "if")
         condition = parse_expression()
-        consume(KeyWordToken, "then")
         then_body = parse_statement()
         if peek() == KeyWordToken("else"):
             consume(KeyWordToken, "else")
             else_body = parse_statement()
-        else:
-            else_body = None
-        return If(condition, then_body, else_body)
+            return If(condition, then_body, else_body)
+        return IfUnM(condition, then_body)
     
     def parse_block():
         consume(OperatorToken, "{")
@@ -444,8 +443,7 @@ def resolve(program: AST, env: Environment = None) -> AST:
             return Program(new_decls)
         
         case Variable(varName, _):
-            return Variable(varName, env.get(varName)) # This ask too! why sir did env.get(varName)
-            # return env.get(varName)
+            return Variable(varName, env.get(varName))
         
         case Number(_) as N:
             return N
@@ -488,8 +486,13 @@ def resolve(program: AST, env: Environment = None) -> AST:
         case If(condition, then_body, else_body):
             condition = resolve_(condition)
             then_body = resolve_(then_body)
-            else_body = resolve_(else_body) if else_body else None
+            else_body = resolve_(else_body)
             return If(condition, then_body, else_body)
+        
+        case IfUnM(condition, then_body):
+            condition = resolve_(condition)
+            then_body = resolve_(then_body)
+            return IfUnM(condition, then_body)
         
         case PrintStmt(expr):
             return PrintStmt(resolve_(expr))
@@ -515,8 +518,6 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             return val
         
         case Variable(varName, i):
-            # pprint(env.envs)
-            # print("------------------------------------------------")
             return env.get(f"{varName}:{i}")
         
         case Let(Variable(varName, i), e1):
@@ -525,9 +526,10 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             return v1
         
         case LetFun(Variable(varName, i), params, body):
-            # Closure -> Copy of Environment taken along
-            funObj = FunObj(params, body, env.copy())
+            # Closure -> Copy of Environment taken along with the declaration!
+            funObj = FunObj(params, body, None)
             env.add(f"{varName}:{i}", funObj)
+            funObj.env = env.copy()
             return None
         
         case CallFun(Variable(varName, i), args):
@@ -546,8 +548,11 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
         case Statements(stmts):
             env.enter_scope()
             res = None
-            for stmt in stmts:
+            for i, stmt in enumerate(stmts):
                 res = e_(stmt)
+                if res is not None:
+                    env.exit_scope()
+                    return res
             env.exit_scope()
             return res
         
@@ -558,8 +563,7 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
         case ReturnStmt(expr):
             if expr:
                 return e_(expr)
-            else:
-                return
+            return None
             
         case BinOp("+", left, right): return e_(left) + e_(right)
         case BinOp("*", left, right): return e_(left) * e_(right)
@@ -583,7 +587,12 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             if e_(condition):
                 return e_(then_body) 
             else:
-                return e_(else_body) if else_body else None
+                return e_(else_body)
+        
+        case IfUnM(condition, then_body):
+            if e_(condition):
+                return e_(then_body)
+            return None
 
 
 exp = """
@@ -666,6 +675,25 @@ var y := F(5);
 y() * y();
 """
 
+exp = """
+var x := 15;
+if (x > 10)
+if (x < 20)
+print(x + 1);
+else print(x - 1);
+x;
+"""
+
+exp = """
+letFunc fact(n)
+{
+    if (n = 0)
+        return 1;
+    return n * fact(n - 1);
+}
+fact(5);
+"""
+
 print(exp)
 print()
 
@@ -678,4 +706,3 @@ rexp = resolve(parse(exp))
 pprint(rexp)
 print()
 print(e(rexp))
-# exit()

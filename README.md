@@ -33,10 +33,11 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
 
     match tree:
         case LetFun(Variable(varName, i), params, body):
-                # Closure -> Copy of Environment taken along
-                funObj = FunObj(params, body, env.copy())
-                env.add(f"{varName}:{i}", funObj)
-                return None
+            # Closure -> Copy of Environment taken along with the declaration!
+            funObj = FunObj(params, body, None)
+            env.add(f"{varName}:{i}", funObj)
+            funObj.env = env.copy()
+            return None
 
         case CallFun(Variable(varName, i), args):
             fun = env.get(f"{varName}:{i}")
@@ -92,6 +93,59 @@ y() * y();
 
 <div align = "center">
     <img src = "./images/closure1.png" style="width: 100%">
+</div>
+
+```python
+exp = """
+letFunc fact(n)
+{
+    if (n = 0)
+        return 1;
+    return n * fact(n - 1);
+}
+fact(5);
+"""
+```
+
+<div align = "center">
+    <img src = "./images/closure3.png" style="width: 100%">
+</div>
+
+## Dangling "else" matched to latest "if"
+
+```python
+@dataclass
+class IfUnM(AST):
+    condition: AST
+    then_body: AST
+```
+
+```python
+def parse(s: str) -> AST:
+    def parse_if():
+            consume(KeyWordToken, "if")
+            condition = parse_expression()
+            then_body = parse_statement()
+            if peek() == KeyWordToken("else"):
+                consume(KeyWordToken, "else")
+                else_body = parse_statement()
+                return If(condition, then_body, else_body)
+            return IfUnM(condition, then_body)
+```
+
+```python
+exp = """
+var x := 15;
+if (x > 10)
+if (x < 20)
+print(x + 1);
+else print(x - 1);
+x;
+"""
+```
+
+<div align = "center">
+    <img src = "./images/if1.png" style="width: 100%">
 </div>
 
 ## Functions as First-Class Objects (like variables)
