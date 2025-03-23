@@ -152,7 +152,7 @@ python3 unit_tests.py
 ```
 
 <div align = "center">
-    <img src = "./images/tests.png" style="width: 30%">
+    <img src = "./images/tests.png" style="width: 100%">
 </div>
 
 ## Addition of Assignment (22 March 2025)
