@@ -4,8 +4,9 @@ from more_itertools import peekable
 from pprint import pprint
 from typing import List, Optional
 import sys
+import time
 
-sys.setrecursionlimit(10000)
+sys.setrecursionlimit(100000000)
 
 class Environment:
     envs: List
@@ -81,12 +82,11 @@ class IfUnM(AST):
 class Let(AST):
     var: AST
     e1: Optional[AST]
-    
+
 @dataclass
-class LetMut(AST):
-    var: str
-    e1: str
-    e2: str
+class Assign(AST):
+    var: AST
+    e1: AST
 
 @dataclass
 class Variable(AST):
@@ -323,7 +323,17 @@ def parse(s: str) -> AST:
         return Statements(decls) if decls else Statements([])
     
     def parse_expression():
-        return parse_bool()
+        # expression -> expB | assignment
+        # first parse the lhs, if it's a variable and next token is ':=' then it's an assignment
+        # otherwise it's an expB so return it as is.
+        ast = parse_bool()
+        if not isinstance(ast, Variable) and peek() == OperatorToken(":="):
+            raise ParseErr(f"Expected variable on the left side of assignment := operator at index {i}")
+        if isinstance(ast, Variable) and peek() == OperatorToken(":="):
+            consume(OperatorToken, ":=")
+            e1 = parse_bool()
+            return Assign(ast, e1)
+        return ast
     
     def parse_bool():
         ast = parse_comparison()
@@ -357,9 +367,6 @@ def parse(s: str) -> AST:
                 case OperatorToken('-'):
                     consume()
                     ast = BinOp('-', ast, parse_mul())
-                case OperatorToken("%"):
-                    consume()
-                    ast = BinOp("%", ast, parse_mul())
                 case _:
                     return ast
  
@@ -373,6 +380,9 @@ def parse(s: str) -> AST:
                 case OperatorToken('/'):
                     consume()
                     ast = BinOp("/", ast, parse_exponentiation())
+                case OperatorToken("%"):
+                    consume()
+                    ast = BinOp("%", ast, parse_exponentiation())
                 case _:
                     return ast
     
@@ -453,6 +463,10 @@ def resolve(program: AST, env: Environment = None) -> AST:
             env.add(varName, i := fresh())
             return Let(Variable(varName, i), re1)
         
+        case Assign(Variable(varName, _), e1):
+            re1 = resolve_(e1)
+            return Assign(Variable(varName, env.get(varName)), re1)
+        
         case LetFun(Variable(varName, _), params, body):
             env.add(varName, i := fresh())
             env.enter_scope()
@@ -523,7 +537,12 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
         case Let(Variable(varName, i), e1):
             v1 = e_(e1) if e1 else None
             env.add(f"{varName}:{i}", v1)
-            return v1
+            return None
+        
+        case Assign(Variable(varName, i), e1):
+            v1 = e_(e1)
+            env.update(f"{varName}:{i}", v1)
+            return None
         
         case LetFun(Variable(varName, i), params, body):
             # Closure -> Copy of Environment taken along with the declaration!
@@ -567,7 +586,12 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             
         case BinOp("+", left, right): return e_(left) + e_(right)
         case BinOp("*", left, right): return e_(left) * e_(right)
-        case BinOp("/", left, right): return e_(left) / e_(right)
+        case BinOp("/", left, right): 
+            left_val = e_(left)
+            right_val = e_(right)
+            if isinstance(left_val, int) and isinstance(right_val, int):
+                return left_val // right_val
+            return left_val / right_val
         case BinOp("^", left, right): return e_(left) ** e_(right)
         case BinOp("-", left, right): return e_(left) - e_(right)
         case BinOp("<", left, right): return e_(left) < e_(right)
@@ -694,15 +718,142 @@ letFunc fact(n)
 fact(5);
 """
 
-print(exp)
-print()
+exp = """
+letFunc fun(F, x)
+{
+    return F(x);
+}
 
-for i, t in enumerate(lex(exp)):
-    print(f"{i}: {t}")
-print()
-pprint(parse(exp))
-print()
-rexp = resolve(parse(exp))
-pprint(rexp)
-print()
-print(e(rexp))
+letFunc square(x)
+{
+    return x ^ 2;
+}
+
+fun(square, 5);
+"""
+
+## Euler Project Problem 1
+exp = """
+letFunc F(x, s)
+{
+    if (x = 1000) return s;
+    if (x % 3 = 0 || x % 5 = 0) 
+        return F(x + 1, s + x);
+    return F(x + 1, s);
+}
+
+F(0, 0);
+"""
+
+# Euler Project Problem 2
+exp = """
+letFunc fib(a, b, s)
+{
+    if (a >= 4000000) 
+        return s;
+    if (a % 2 = 0) 
+        return fib(b, a + b, s + a);
+    return fib(b, a + b, s);
+}
+
+fib(0, 1, 0);
+"""
+
+# Euler Project Problem 3
+exp = """
+letFunc prime(n, i)
+{
+    if (i * i > n) 
+        return n;
+    
+    if (n % i = 0)
+        return prime(n / i, i);
+    
+    return prime(n, i + 1);
+}
+
+var n := 600851475143;
+prime(n, 2);
+"""
+
+exp = """
+var x := 5;
+x := x + 6;
+x;
+"""
+
+exp1 = """
+letFunc isPal(n, rev, org)
+{
+    if (n = 0) return rev = org;
+    
+    return isPal(n/10, rev*10 + n%10, org);
+}
+
+var n := 10;
+
+letFunc f(n)
+{   
+    if (n = 0) return 0;
+    print(n);
+    print(isPal(9999, 0, 9999));
+    return f(n - 1);
+}
+f(n);
+"""
+
+exp1 = """
+var x := 0;
+var n := 121;
+
+x := (x * 10) + (n % 10);
+n := n / 10;
+print(x);
+print(n);
+
+x := (x * 10) + (n % 10);
+n := n / 10;
+print(x);
+print(n);
+
+x := (x * 10) + (n % 10);
+n := n / 10;
+print(x);
+n;
+"""
+
+# Euler Project Problem 4
+exp = """
+letFunc isPal(n, rev, org)
+{
+    if (n = 0) return rev = org;   
+    return isPal(n/10, rev*10 + n%10, org);
+}
+
+letFunc F(i, j, maxPal)
+{
+    if (i < 100) return maxPal;
+    if (j < 100) return F(i - 1, i - 1, maxPal);
+    
+    var prod := i * j;
+    if ((prod > maxPal) && (isPal(prod, 0, prod))) 
+        maxPal := prod;
+    
+    return F(i, j - 1, maxPal);
+}
+
+F(999, 999, 0);
+"""
+
+# print(exp)
+# print()
+
+# for i, t in enumerate(lex(exp)):
+#     print(f"{i}: {t}")
+# print()
+# pprint(parse(exp))
+# print()
+# rexp = resolve(parse(exp))
+# pprint(rexp)
+# print()
+# # print(e(rexp))

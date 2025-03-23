@@ -6,21 +6,218 @@
 program → declaration* EOF;
 
 declaration → funDecl | varDecl | statement;
+
 funDecl → "letFunc" IDENTIFIER "(" parameters? ")" block;
 varDecl → "var" IDENTIFIER (":=" expression)? ";";
 statement → ifStmt | printStmt | returnStmt | block | expressionStmt;
 
 ifStmt → "if" expression statement ("else" statement)?;
-printStmt → "print" expression ";";
-returnStmt → "return" expression ";";
+printStmt → "print" "(" expression ")" ";";
+returnStmt → "return" (expression)? ";";
 block → "{" declaration* "}";
 
 expressionStmt → expression ";";
+expression → assignment | expB;
+assignment → IDENTIFIER ":=" expB;
 
 parameters → IDENTIFIER ("," IDENTIFIER)*;
+
+expB → logicOr;
+logicOr → logicAnd ("||" logicAnd)*;
+logicAnd → comparison ("&&" comparison)*;
+comparison → add (("<" | ">" | "<=" | ">=" | "=" | "!=") add)*;
+add → mul (("+" | "-") mul)*;
+mul → exp (("*" | "/" | "%") exp)*;
+exp → unary ("^" unary)*;
+unary → ("-" | "√") unary | atom;
+
+atom → NUMBER | IDENTIFIER | funCall | "(" expression ")";
+funCall → IDENTIFIER "(" arguments? ")";
+arguments → expression ("," expression)*;
+
+NUMBER → DIGIT+ ("." DIGIT*)? | "." DIGIT+;
+DIGIT → "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
+IDENTIFIER → LETTER (LETTER | DIGIT | "_")*;
+LETTER → "a" .. "z" | "A" .. "Z";
 ```
 
-## Addition of Closures
+## Run Project Euler Analysis
+
+```bash
+python3 eulerProblems.py
+```
+
+<div align = "center">
+    <img src = "./images/euler.png" style="width: 100%">
+</div>
+
+## Project Euler Problems in `osl.`
+
+```python
+euler_p1 = """
+letFunc F(x, s) {
+    if (x = 1000) return s;
+    if (x % 3 = 0 || x % 5 = 0)
+        return F(x + 1, s + x);
+    return F(x + 1, s);
+}
+F(0, 0);
+"""
+```
+
+```python
+euler_p2 = """
+letFunc fib(a, b, s) {
+    if (a >= 4000000) return s;
+    if (a % 2 = 0)
+        return fib(b, a + b, s + a);
+    return fib(b, a + b, s);
+}
+fib(0, 1, 0);
+"""
+```
+
+```python
+euler_p3 = """
+letFunc prime(n, i) {
+    if (i * i > n) return n;
+    if (n % i = 0)
+        return prime(n / i, i);
+    return prime(n, i + 1);
+}
+var n := 600851475143;
+prime(n, 2);
+"""
+```
+
+```python
+euler_p4 = """
+letFunc isPal(n, rev, org) {
+    if (n = 0) return rev = org;
+    return isPal(n/10, rev*10 + n%10, org);
+}
+letFunc F(i, j, maxPal) {
+    if (i < 100) return maxPal;
+    if (j < 100) return F(i - 1, i - 1, maxPal);
+    var prod := i * j;
+    if ((prod > maxPal) && (isPal(prod, 0, prod)))
+        maxPal := prod;
+    return F(i, j - 1, maxPal);
+}
+F(999, 999, 0);
+"""
+```
+
+## Coverage with Automated Unit Tests
+
+```bash
+python3 -m pytest test_unit_tests.py --cov=calculator_extended_resolved --cov-report=html
+```
+
+<div align = "center">
+    <img src = "./images/pytest-cov.png" style="width: 100%">
+</div>
+
+### `./test_unit_tests.py`
+
+<div align = "center">
+    <img src = "./images/test_unit.png" style="width: 100%">
+</div>
+
+### Coverage Report (`./htmlcov/index.html`)
+
+#### Overall Coverage
+
+<div align = "center">
+    <img src = "./images/cov.png" style="width: 100%">
+    <img src = "./images/cov1.png" style="width: 100%">
+</div>
+
+#### Function Coverage
+
+<div align = "center">
+    <img src = "./images/cov-func.png" style="width: 100%">
+</div>
+
+#### Class Coverage
+
+<div align = "center">
+    <img src = "./images/cov-class.png" style="width: 100%">
+</div>
+
+## Make Custom Tests
+
+```bash
+python3 unit_tests.py
+```
+
+<div align = "center">
+    <img src = "./images/tests.png" style="width: 30%">
+</div>
+
+## Addition of Assignment (22 March 2025)
+
+```python
+@dataclass
+class Assign(AST):
+    var: AST
+    e1: AST
+
+def parse(s: str) -> AST:
+    t = peekable(lex(s))
+    i = 0
+
+    def parse_expression():
+        # expression -> expB | assignment
+        # first parse the lhs, if it's a variable and next token is ':=' then it's an assignment
+        # otherwise it's an expB so return it as is.
+        ast = parse_bool()
+        if not isinstance(ast, Variable) and peek() == OperatorToken(":="):
+            raise ParseErr(f"Expected variable on the left side of assignment := operator at index {i}")
+        if isinstance(ast, Variable) and peek() == OperatorToken(":="):
+            consume(OperatorToken, ":=")
+            e1 = parse_bool()
+            return Assign(ast, e1)
+        return ast
+
+
+def resolve(program: AST, env: Environment = None) -> AST:
+
+    case Assign(Variable(varName, _), e1):
+            re1 = resolve_(e1)
+            return Assign(Variable(varName, env.get(varName)), re1)
+
+def e(tree: AST, env: Environment = None) -> int | float | bool:
+
+    case Assign(Variable(varName, i), e1):
+            v1 = e_(e1)
+            env.update(f"{varName}:{i}", v1)
+            return None
+```
+
+```python
+exp = """
+var x := 0;
+var n := 121;
+
+x := (x * 10) + (n % 10);
+n := n / 10;
+print(x);
+print(n);
+
+x := (x * 10) + (n % 10);
+n := n / 10;
+print(x);
+print(n);
+
+x := (x * 10) + (n % 10);
+n := n / 10;
+print(x);
+n;
+"""
+```
+
+## Addition of Closures (19 March 2025)
 
 ```python
 @dataclass
@@ -111,7 +308,7 @@ fact(5);
     <img src = "./images/closure3.png" style="width: 100%">
 </div>
 
-## Dangling "else" matched to latest "if"
+## Dangling "else" matched to latest "if" (20 March 2025)
 
 ```python
 @dataclass
@@ -202,6 +399,8 @@ Add new token for call - the lexer checks if previously yielded token is `KeyWor
 class FunCallToken(Token):
     funName: str
 ```
+
+# OLDER VERSIONS (From 12 Feb 2025)
 
 ## Project Euler Q1
 
@@ -334,7 +533,7 @@ Color coded `unit_tests.py` for better readability. (fail shown deliberately by 
     <img src = "./images/unit.png" style="width: 30%">
 </div>
 
-## Older Versions
+## Even Older Versions
 
 ```python
 exp_cond1 = """
