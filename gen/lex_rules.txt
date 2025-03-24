@@ -1,0 +1,17 @@
+( LBRACE
+) RBRACE
++ ADD
+* MUL
+/ DIV
+- NEG
+^ POW
+% MOD
+~ NOT
+| OR
+& AND
+!| XOR
+!& XAND
+>> RSHIFT
+<< LSHIFT
+0-->9 NUM
+a-->z CHAR
