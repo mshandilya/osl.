@@ -1,80 +1,160 @@
-#include <cosl.hpp>
+#include "cosl.hpp"
 
 // Program --> Lexer --> Parser --> AST --> Constant Expression Optimization
 // --> ABT --> Function Optimization ??--> Executable
 
 ast::ASTNode Parser::parseAtomicNumber(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+    if(begin != end) {
+        if((*begin)->type() == ast::NUM_TOKEN) {
+            auto numUtil = utils::stringToNumberUtil((*begin++)->getVal());
+            switch (numUtil.first) {
+                case types::B8:
+                    return ast::NumericalValue<types::Integer<types::B8>>(types::Integer<types::B8>(numUtil.second));
+                case types::B16:
+                    return ast::NumericalValue<types::Integer<types::B16>>(types::Integer<types::B16>(numUtil.second));
+                case types::B32:
+                    return ast::NumericalValue<types::Integer<types::B32>>(types::Integer<types::B32>(numUtil.second));
+                case types::B64:
+                    return ast::NumericalValue<types::Integer<types::B64>>(types::Integer<types::B64>(numUtil.second));
+                case types::B128:
+                    return ast::NumericalValue<types::Integer<types::B128>>(types::Integer<types::B128>(numUtil.second));
+            }
+        }
+        else
+            throw EXPECTED_NUM_ERR;
+    }
+    else
+        throw IMMATURE_EOF;
+}
+
+// immature eof unimplemented
+ast::ASTNode Parser::parseUnAmb(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+    if((*begin)->type() == ast::SEP_TOKEN and (*begin)->getVal() == "(") {
+        auto child = parseAtomicNumber(++begin, end);
+        if((*begin)->type() == ast::SEP_TOKEN and (*begin++)->getVal() == ")") {
+            return ast::UnaryOperator(ast::BKT_PREC, child);
+        }
+        else {
+            throw UNMATCHED_BKT_ERR;
+        }
+    }
+}
+
+ast::ASTNode Parser::parseUnNeg(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+    bool neg = false;
+    while(begin != end and (*begin)->type() == ast::OP_TOKEN) {
+        if((*begin)->getVal() == "+") {
+            begin++;
+        }
+        else if((*begin)->getVal() == "-") {
+            neg = !neg;
+            begin++;
+        }
+        else {
+            throw UNEXPECTED_OP;
+        }
+    }
+    if(begin != end) {
+        auto child = parseUnAmb(begin, end);
+        if(neg) {
+            return ast::UnaryOperator(ast::ATH_USUB, child);
+        }
+        else {
+            return child;
+        }
+    }
+    throw IMMATURE_EOF;
+}
+
+ast::ASTNode Parser::parseUnNot(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+
+}
+
+ast::ASTNode Parser::parseAdd(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+
+}
+
+ast::ASTNode Parser::parseMul(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+
+}
+
+ast::ASTNode Parser::parseAnd(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+
+}
+
+ast::ASTNode Parser::parseOr(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+
+}
+
+ast::ASTNode Parser::parseXor(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
+
+}
+ 
+ast::ASTNode Parser::parseXnor(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
 
 }
 
 ast::ASTNode Parser::parseArithmeticExpression(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end) {
-    switch((*begin)->type()) {
-        case ast::OP_TOKEN:
-            // prefix operation
-            switch((*begin)->val) {
-                case "+":
-                case "-":
-                    return parseUnNeg(begin, end);
-                case "~":
-                    return parseUnNot(begin, end);
+    if((*begin)->type() == ast::OP_TOKEN) {
+        // prefix operation
+        if ((*begin)->getVal() == "+" or (*begin)->getVal() == "-")
+            return parseUnNeg(begin, end);
+        else if ((*begin)->getVal() == "~")
+            return parseUnNot(begin, end);
+        // check for the operation (~, -, or +), and go to necessary parse
+    }
+    else {
+        // all other cases first expect an UnAmb
+        ast::ASTNode lhs = parseUnAmb(begin, end);
+        if ((*begin)->getVal() == "+") {
+            ast::ASTNode rhs = parseAdd(++begin, end);
+            lhs = ast::BinaryOperator(ast::ATH_ADD, lhs, rhs);
+            if ((*begin)->getVal() == "-") {
+                rhs = parseUnAmb(++begin, end);
+                return ast::BinaryOperator(ast::ATH_SUB, lhs, rhs);
+            } else {
+                return lhs;
             }
-            // check for the operation (~, -, or +), and go to necessary parse
-            break;
-        default:
-            // all other cases first expect an UnAmb
-            ast::ASTNode lhs = parseUnAmb(begin, end);
-            switch((*begin)->val) {
-                case "+":
-                    ast::ASTNode rhs = parseAdd(++begin, end);
-                    lhs = ast::BinaryOperator op(ast::ATH_ADD, lhs, rhs);
-                    switch((*begin)->val) {
-                        case "-":
-                            rhs = parseUnAmb(++begin, end);
-                            return ast::BinaryOperator op(ast::ATH_SUB, lhs, rhs);
-                        default:
-                            return lhs;
-                    }
-                case "-":
-                    ast::ASTNode rhs = parseUnAmb(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_SUB, lhs, rhs);
-                case "*":
-                    ast::ASTNode rhs = parseMul(++begin, end);
-                    lhs = ast::BinaryOperator op(ast::ATH_MUL, lhs, rhs);
-                    switch((*begin)->val) {
-                        case "/":
-                            rhs = parseUnAmb(++begin, end);
-                            return ast::BinaryOperator op(ast::ATH_DIV, lhs, rhs);
-                        default:
-                            return lhs;
-                    }
-                case "/":
-                    ast::ASTNode rhs = parseUnAmb(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_DIV, lhs, rhs);
-                case "^":
-                    ast::ASTNode rhs = parseUnAmb(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_POW, lhs, rhs);
-                case "%":
-                    ast::ASTNode rhs = parseUnAmb(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_MOD, lhs, rhs);
-                case ">>":
-                    ast::ASTNode rhs = parseUnAmb(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_RS, lhs, rhs);
-                case "<<":
-                    ast::ASTNode rhs = parseUnAmb(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_LS, lhs, rhs);
-                case "|":
-                    ast::ASTNode rhs = parseOr(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_OR, lhs, rhs);
-                case "&":
-                    ast::ASTNode rhs = parseAnd(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_AND, lhs, rhs);
-                case "!|":
-                    ast::ASTNode rhs = parseXor(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_XOR, lhs, rhs);
-                case "!&":
-                    ast::ASTNode rhs = parseXnor(++begin, end);
-                    return ast::BinaryOperator op(ast::ATH_XNOR, lhs, rhs);
+        } else if ((*begin)->getVal() == "-") {
+            ast::ASTNode rhs = parseUnAmb(++begin, end);
+            return ast::BinaryOperator(ast::ATH_SUB, lhs, rhs);
+        } else if ((*begin)->getVal() == "*") {
+            ast::ASTNode rhs = parseMul(++begin, end);
+            lhs = ast::BinaryOperator(ast::ATH_MUL, lhs, rhs);
+            if ((*begin)->getVal() == "/") {
+                rhs = parseUnAmb(++begin, end);
+                return ast::BinaryOperator(ast::ATH_DIV, lhs, rhs);
+            } else {
+                return lhs;
             }
+        } else if ((*begin)->getVal() == "/") {
+            ast::ASTNode rhs = parseUnAmb(++begin, end);
+            return ast::BinaryOperator(ast::ATH_DIV, lhs, rhs);
+        } else if ((*begin)->getVal() == "^") {
+            ast::ASTNode rhs = parseUnAmb(++begin, end);
+            return ast::BinaryOperator(ast::ATH_POW, lhs, rhs);
+        } else if ((*begin)->getVal() == "%") {
+            ast::ASTNode rhs = parseUnAmb(++begin, end);
+            return ast::BinaryOperator(ast::ATH_MOD, lhs, rhs);
+        } else if ((*begin)->getVal() == ">>") {
+            ast::ASTNode rhs = parseUnAmb(++begin, end);
+            return ast::BinaryOperator(ast::ATH_RS, lhs, rhs);
+        } else if ((*begin)->getVal() == "<<") {
+            ast::ASTNode rhs = parseUnAmb(++begin, end);
+            return ast::BinaryOperator(ast::ATH_LS, lhs, rhs);
+        } else if ((*begin)->getVal() == "|") {
+            ast::ASTNode rhs = parseOr(++begin, end);
+            return ast::BinaryOperator(ast::ATH_OR, lhs, rhs);
+        } else if ((*begin)->getVal() == "&") {
+            ast::ASTNode rhs = parseAnd(++begin, end);
+            return ast::BinaryOperator(ast::ATH_AND, lhs, rhs);
+        } else if ((*begin)->getVal() == "!|") {
+            ast::ASTNode rhs = parseXor(++begin, end);
+            return ast::BinaryOperator(ast::ATH_XOR, lhs, rhs);
+        } else if ((*begin)->getVal() == "!&") {
+            ast::ASTNode rhs = parseXnor(++begin, end);
+            return ast::BinaryOperator(ast::ATH_XNOR, lhs, rhs);
+        }
     }
 }
 
@@ -362,4 +442,8 @@ void lexer(const std::string& source, std::vector<std::unique_ptr<ast::Token>>& 
             }
         }
     }
+}
+
+int main() {
+    return 0;
 }

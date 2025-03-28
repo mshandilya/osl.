@@ -12,15 +12,33 @@ and token structures.
 #include <utility>
 #include <memory>
 
+enum ERRORS {
+    OK,
+    INVALID_TOKEN,
+    EXPECTED_NUM_ERR,
+    UNEXPECTED_OP,
+    UNMATCHED_BKT_ERR,
+    NUM_TOO_BIG,
+    IMMATURE_EOF
+};
+
 /* The `types` namespace contains structures for all the primitive types in the osl language.
 */
 namespace types {
+
+    enum MAX_BITS {
+        B8 = 8,
+        B16 = 16,
+        B32 = 32,
+        B64 = 64,
+        B128 = 128
+    };
 
     /* Signed integers are defined by using the templated `Integer` class which also takes in the number
     of bits used to store the integer. Type aliases for specific bit sizes have been made as `i8` all
     the way to `i128` at powers of 2.
     */
-    template<unsigned short int bitSize>
+    template<MAX_BITS bitSize>
     class Integer {
         static_assert(bitSize%8==0, "Bit Size for class Integer must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class Integer must be a positive integer");
@@ -37,19 +55,21 @@ namespace types {
             for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
                 this->value[i] = value[i];
         }
+
+
     };
 
-    typedef Integer<8> i8;
-    typedef Integer<16> i16;
-    typedef Integer<32> i32;
-    typedef Integer<64> i64;
-    typedef Integer<128> i128;
+    typedef Integer<B8> i8;
+    typedef Integer<B16> i16;
+    typedef Integer<B32> i32;
+    typedef Integer<B64> i64;
+    typedef Integer<B128> i128;
 
     /* Unsigned integers are defined by using the templated `UnsignedInteger` class which also takes in 
     the number of bits used to store the unsigned integer as a template parameter. Type aliases for 
     specific bit sizes have been made as `u8` all the way to `u128` at powers of 2.
     */
-    template<unsigned short int bitSize>
+    template<MAX_BITS bitSize>
     class UnsignedInteger {
         static_assert(bitSize%8==0, "Bit Size for class UnsignedInteger must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class UnsignedInteger must be a positive integer");
@@ -68,13 +88,13 @@ namespace types {
         }
     };
 
-    typedef UnsignedInteger<8> u8;
-    typedef UnsignedInteger<16> u16;
-    typedef UnsignedInteger<32> u32;
-    typedef UnsignedInteger<64> u64;
-    typedef UnsignedInteger<128> u128;
+    typedef UnsignedInteger<B8> u8;
+    typedef UnsignedInteger<B16> u16;
+    typedef UnsignedInteger<B32> u32;
+    typedef UnsignedInteger<B64> u64;
+    typedef UnsignedInteger<B128> u128;
 
-    template<unsigned short int bitSize>
+    template<MAX_BITS bitSize>
     class Float {
         static_assert(bitSize%8==0, "Bit Size for class Float must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class Float must be a positive integer");
@@ -88,11 +108,11 @@ namespace types {
         }
     };
 
-    typedef Float<8> f8;
-    typedef Float<16> f16;
-    typedef Float<32> f32;
-    typedef Float<64> f64;
-    typedef Float<128> f128;
+    typedef Float<B8> f8;
+    typedef Float<B16> f16;
+    typedef Float<B32> f32;
+    typedef Float<B64> f64;
+    typedef Float<B128> f128;
 
 //    c8 // UTF 8
 //    c16 // UTF 16 --
@@ -100,7 +120,7 @@ namespace types {
 
 namespace utils {
 
-    auto stringToNumber(std::string& source) {
+    std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source) {
         unsigned short int bitSize = 8;
         size_t s = source.length();
         int base = 10, startPos = 0, neg = 0;
@@ -198,7 +218,7 @@ namespace utils {
                             startPos++;
                     }
                     else {
-                        // Throw invalid token error
+                        throw INVALID_TOKEN;
                     }
                 }
                 value[bytePos] |= (carry<<(bitPos++));
@@ -220,20 +240,20 @@ namespace utils {
         }
         switch (bitSize) {
             case 8:
-                return types::i8(value);
+                return std::make_pair(types::B8, value);
             case 16:
-                return types::i16(value);
+                return std::make_pair(types::B16, value);
             case 32:
-                return types::i32(value);
+                return std::make_pair(types::B32, value);
             case 64:
-                return types::i64(value);
+                return std::make_pair(types::B64, value);
             case 128:
-                return types::i128(value);
+                return std::make_pair(types::B128, value);
             default:
-                // error: Integer too big
-                return nullptr;
+                throw NUM_TOO_BIG;
         }
     }
+
 }
 
 namespace ast {
@@ -249,18 +269,19 @@ namespace ast {
     
     class ASTNode {
     public:
-//        virtual AtomicASTNode& const_resolve() {
-//
-//        }
 
         virtual NodeType type() {
             return DEF_AST;
+        }
+
+        virtual AtomicASTNode& const_resolve() {
+            // unimplemented
         }
     };
 
     class AtomicASTNode : public ASTNode {
     public:
-        AtomicASTNode &const_resolve() override {
+        AtomicASTNode& const_resolve() override {
             return *this;
         }
     };
@@ -268,10 +289,11 @@ namespace ast {
     // When storing the numerical values, it is important that the value we store has a type.
     // We shall, by default, analyse the numerical token and assign it a type that takes the
     // least amount of memory.
+    template <typename T>
     class NumericalValue : public AtomicASTNode {
+        T value;
     public:
-        NumericalValue(NumericalToken& token) {
-            
+        NumericalValue(T val): value(val) {
         }
 
         NodeType type() override {
@@ -339,12 +361,10 @@ namespace ast {
 
     class Token {
         std::string value;
-    public:
+    public:        
         Token(std::string&& val) : value(std::move(val)) {}
 
-        virtual TokenType type() {
-            return TokenType::DEF_TOKEN;
-        }
+        virtual TokenType type() = 0;
 
         std::string &getVal() {
             return value;
@@ -394,9 +414,20 @@ class Parser {
     std::vector<std::unique_ptr<ast::Token>> tokens;
 
     ast::ASTNode parseAtomicNumber(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseUnAmb(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseUnNeg(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseUnNot(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseAdd(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseMul(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseAnd(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseOr(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseXor(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
+    ast::ASTNode parseXnor(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
     ast::ASTNode parseArithmeticExpression(std::vector<std::unique_ptr<ast::Token>>::iterator& begin, std::vector<std::unique_ptr<ast::Token>>::iterator& end);
 public:
-    Parser(std::string&& code) : source(std::move(code));
+    Parser(std::string&& code) : source(std::move(code)) {
+
+    }
 };
 
 void lexer(const std::string& source, std::vector<std::unique_ptr<ast::Token>>& tokenVector);
