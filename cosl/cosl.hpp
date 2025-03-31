@@ -14,6 +14,7 @@ and token structures.
 
 enum ERRORS {
     OK,
+    UNEXPECTED_TOKEN,
     INVALID_TOKEN,
     EXPECTED_NUM_ERR,
     UNEXPECTED_OP,
@@ -354,9 +355,11 @@ namespace ast {
     enum TokenType {
         DEF_TOKEN, // Reserved Word (typically tokens which do not have a meaning yet)
         NUM_TOKEN, // Numerical Token
+        BOOL_TOKEN, // Boolean Token
         SEP_TOKEN, // Separator Token
         OP_TOKEN, // Operator Token
-        KEY_TOKEN // Keyword Token
+        KEY_TOKEN, // Keyword Token
+        IDEN_TOKEN // Identifier Token
     };
 
     class Token {
@@ -377,6 +380,17 @@ namespace ast {
 
         TokenType type() override {
             return TokenType::NUM_TOKEN;
+        }
+    };
+
+    class BooleanToken : public Token {
+    public:
+        BooleanToken(std::string&& val) : Token(std::move(val)) {}
+
+        BooleanToken(std::string& val) : Token(std::move(val)) {}
+        
+        TokenType type() override {
+            return TokenType::BOOL_TOKEN;
         }
     };
 
@@ -402,8 +416,21 @@ namespace ast {
     public:
         KeywordToken(std::string&& val) : Token(std::move(val)) {}
 
+        KeywordToken(std::string& val) : Token(std::move(val)) {}
+
         TokenType type() override {
             return TokenType::KEY_TOKEN;
+        }
+    };
+
+    class IdentifierToken : public Token {
+    public:
+        IdentifierToken(std::string&& val) : Token(std::move(val)) {}
+
+        IdentifierToken(std::string& val) : Token(std::move(val)) {}
+
+        TokenType type() override {
+            return TokenType::IDEN_TOKEN;
         }
     };
 }
