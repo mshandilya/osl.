@@ -14,12 +14,23 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             }
             break;
         }
-        case LET_AST:
-            std::cout << "Let" << std::endl;
+        case LET_AST: {
+            std::cout << "Let(";
+            const Let* l = dynamic_cast<const Let*>(node.get());
+            std::cout << "type=" << l->typ.type << ", size=" << l->typ.size << ", access=" << l->acc << ")" << std::endl;
+            if(l->val != nullptr){
+                vizTree(l->var, newPrefix, false);
+                vizTree(l->val, newPrefix, true);
+            }else{
+                vizTree(l->var, newPrefix, true);
+            }
             break;
-        case VAR_AST:
-            std::cout << "Variable" << std::endl;
+        }
+        case VAR_AST: {
+            const Variable* v = dynamic_cast<const Variable*>(node.get());
+            std::cout << "Variable(varName=" << v->varName << ")" << std::endl;
             break;
+        }
     }
 }
 
@@ -83,6 +94,20 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
         std::string name = tree.id[nNode];
         if(name == "IDEN"){
             return std::make_unique<Variable>(tree.val[nNode]);
+        }else if(name == "<Number>"){
+            auto numUtil = utils::stringToNumberUtil(tree.val[tree.adj[nNode][0]]);
+            switch (numUtil.first) {
+                case types::B8:
+                    return std::make_unique<NumValue<types::Integer<types::B8>>>(types::Integer<types::B8>(numUtil.second));
+                case types::B16:
+                    return std::make_unique<NumValue<types::Integer<types::B16>>>(types::Integer<types::B16>(numUtil.second));
+                case types::B32:
+                    return std::make_unique<NumValue<types::Integer<types::B32>>>(types::Integer<types::B32>(numUtil.second));
+                case types::B64:
+                    return std::make_unique<NumValue<types::Integer<types::B64>>>(types::Integer<types::B64>(numUtil.second));
+                case types::B128:
+                    return std::make_unique<NumValue<types::Integer<types::B128>>>(types::Integer<types::B128>(numUtil.second));
+            }
         }
     }
 }
@@ -94,12 +119,13 @@ std::unique_ptr<ast::ASTNode> ast::convertAssn(int node, parser::parseTree &tree
 std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &tree){
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode][0] == '<'){
-            std::string iden;
-            ast::VarType type;
-            int val = -1, access = VAR;
+            int val = -1;
+            Access access = VAR;
             if(tree.id[nNode] == "<Immutable>"){
                 access = CONST;
             }
+            VarType type;
+            std::string iden;
             for(int tNode: tree.adj[nNode]){
                 std::string name = tree.id[tNode];
                 if(name == "<Type>"){
@@ -116,13 +142,13 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
                     iden = tree.val[tNode];
                 }
             }
-            Variable var = Variable(iden);
+
+            auto ptr = std::make_unique<ast::Variable>(iden);
             if(val != -1){
                 auto value = convertVal(val, tree);
-                return std::make_unique<Let>(std::move(var), type, *value);
+                return std::make_unique<Let>(std::move(ptr), type, access, std::move(value));
             }else{
-                auto ret = std::make_unique<Let>(std::move(var), type);
-                return ret;
+                return std::make_unique<Let>(std::move(ptr), type, access);
             }
         }
     }

@@ -35,4 +35,107 @@ std::string charFormat(char c);
 std::string regFormat(std::string s, std::string name);
 int numChar(int val);
 
+namespace types {
+    enum Type{
+        INT,
+        UNSIGNED,
+        FLOAT,
+        CHAR,
+        BOOL
+    };
+
+    enum MAX_BITS {
+        B8 = 8,
+        B16 = 16,
+        B32 = 32,
+        B64 = 64,
+        B128 = 128
+    };
+
+    /* Signed integers are defined by using the templated `Integer` class which also takes in the number
+    of bits used to store the integer. Type aliases for specific bit sizes have been made as `i8` all
+    the way to `i128` at powers of 2.
+    */
+    template<MAX_BITS bitSize>
+    class Integer {
+        static_assert(bitSize%8==0, "Bit Size for class Integer must be a multiple of 8");
+        static_assert(bitSize>0, "Bit Size for class Integer must be a positive integer");
+        // Values as stored in the Little Endian System
+        unsigned char value[bitSize/8];
+
+    public:
+        inline Integer() {
+            for(unsigned char& b : value)
+                b = 0;
+        }
+
+        inline Integer(std::vector<unsigned char>& value) {
+            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
+                this->value[i] = value[i];
+        }
+    };
+
+    typedef Integer<B8> i8;
+    typedef Integer<B16> i16;
+    typedef Integer<B32> i32;
+    typedef Integer<B64> i64;
+    typedef Integer<B128> i128;
+
+    /* Unsigned integers are defined by using the templated `UnsignedInteger` class which also takes in 
+    the number of bits used to store the unsigned integer as a template parameter. Type aliases for 
+    specific bit sizes have been made as `u8` all the way to `u128` at powers of 2.
+    */
+    template<MAX_BITS bitSize>
+    class UnsignedInteger {
+        static_assert(bitSize%8==0, "Bit Size for class UnsignedInteger must be a multiple of 8");
+        static_assert(bitSize>0, "Bit Size for class UnsignedInteger must be a positive integer");
+        // Values as stored in the Little Endian System
+        unsigned char value[bitSize/8];
+
+    public:
+        inline UnsignedInteger() {
+            for(unsigned char& b : value)
+                b = 0;
+        }
+
+        inline UnsignedInteger(std::vector<unsigned char>& value) {
+            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
+                this->value[i] = value[i];
+        }
+    };
+
+    typedef UnsignedInteger<B8> u8;
+    typedef UnsignedInteger<B16> u16;
+    typedef UnsignedInteger<B32> u32;
+    typedef UnsignedInteger<B64> u64;
+    typedef UnsignedInteger<B128> u128;
+
+    template<MAX_BITS bitSize>
+    class Float {
+        static_assert(bitSize%8==0, "Bit Size for class Float must be a multiple of 8");
+        static_assert(bitSize>0, "Bit Size for class Float must be a positive integer");
+        // Values as stored in the Little Endian System
+        unsigned char value[bitSize/8];
+
+    public:
+        inline Float() {
+            for(unsigned char& b : value)
+                b = 0;
+        }
+    };
+
+    typedef Float<B8> f8;
+    typedef Float<B16> f16;
+    typedef Float<B32> f32;
+    typedef Float<B64> f64;
+    typedef Float<B128> f128;
+
+//    c8 // UTF 8
+//    c16 // UTF 16 --
+}
+
+namespace utils{
+    std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source);
+}
+
 #endif
