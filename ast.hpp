@@ -260,7 +260,7 @@ namespace ast{
         }
     };
 
-    Prog parseTreeToAST(parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> parseTreeToAST(parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVarDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVal(int node, parser::parseTree &tree);
@@ -275,7 +275,7 @@ namespace ast{
 
 //    std::string opToString(OperatorType op);
 //    std::string getNodeLabel(const ASTNode* node);
-    void vizTree(const ASTNode* node, const std::string &prefix, bool isLast);
+    void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }
 
 #endif

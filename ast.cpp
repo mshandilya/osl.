@@ -1,6 +1,6 @@
 #include "ast.hpp"
 
-void ast::vizTree(const std::unique_ptr<ast::ASTNode>& node, const std::string &prefix, bool isLast){
+void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast){
     std::cout << prefix;
     if (!prefix.empty())
         std::cout << "+-";
@@ -135,16 +135,15 @@ std::unique_ptr<ast::ASTNode> ast::convertDecl(int node, parser::parseTree &tree
     }
 }
 
-ast::Prog ast::parseTreeToAST(parser::parseTree &tree) {
-    Prog root;
+std::unique_ptr<ast::ASTNode> ast::parseTreeToAST(parser::parseTree &tree) {
+    std::unique_ptr<Prog> root;
     int curNode = 0;
     while(tree.adj[curNode].size() > 1){
         auto d = convertDecl(tree.adj[curNode][0], tree);
-        root.addDecl(std::move(d));
+        root->addDecl(std::move(d));
         curNode = tree.adj[curNode][1];
     }
     auto d = convertDecl(tree.adj[curNode][0], tree);
-    root.addDecl(std::move(d));
-    std::cout << "Finished conversion" << std::endl;
+    root->addDecl(std::move(d));
     return root;
 }
