@@ -26,5 +26,7 @@ int main(int argc, char* argv[]){
     if(tree.getNodeCnt() != 0){
         parser::vizTree(tree, 0, "", true);
     }
+    ast::Prog root = ast::parseTreeToAST(tree);
+    ast::vizTree(&root, "", true);
     return 0;
 }
