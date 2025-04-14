@@ -119,9 +119,10 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
             Variable var = Variable(iden);
             if(val != -1){
                 auto value = convertVal(val, tree);
-                return std::make_unique<Let>(var, type, *value);
+                return std::make_unique<Let>(std::move(var), type, *value);
             }else{
-                return std::make_unique<Let>(var, type);
+                auto ret = std::make_unique<Let>(std::move(var), type);
+                return ret;
             }
         }
     }
@@ -129,14 +130,15 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
 
 std::unique_ptr<ast::ASTNode> ast::convertDecl(int node, parser::parseTree &tree){
     for(auto nNode: tree.adj[node]){
-        if(tree.id[nNode] == "<VarDecl>"){
-            return convertVarDecl(nNode, tree);
+        if(tree.id[nNode] == "<VarDecl>") {
+            auto ret = convertVarDecl(nNode, tree);
+            return ret;
         }
     }
 }
 
 std::unique_ptr<ast::ASTNode> ast::parseTreeToAST(parser::parseTree &tree) {
-    std::unique_ptr<Prog> root;
+    std::unique_ptr<ast::Prog> root = std::make_unique<ast::Prog>();
     int curNode = 0;
     while(tree.adj[curNode].size() > 1){
         auto d = convertDecl(tree.adj[curNode][0], tree);

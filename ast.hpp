@@ -212,7 +212,7 @@ namespace ast{
 
         Prog(){};
         
-        void addDecl(std::unique_ptr<ASTNode> decl){
+        void addDecl(std::unique_ptr<ASTNode>&& decl){
             decls.push_back(std::move(decl));
         }
 
@@ -251,8 +251,8 @@ namespace ast{
         VarType typ;
         std::unique_ptr<ASTNode> val;
 
-        Let(Variable &var, VarType type): var(std::make_unique<Variable>(var)), typ(type) {};
-        Let(Variable &var, VarType type, ASTNode &val): var(std::make_unique<Variable>(var)), typ(type), val(std::make_unique<ASTNode>(val)) {};
+        Let(Variable&& var, VarType type): var(std::make_unique<Variable>(var)), typ(type) {};
+        Let(Variable&& var, VarType type, ASTNode &val): var(std::make_unique<Variable>(var)), typ(type), val(std::make_unique<ASTNode>(val)) {};
         friend std::ostream& operator<<(std::ostream& os, Let const& node);
         
         NodeType type() const override {
