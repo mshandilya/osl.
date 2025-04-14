@@ -17,6 +17,8 @@ namespace parser{
         int getNodeCnt();
     };
 
+    void vizTree(const parseTree &tree, int node, const std::string &prefix, bool isLast);
+
     class PDA{
         private:
         std::vector<std::vector<std::vector<std::string>>> rules;
@@ -24,7 +26,7 @@ namespace parser{
         
         public:
         PDA() {};
-        PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::vector<std::string> allTokens);
+        PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::vector<std::string> allTokens, std::map<std::string, std::string> &desc);
         std::map<std::string, int> symId;
         std::unordered_map<int, std::string> idSym;
         std::unordered_map<int, bool> isToken;
@@ -42,7 +44,7 @@ namespace parser{
         std::unordered_map<int, std::string> lines;
 
         public:
-        genParser(std::string filename, std::vector<std::string> allTokens, std::map<std::string, std::string> desc, std::unordered_map<int, std::string> lines);
+        genParser(std::string filename, std::vector<std::string> allTokens, std::map<std::string, std::string> des, std::unordered_map<int, std::string> lines);
         std::function<parseTree(std::vector<Token>)> getParser();
     };
 }

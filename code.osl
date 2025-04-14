@@ -1,5 +1,3 @@
-if a < b {
-    log b;
-}else{
-    log a;
+fn i32 b()(b,c) a(){
+
 }

@@ -1,5 +1,29 @@
 #include "parser.hpp"
 
+void parser::vizTree(const parser::parseTree &tree, int node, const std::string &prefix, bool isLast){
+    std::cout << prefix;
+    if(!prefix.empty()){
+        std::cout << "+-";  
+    }
+    std::cout << tree.id[node];
+    if(isValToken(tree.id[node])){
+        std::cout << ": " << tree.val[node];
+    }
+    std::cout << "\n";
+    std::string newPrefix;
+    if(prefix.empty()){
+        newPrefix = "   ";
+    }else{
+        if(isLast)
+            newPrefix = prefix + "   ";
+        else
+            newPrefix = prefix + "| ";
+    }
+    for(int i = 0;i < tree.adj[node].size();i++){
+        vizTree(tree, tree.adj[node][i], newPrefix, i == tree.adj[node].size()-1);
+    }
+}
+
 int parser::parseTree::newNode(){
     adj.push_back({});
     id.push_back("");
@@ -11,7 +35,7 @@ int parser::parseTree::getNodeCnt(){
     return nodeCnt;
 }
 
-parser::PDA::PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::vector<std::string> allTokens): rules(rules), allTokens(allTokens) {
+parser::PDA::PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::vector<std::string> allTokens, std::map<std::string, std::string> &desc): rules(rules), allTokens(allTokens) {
     //Assign ids to symbols
     int idCnt = 1;
     for(std::vector<std::vector<std::string>> rule: rules){
@@ -32,8 +56,22 @@ parser::PDA::PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::
         if(!leftMost[stSym].empty()){
             continue;
         }
+        desc[rules[i][0][0]] = rules[i][0][0].substr(1,rules[i][0][0].length()-2);
+        std::string curDesc = "";
+        bool canRep = true;
         for(int j = 1;j < rules[i].size();j++){
             int possSym = symId[rules[i][j][0]];
+            if(canRep){
+                if(isToken[possSym]){
+                    canRep = false;
+                }else{
+                    if(curDesc == ""){
+                        curDesc = desc[rules[i][j][0]];
+                    }else if(curDesc != desc[rules[i][j][0]]){
+                        canRep = false;
+                    }
+                }
+            }
             if(isToken[possSym]){
                 leftMost[stSym][possSym] = true;
             }else{
@@ -41,6 +79,9 @@ parser::PDA::PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::
                     leftMost[stSym][possToken.first] = true;
                 }
             }
+        }
+        if(canRep){
+            desc[rules[i][0][0]] = curDesc;
         }
     }
     //Construct transitions
@@ -66,7 +107,7 @@ parser::PDA::PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::
     }
 }
 
-parser::genParser::genParser(std::string filename, std::vector<std::string> allTokens, std::map<std::string, std::string> desc, std::unordered_map<int, std::string> lines): desc(desc), lines(lines){
+parser::genParser::genParser(std::string filename, std::vector<std::string> allTokens, std::map<std::string, std::string> des, std::unordered_map<int, std::string> lines): desc(des), lines(lines){
     std::ifstream fin;
     try{
         fin.open(filename);
@@ -86,7 +127,7 @@ parser::genParser::genParser(std::string filename, std::vector<std::string> allT
         }
         rules.push_back(rule);
     }
-    pda = PDA(rules, allTokens);
+    pda = PDA(rules, allTokens, desc);
 }
 
 void parser::genParser::populateTree(int curNode, int curSym, int &pind, std::vector<int> path, int &tind, std::vector<Token> tokens, parseTree &tree){
@@ -195,12 +236,13 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
     }
     std::string corr = "";
     if(!pda.isToken[charExp]){
-        std::cout << pda.idSym[charExp].substr(1,pda.idSym[charExp].length()-2) << " ";
+        //std::cout << pda.idSym[charExp].substr(1,pda.idSym[charExp].length()-2) << " ";
+        std::cout << desc[pda.idSym[charExp]] << " ";
         if(pda.leftMost[charExp].size() == 1){
             corr = desc[pda.idSym[pda.leftMost[charExp].begin()->first]];
             std::cout << "beginning with `" << corr << "` ";
         }else{
-            corr = pda.idSym[charExp].substr(1,pda.idSym[charExp].length()-2);
+            corr = desc[pda.idSym[charExp]];
         }
     }else{
         corr = desc[pda.idSym[charExp]];
@@ -217,7 +259,11 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
         std::cout << " ";
     }
     std::cout << "|";
-    for(int i = 0;i < pos.second+1;i++){
+    int gap = pos.second+1;
+    if(missVal != -1){
+        gap = lines[pos.first].length();
+    }
+    for(int i = 0;i < gap;i++){
         std::cout << " ";
     }
     std::cout << "\033[31m^\033[0m" << std::endl;
@@ -225,7 +271,7 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
         std::cout << " ";
     }
     std::cout << "|";
-    for(int i = 0;i < pos.second+1;i++){
+    for(int i = 0;i < gap;i++){
         std::cout << " ";
     }
     if(single){

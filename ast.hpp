@@ -2,8 +2,17 @@
 #define AST_H
 
 #include "utils.hpp"
+#include "parser.hpp"
 
 namespace types {
+    enum Type{
+        INT,
+        UNSIGNED,
+        FLOAT,
+        CHAR,
+        BOOL
+    };
+
     enum MAX_BITS {
         B8 = 8,
         B16 = 16,
@@ -97,6 +106,7 @@ namespace types {
 }
 
 namespace ast{
+
     enum NodeType {
         DEF_AST,
         NUM_AST,
@@ -170,9 +180,10 @@ namespace ast{
     };
 
     class BinaryOperator : public ASTNode {
-        OperatorType op;
-        std::unique_ptr<ast::ASTNode> leftChild, rightChild;
     public:
+        OperatorType op;
+        std::unique_ptr<ASTNode> leftChild, rightChild;
+
         BinaryOperator(OperatorType operation, ASTNode& lc, ASTNode& rc): op(operation), leftChild(std::make_unique<ASTNode>(lc)), rightChild(std::make_unique<ASTNode>(rc)) {};
 
         NodeType type() override {
@@ -181,14 +192,68 @@ namespace ast{
     };
 
     class UnaryOperator : public ASTNode {
+    public:
         OperatorType op;
         std::unique_ptr<ASTNode> child;
-    public:
+
         UnaryOperator(OperatorType operation, ASTNode& c): op(operation), child(std::make_unique<ASTNode>(c)) {};
 
         NodeType type() override {
             return UOP_AST;
         }
+    };
+
+    class Prog: public ASTNode{
+    public:
+        std::vector<std::unique_ptr<ASTNode>> decls;
+
+        Prog(){};
+        
+        void addDecl(ASTNode decl){
+            decls.push_back(std::make_unique<ASTNode>(decl));
+        }
+    };
+
+    class VarType{
+    public:
+        types::Type type;
+        types::MAX_BITS size;
+
+        VarType() {};
+        VarType(types::Type type): type(type) {};
+        VarType(types::Type type, types::MAX_BITS size): type(type), size(size) {};
+    };
+
+    class Variable: public ASTNode{
+    public:
+        std::string varName;
+
+        Variable(std::string varName): varName(varName) {};
+        friend std::ostream& operator<<(std::ostream& os, Variable const& node);
+    };
+
+    class Let: public ASTNode{
+    public:
+        std::unique_ptr<Variable> var;
+        std::unique_ptr<VarType> type;
+        std::unique_ptr<ASTNode> val;
+
+        Let(Variable &var, VarType &type): var(std::make_unique<Variable>(var)), type(std::make_unique<VarType>(type)) {};
+        Let(Variable &var, VarType &type, ASTNode &val): var(std::make_unique<Variable>(var)), type(std::make_unique<VarType>(type)), val(std::make_unique<ASTNode>(val)) {};
+        friend std::ostream& operator<<(std::ostream& os, Let const& node);
+    };
+
+    Prog parseTreeToAST(parser::parseTree &tree);
+    ASTNode convertDecl(int node, parser::parseTree &tree);
+    ASTNode convertVarDecl(int node, parser::parseTree &tree);
+    ASTNode convertVal(int node, parser::parseTree &tree);
+    VarType convertType(std::string type);
+    ASTNode convertExp(int node, parser::parseTree &tree);
+    ASTNode convertAssn(int node, parser::parseTree &tree);
+    ASTNode convertUnAmb(int node, parser::parseTree &tree);
+    
+    enum ACCESS{
+        VAR, CONST
     };
 }
 

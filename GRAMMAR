@@ -13,7 +13,9 @@
 <ElifStmt> ::= ELIF <Val> <Block>
 <LogStmt> ::= LOG <Val> SEMC
 <ExpStmt> ::= <Val> SEMC
-<VarDecl> ::= VAR <Type> IDEN SEMC | VAR <Type> <Assn> SEMC
+<VarDecl> ::= <Mutable> | <Immutable>
+<Mutable> ::= VAR <Type> IDEN SEMC | VAR <Type> <Assn> SEMC
+<Immutable> ::= CONST <Type> <Assn> SEMC
 <Val> ::= <Exp> | <Assn> | NULL
 <Assn> ::= IDEN ASSIGN <Val>
 <Exp> ::= <UnAmb> | <Or> | <And> | <Not> | <Lesser> | <Greater> | <Eq> | <NotEq> | <Add> | <Multiply> | <Divide> | <Subtract> | <Power> | <Modulo> | <Xor> | <Xand> | <Shift> | <UnaryNeg>
