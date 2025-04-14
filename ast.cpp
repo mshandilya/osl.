@@ -1,6 +1,6 @@
 #include "ast.hpp"
 
-void ast::vizTree(std::shared_ptr<ast::ASTNode> node, const std::string &prefix, bool isLast){
+void ast::vizTree(const std::unique_ptr<ast::ASTNode>& node, const std::string &prefix, bool isLast){
     std::cout << prefix;
     if (!prefix.empty())
         std::cout << "+-";
