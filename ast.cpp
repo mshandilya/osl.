@@ -1,6 +1,6 @@
 #include "ast.hpp"
 
-void ast::vizTree(const ASTNode* node, const std::string &prefix, bool isLast){
+void ast::vizTree(std::shared_ptr<ast::ASTNode> node, const std::string &prefix, bool isLast){
     std::cout << prefix;
     if (!prefix.empty())
         std::cout << "+-";
@@ -8,7 +8,7 @@ void ast::vizTree(const ASTNode* node, const std::string &prefix, bool isLast){
     switch(node->type()){
         case PROG_AST: {
             std::cout << "Prog" << std::endl;
-            const Prog* p = dynamic_cast<const Prog*>(node);
+            const Prog* p = dynamic_cast<const Prog*>(node.get());
             for(size_t i = 0;i < p->decls.size();i++){
                 vizTree(p->decls[i], newPrefix, i==p->decls.size()-1);
             }

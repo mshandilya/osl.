@@ -208,7 +208,7 @@ namespace ast{
 
     class Prog: public ASTNode{
     public:
-        std::vector<std::unique_ptr<ASTNode>> decls;
+        std::vector<std::shared_ptr<ASTNode>> decls;
 
         Prog(){};
         
