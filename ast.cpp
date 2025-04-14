@@ -112,12 +112,13 @@ ast::ASTNode ast::convertDecl(int node, parser::parseTree &tree){
     }
 }
 
-ast::Prog ast::parseTreeToAST(parser::parseTree &tree){
+ast::Prog ast::parseTreeToAST(parser::parseTree &tree) {
     Prog root;
     int curNode = 0;
-    do{
+    do {
         ASTNode d = convertDecl(tree.adj[curNode][0], tree);
         root.addDecl(d);
         curNode = tree.adj[curNode][1];
-    }while(tree.adj[curNode].size() > 1);
+    } while(tree.adj[curNode].size() > 1);
+    return root;
 }
