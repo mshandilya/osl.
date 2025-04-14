@@ -89,7 +89,7 @@ std::unique_ptr<ast::ASTNode> ast::convertExp(int node, parser::parseTree &tree)
     }
 }
 
-std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tree){
+std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tree) {
     for(int nNode: tree.adj[node]){
         std::string name = tree.id[nNode];
         if(name == "IDEN"){
@@ -142,7 +142,6 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
                     iden = tree.val[tNode];
                 }
             }
-
             auto ptr = std::make_unique<ast::Variable>(iden);
             if(val != -1){
                 auto value = convertVal(val, tree);

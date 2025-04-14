@@ -122,9 +122,9 @@ std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil
             }
             for(int curPos = startPos; curPos < s; curPos++) {
                 if(source[curPos]>='a' and source[curPos]<='f') {
-                    newVal = (source[curPos] - 'a' + 10 + carry * base) / 2;
-                    carry = newVal/base;
-                    newVal %= base;
+                    newVal = (source[curPos] - 'a' + 10 + carry * base);
+                    carry = newVal%2;
+                    newVal /= 2;
                     if(newVal<10)
                         source[curPos] = (char)(newVal+'0');
                     else
@@ -133,9 +133,9 @@ std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil
                         startPos++;
                 }
                 else if(source[curPos] >= 'A' and source[curPos] <= 'F') {
-                    newVal = (source[curPos] - 'A' + 10 + carry * base) / 2;
-                    carry = newVal/base;
-                    newVal %= base;
+                    newVal = (source[curPos] - 'A' + 10 + carry * base);
+                    carry = newVal%2;
+                    newVal /= 2;
                     if(newVal<10)
                         source[curPos] = (char)(newVal+'0');
                     else
@@ -144,9 +144,9 @@ std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil
                         startPos++;
                 }
                 else if(source[curPos]>='0' and source[curPos]<='9') {
-                    newVal = (source[curPos] - '0' + carry * base) / 2;
-                    carry = newVal/base;
-                    newVal %= base;
+                    newVal = (source[curPos] - '0' + carry * base);
+                    carry = newVal%2;
+                    newVal /= 2;
                     if(newVal<10)
                         source[curPos] = (char)(newVal+'0');
                     else
@@ -176,13 +176,10 @@ std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil
             }
             for(int curPos = startPos; curPos < s; curPos++) {
                 if(source[curPos]>='0' and source[curPos]<=('0'+base-1)) {
-                    newVal = (source[curPos] - 'a' + 10 + carry * base) / 2;
-                    carry = newVal/base;
-                    newVal %= base;
-                    if(newVal<10)
-                        source[curPos] = (char)(newVal+'0');
-                    else
-                        source[curPos] = (char)(newVal-10+'a');
+                    newVal = (source[curPos] - '0' + carry * base);
+                    carry = newVal%2;
+                    newVal /= 2;
+                    source[curPos] = (char)(newVal+'0');
                     if(newVal == 0 and curPos == startPos)
                         startPos++;
                 }
