@@ -112,7 +112,10 @@ namespace ast{
         NUM_AST,
         BOOL_AST,
         BOP_AST,
-        UOP_AST
+        UOP_AST,
+        PROG_AST,
+        LET_AST,
+        VAR_AST
     };
 
     class AtomicASTNode;
@@ -120,7 +123,7 @@ namespace ast{
     class ASTNode {
     public:
 
-        virtual NodeType type() {
+        virtual NodeType type() const {
             return DEF_AST;
         }
 
@@ -146,14 +149,14 @@ namespace ast{
         NumericalValue(T val): value(val) {
         }
 
-        NodeType type() override {
+        NodeType type() const override {
             return NUM_AST;
         }
     };
 
     class BooleanValue : public AtomicASTNode {
     public:
-        NodeType type() override {
+        NodeType type() const override {
             return BOOL_AST;
         }
     };
@@ -186,7 +189,7 @@ namespace ast{
 
         BinaryOperator(OperatorType operation, ASTNode& lc, ASTNode& rc): op(operation), leftChild(std::make_unique<ASTNode>(lc)), rightChild(std::make_unique<ASTNode>(rc)) {};
 
-        NodeType type() override {
+        NodeType type() const override {
             return BOP_AST;
         }
     };
@@ -198,7 +201,7 @@ namespace ast{
 
         UnaryOperator(OperatorType operation, ASTNode& c): op(operation), child(std::make_unique<ASTNode>(c)) {};
 
-        NodeType type() override {
+        NodeType type() const override {
             return UOP_AST;
         }
     };
@@ -209,9 +212,15 @@ namespace ast{
 
         Prog(){};
         
-        void addDecl(ASTNode decl){
-            decls.push_back(std::make_unique<ASTNode>(decl));
+        void addDecl(std::unique_ptr<ASTNode> decl){
+            decls.push_back(std::move(decl));
         }
+
+        NodeType type() const override {
+            return PROG_AST;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, Prog const& p);
     };
 
     class VarType{
@@ -230,31 +239,43 @@ namespace ast{
 
         Variable(std::string varName): varName(varName) {};
         friend std::ostream& operator<<(std::ostream& os, Variable const& node);
+        
+        NodeType type() const override {
+            return VAR_AST;
+        }
     };
 
     class Let: public ASTNode{
     public:
         std::unique_ptr<Variable> var;
-        std::unique_ptr<VarType> type;
+        VarType typ;
         std::unique_ptr<ASTNode> val;
 
-        Let(Variable &var, VarType &type): var(std::make_unique<Variable>(var)), type(std::make_unique<VarType>(type)) {};
-        Let(Variable &var, VarType &type, ASTNode &val): var(std::make_unique<Variable>(var)), type(std::make_unique<VarType>(type)), val(std::make_unique<ASTNode>(val)) {};
+        Let(Variable &var, VarType type): var(std::make_unique<Variable>(var)), typ(type) {};
+        Let(Variable &var, VarType type, ASTNode &val): var(std::make_unique<Variable>(var)), typ(type), val(std::make_unique<ASTNode>(val)) {};
         friend std::ostream& operator<<(std::ostream& os, Let const& node);
+        
+        NodeType type() const override {
+            return LET_AST;
+        }
     };
 
     Prog parseTreeToAST(parser::parseTree &tree);
-    ASTNode convertDecl(int node, parser::parseTree &tree);
-    ASTNode convertVarDecl(int node, parser::parseTree &tree);
-    ASTNode convertVal(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertVarDecl(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertVal(int node, parser::parseTree &tree);
     VarType convertType(std::string type);
-    ASTNode convertExp(int node, parser::parseTree &tree);
-    ASTNode convertAssn(int node, parser::parseTree &tree);
-    ASTNode convertUnAmb(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertExp(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertAssn(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertUnAmb(int node, parser::parseTree &tree);
     
     enum ACCESS{
         VAR, CONST
     };
+
+//    std::string opToString(OperatorType op);
+//    std::string getNodeLabel(const ASTNode* node);
+    void vizTree(const ASTNode* node, const std::string &prefix, bool isLast);
 }
 
 #endif
