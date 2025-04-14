@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from collections.abc import Iterator
 from more_itertools import peekable
-from pprint import pprint
 from typing import List, Optional
 import sys
-import time
 
 sys.setrecursionlimit(100000000)
 
@@ -153,6 +151,10 @@ class VariableToken(Token):
     varName: str
 
 @dataclass
+class StringToken(Token):
+    val: str
+
+@dataclass
 class FunCallToken(Token):
     funName: str
 
@@ -174,12 +176,12 @@ def lex(s: str) -> Iterator[Token]:
                 i += 1
                 name = s[start:i]
 
-            if name in {"if", "else", "var", "in", "letFunc", "print", "return"}:
+            if name in {"if", "else", "var", "in", "fn", "print", "return"}:
                 prev_token = KeyWordToken(name)
                 yield prev_token
 
-            # If preceded by `letFunc`, it's a function definition
-            elif isinstance(prev_token, KeyWordToken) and prev_token.op == "letFunc":
+            # If preceded by `fn`, it's a function definition
+            elif isinstance(prev_token, KeyWordToken) and prev_token.op == "fn":
                 prev_token = VariableToken(name)
                 yield prev_token
 
@@ -191,7 +193,60 @@ def lex(s: str) -> Iterator[Token]:
             else:
                 prev_token = VariableToken(name)
                 yield prev_token
-
+        
+        elif s[i] == '/' and i + 1 < len(s) and s[i + 1] == '/':
+            i += 2
+            while i < len(s) and s[i] != '\n':
+                i += 1
+        
+        elif s[i] == '"':
+            i += 1
+            start = i
+            string = ""
+            while i < len(s):
+                char = s[i]
+                if char == '"':
+                    i += 1
+                    yield StringToken(string)
+                    break
+                if char == '\\':
+                    i += 1
+                    if i >= len(s):
+                        raise ValueError("Unterminated string")
+                    escape_char = s[i]
+                    if escape_char == '"':
+                        string += '"'
+                    elif escape_char == '\\':
+                        string += '\\'
+                    elif escape_char == '/':
+                        string += '/'
+                    elif escape_char == 'b':
+                        string += '\b'
+                    elif escape_char == 'f':
+                        string += '\f'
+                    elif escape_char == 'n':
+                        string += '\n'
+                    elif escape_char == 'r':
+                        string += '\r'
+                    elif escape_char == 't':
+                        string += '\t'
+                    elif escape_char == 'u':
+                        if i + 4 >= len(s):
+                            raise ValueError("Unterminated unicode escape sequence")
+                        hex_value = s[i+1:i+5]
+                        if all(c in '0123456789abcdefABCDEF' for c in hex_value):
+                            string += chr(int(hex_value, 16))
+                            i += 4
+                        else:
+                            raise ValueError(f"Invalid unicode escape sequence at index {i}: \\u{hex_value}")
+                    else:
+                        raise ValueError(f"Invalid escape character at index {i}: \\{escape_char}")
+                else:
+                    string += char
+                i += 1
+            else:
+                raise ValueError("Unterminated string")
+        
         elif s[i].isdigit():
             start = i
             while i < len(s) and (s[i].isdigit() or s[i] == '.'):
@@ -210,8 +265,7 @@ def lex(s: str) -> Iterator[Token]:
                 i += 1
             else:
                 raise ParseErr(f"Unexpected character: {s[i]} at position {i}")
-
-      
+    
 def parse(s: str) -> AST:
     t = peekable(lex(s))
     i = 0
@@ -241,7 +295,7 @@ def parse(s: str) -> AST:
     
     def parse_declaration():
         match peek():
-            case KeyWordToken("letFunc"):
+            case KeyWordToken("fn"):
                 return parse_func()
             case KeyWordToken("var"):
                 return parse_let()
@@ -249,7 +303,7 @@ def parse(s: str) -> AST:
                 return parse_statement()
             
     def parse_func():
-        consume(KeyWordToken, "letFunc")
+        consume(KeyWordToken, "fn")
         func_name = consume(VariableToken)
         
         consume(OperatorToken, "(")
@@ -403,6 +457,10 @@ def parse(s: str) -> AST:
                 val = float(v) if '.' in v else int(v)
                 return Number(val)
             
+            case StringToken(v):
+                consume()
+                return StringLiteral(v)
+            
             case VariableToken(varName):
                 consume()
                 return Variable(varName)
@@ -439,7 +497,6 @@ def parse(s: str) -> AST:
 
     return parse_program()
 
-
 def resolve(program: AST, env: Environment = None) -> AST:
     if env is None:
         env = Environment()
@@ -457,6 +514,9 @@ def resolve(program: AST, env: Environment = None) -> AST:
         
         case Number(_) as N:
             return N
+        
+        case StringLiteral(_) as S:
+            return S
         
         case Let(Variable(varName, _), e1):
             re1 = resolve_(e1) if e1 else None
@@ -529,6 +589,9 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             return res
         
         case Number(val):
+            return val
+        
+        case StringLiteral(val):
             return val
         
         case Variable(varName, i):
@@ -621,13 +684,13 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
 
 exp = """
 var x := 5;
-letFunc f(y) 
+fn f(y) 
 {
     return x;
 } 
 print(x);
 print(f(2));
-letFunc g(z) 
+fn g(z) 
 { 
     var x := 6;
     return f(z);
@@ -637,7 +700,7 @@ print(g(0));
 
 exp = """
 var x := 5;
-letFunc f(y) 
+fn f(y) 
 {
     return y ^ 2;
 }
@@ -647,7 +710,7 @@ letFunc f(y)
 }
 print(f(x));
 print(x);
-letFunc g(z)
+fn g(z)
 {
     return f(z);
 }
@@ -656,9 +719,9 @@ print(g(3));
 """
 
 exp = """
-letFunc f1()
+fn f1()
 {
-    letFunc f2()
+    fn f2()
     {
         var x := 10;
         return x;
@@ -670,10 +733,10 @@ msg();
 """
 
 exp = """
-letFunc f1()
+fn f1()
 {
     var x := 10;
-    letFunc f2()
+    fn f2()
     {
         return x;
     }
@@ -686,9 +749,9 @@ msg();
 exp = """
 var x := 6;
 
-letFunc F(x)
+fn F(x)
 {
-    letFunc G()
+    fn G()
     {
         return x;
     }
@@ -709,7 +772,7 @@ x;
 """
 
 exp = """
-letFunc fact(n)
+fn fact(n)
 {
     if (n = 0)
         return 1;
@@ -719,12 +782,12 @@ fact(5);
 """
 
 exp = """
-letFunc fun(F, x)
+fn fun(F, x)
 {
     return F(x);
 }
 
-letFunc square(x)
+fn square(x)
 {
     return x ^ 2;
 }
@@ -734,7 +797,7 @@ fun(square, 5);
 
 ## Euler Project Problem 1
 exp = """
-letFunc F(x, s)
+fn F(x, s)
 {
     if (x = 1000) return s;
     if (x % 3 = 0 || x % 5 = 0) 
@@ -747,7 +810,7 @@ F(0, 0);
 
 # Euler Project Problem 2
 exp = """
-letFunc fib(a, b, s)
+fn fib(a, b, s)
 {
     if (a >= 4000000) 
         return s;
@@ -761,7 +824,7 @@ fib(0, 1, 0);
 
 # Euler Project Problem 3
 exp = """
-letFunc prime(n, i)
+fn prime(n, i)
 {
     if (i * i > n) 
         return n;
@@ -783,7 +846,7 @@ x;
 """
 
 exp1 = """
-letFunc isPal(n, rev, org)
+fn isPal(n, rev, org)
 {
     if (n = 0) return rev = org;
     
@@ -792,7 +855,7 @@ letFunc isPal(n, rev, org)
 
 var n := 10;
 
-letFunc f(n)
+fn f(n)
 {   
     if (n = 0) return 0;
     print(n);
@@ -824,13 +887,13 @@ n;
 
 # Euler Project Problem 4
 exp = """
-letFunc isPal(n, rev, org)
+fn isPal(n, rev, org)
 {
     if (n = 0) return rev = org;   
     return isPal(n/10, rev*10 + n%10, org);
 }
 
-letFunc F(i, j, maxPal)
+fn F(i, j, maxPal)
 {
     if (i < 100) return maxPal;
     if (j < 100) return F(i - 1, i - 1, maxPal);

@@ -1,5 +1,5 @@
 import pytest
-from calculator_extended_resolved import parse, e, resolve
+from osl_package import parse, e, resolve
 from io import StringIO
 import sys
 
@@ -35,11 +35,11 @@ def test_variables_and_assignment():
     assert e(resolve(parse("var x := 10; var y := x * 2; y;"))) == 20
 
 def test_functions():
-    assert e(resolve(parse("letFunc f(x) { return x + 1; } f(5);"))) == 6
-    assert e(resolve(parse("letFunc f(x) { var y := x * 2; return y; } f(3);"))) == 6
+    assert e(resolve(parse("fn f(x) { return x + 1; } f(5);"))) == 6
+    assert e(resolve(parse("fn f(x) { var y := x * 2; return y; } f(3);"))) == 6
 
 func_test1 = """
-letFunc f(x) { 
+fn f(x) { 
     return x ^ 2; 
 }
 f(4);
@@ -49,7 +49,7 @@ def test_function_multiline():
 
 nested_func_test = """
 var x := 5;
-letFunc f(y) { 
+fn f(y) { 
     return x + y; 
 }
 f(3);
@@ -58,9 +58,9 @@ def test_nested_function():
     assert e(resolve(parse(nested_func_test))) == 8
 
 closure_test1 = """
-letFunc outer() {
+fn outer() {
     var x := 10;
-    letFunc inner() { 
+    fn inner() { 
         return x; 
     }
     return inner;
@@ -70,12 +70,12 @@ f();
 """
 
 closure_test2 = """
-letFunc fun(F, x)
+fn fun(F, x)
 {
     return F(x);
 }
 
-letFunc square(x)
+fn square(x)
 {
     return x ^ 2;
 }
@@ -86,9 +86,9 @@ fun(square, 5);
 closure_test3 = """
 var x := 6;
 
-letFunc F(x)
+fn F(x)
 {
-    letFunc G()
+    fn G()
     {
         return x;
     }
@@ -111,13 +111,13 @@ def test_control_flow():
     
 lexical_scoping_test1 = """
 var x := 5;
-letFunc f(y) 
+fn f(y) 
 {
     return x;
 } 
 print(x);
 print(f(2));
-letFunc g(z) 
+fn g(z) 
 { 
     var x := 6;
     return f(z);
@@ -157,7 +157,7 @@ def test_print_simple(capture_output):
     assert output == "42\nNone"
 
 print_test2 = """
-letFunc f(x) {
+fn f(x) {
     print(x * 2);
 }
 f(5);
@@ -167,7 +167,7 @@ def test_print_function(capture_output):
     assert output == "10\nNone"
 
 factorial_test = """
-letFunc fact(n) {
+fn fact(n) {
     if (n = 0) return 1;
     return n * fact(n - 1);
 }
@@ -178,7 +178,7 @@ def test_recursion():
 
 def test_complex_expressions():
     assert e(resolve(parse("2 + 3 * (5 - 2) / 1.5;"))) == 8.0
-    assert e(resolve(parse("letFunc f(x) { return x * \u221a(4); } f(3);"))) == 6
+    assert e(resolve(parse("fn f(x) { return x * \u221a(4); } f(3);"))) == 6
 
 def test_edge_cases():
     assert e(resolve(parse("0 / 1;"))) == 0
@@ -186,7 +186,7 @@ def test_edge_cases():
     assert e(resolve(parse("var x := 0; x := x + 0; x;"))) == 0
     
 euler_p1 = """
-letFunc F(x, s) {
+fn F(x, s) {
     if (x = 1000) return s;
     if (x % 3 = 0 || x % 5 = 0) 
         return F(x + 1, s + x);
@@ -196,7 +196,7 @@ F(0, 0);
 """
 
 euler_p2 = """
-letFunc fib(a, b, s) {
+fn fib(a, b, s) {
     if (a >= 4000000) return s;
     if (a % 2 = 0) 
         return fib(b, a + b, s + a);
@@ -206,7 +206,7 @@ fib(0, 1, 0);
 """
 
 euler_p3 = """
-letFunc prime(n, i) {
+fn prime(n, i) {
     if (i * i > n) return n;
     if (n % i = 0)
         return prime(n / i, i);
@@ -217,11 +217,11 @@ prime(n, 2);
 """
 
 euler_p4 = """
-letFunc isPal(n, rev, org) {
+fn isPal(n, rev, org) {
     if (n = 0) return rev = org;
     return isPal(n/10, rev*10 + n%10, org);
 }
-letFunc F(i, j, maxPal) {
+fn F(i, j, maxPal) {
     if (i < 100) return maxPal;
     if (j < 100) return F(i - 1, i - 1, maxPal);
     var prod := i * j;

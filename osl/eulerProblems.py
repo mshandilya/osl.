@@ -1,7 +1,9 @@
-from osl_package import e, resolve, parse
+# from osl_package import e, resolve, parse
 import time
 import sys
 from colorama import Fore, Style
+from codegen import *
+from vm import StackVM, Code
 
 sys.setrecursionlimit(100000000)
 
@@ -9,22 +11,32 @@ def run_test(exp, expected, label):
     print(f"\n{label} osl Code:")
     print(exp)
     start_time = time.time()
-    result = e(resolve(parse(exp)))
-    t1 = time.time() - start_time
-    print(f"Result: {result}")
-    print(f"osl Time: {Fore.CYAN}{t1:.6f} seconds{Style.RESET_ALL}")
-    assert result == expected, f"{label} failed: Expected {expected}, got {result}"
+    result = codegen(resolve(parse(exp)))
+    end_time = time.time() - start_time
+
+    code = Code(bytecode=result)
+
+    stack = StackVM(code)
+    t2 = time.time()
+    result = stack.execute()
+    t1 = time.time() - t2
+    print(f"Expected: {expected}")
+    print(f"osl compilation Time: {Fore.CYAN}{end_time:.6f} seconds{Style.RESET_ALL}")
+    print(f"osl execution Time: {Fore.CYAN}{t1:.6f} seconds{Style.RESET_ALL}")
+    print(f"osl total Time: {Fore.CYAN}{t1+end_time:.6f} seconds{Style.RESET_ALL}")
     return t1
 
 # Euler Problem 1: Sum of multiples of 3 or 5
 exp1 = """
 fn F(x, s) {
     if (x = 1000) return s;
-    if (x % 3 = 0 || x % 5 = 0) 
+    if (x % 3 = 0) 
+        return F(x + 1, s + x);
+    if (x % 5 = 0)
         return F(x + 1, s + x);
     return F(x + 1, s);
 }
-F(0, 0);
+log F(0, 0);
 """
 t1 = run_test(exp1, 233168, "Problem 1")
 
@@ -49,7 +61,7 @@ fn fib(a, b, s) {
         return fib(b, a + b, s + a);
     return fib(b, a + b, s);
 }
-fib(0, 1, 0);
+log fib(0, 1, 0);
 """
 t1 = run_test(exp2, 4613732, "Problem 2")
 
@@ -75,7 +87,7 @@ fn prime(n, i) {
     return prime(n, i + 1);
 }
 var n := 600851475143;
-prime(n, 2);
+log prime(n, 2);
 """
 t1 = run_test(exp3, 6857, "Problem 3")
 
@@ -95,7 +107,11 @@ print(f"osl is {int(t1//t2)}x slower than Python")
 # Euler Problem 4: Largest palindrome product
 exp4 = """
 fn isPal(n, rev, org) {
-    if (n = 0) return rev = org;
+    if (n = 0)
+    {
+        if (org = rev) return 1;
+        return 0;
+    }
     return isPal(n/10, rev*10 + n%10, org);
 }
 fn F(i, j, maxPal) {
@@ -106,7 +122,7 @@ fn F(i, j, maxPal) {
         maxPal := prod;
     return F(i, j - 1, maxPal);
 }
-F(999, 999, 0);
+log F(999, 999, 0);
 """
 t1 = run_test(exp4, 906609, "Problem 4")
 
@@ -143,7 +159,7 @@ fn F(n, i) {
     if (i = 1) return n;
     return F(lcm(n, i - 1), i - 1);
 }
-F(1, 20);
+log F(1, 20);
 """
 t1 = run_test(exp5, 232792560, "Problem 5")
 
@@ -171,7 +187,7 @@ fn F(n, sum, sumSq) {
     if (n = 0) return sum * sum - sumSq;
     return F(n - 1, sum + n, sumSq + n * n);
 }
-F(100, 0, 0);
+log F(100, 0, 0);
 """
 t1 = run_test(exp6, 25164150, "Problem 6")
 

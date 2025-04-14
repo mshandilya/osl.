@@ -7,7 +7,7 @@ program → declaration* EOF;
 
 declaration → funDecl | varDecl | statement;
 
-funDecl → "letFunc" IDENTIFIER "(" parameters? ")" block;
+funDecl → "fn" IDENTIFIER "(" parameters? ")" block;
 varDecl → "var" IDENTIFIER (":=" expression)? ";";
 statement → ifStmt | printStmt | returnStmt | block | expressionStmt;
 

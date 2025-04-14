@@ -1,0 +1,115 @@
+// var z := 5;
+// fn fact(n){
+//     // var x:= n;
+//     // return x;
+//     // fn h(u){
+//     //     var o:= u;
+//     // }
+//     if(n = 0){
+//         return 1;
+//     }
+//     return n*fact(n-1);
+// }
+// log fact(5);
+
+
+// fn g(m){
+//     var y:= m;
+//     return y;
+// }
+// log g(4);
+
+// print(fact(10));
+
+// fn f(a){
+//     return a+2;
+// }
+// f(2);
+
+
+
+// var x := 10;
+// fn f(a){
+//     // log x;
+//     x := a;
+//     // var y := x;
+//     fn g(y){
+//         x := y;
+//         return x;
+//     }
+//     log g(12);
+//     log x;
+//     return x;
+// }
+// log f(5);
+// log x;
+
+
+// To do: (Fix the error in the following code)
+
+
+fn f1()
+{
+    var x := 10;
+    // return x;
+    fn f2(t)
+    {
+        return x*t;
+    }
+    return f2;
+}
+var msg := f1;
+msg := msg();
+log msg(5);
+
+
+// var msg1 := msg;
+// log msg1;
+// log f1();
+
+
+// var msg := f1();
+// log msg();
+
+
+// var x := 5;
+// var y := x;
+// log x;
+// log y;
+
+
+
+// var x := 5;
+// var y := x;
+// var z := y;
+// log x;
+// log y;
+// log z;
+
+
+
+
+// var x := 5;
+
+// fn foo()
+// {
+//     x := 10;
+//     fn bar()
+//     {
+//         x := 15;
+//         fn foobar()
+//         {
+//             x := 20;
+//             return x;
+//         }
+//         log x;
+//         return foobar;
+//     }
+//     log x;
+//     return bar;
+// }
+
+// var f := foo();
+// var g := f();
+// log g();
+// log x;

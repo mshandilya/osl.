@@ -1,4 +1,4 @@
-from calculator_extended_resolved import parse, e, resolve
+from osl_package import parse, e, resolve
 from pprint import pprint
 from colorama import Fore, Style
 import sys
@@ -64,12 +64,12 @@ unit_test("var x := 5; x := x + 1; x;", 6, log)
 unit_test("var x := 10; var y := x * 2; y;", 20, log)
 
 # Functions
-unit_test("letFunc f(x) { return x + 1; } f(5);", 6, log)
-unit_test("letFunc f(x) { var y := x * 2; return y; } f(3);", 6, log)
+unit_test("fn f(x) { return x + 1; } f(5);", 6, log)
+unit_test("fn f(x) { var y := x * 2; return y; } f(3);", 6, log)
 
 # Multi-line osl code in separate variables
 func_test1 = """
-letFunc f(x) { 
+fn f(x) { 
     return x ^ 2; 
 }
 f(4);
@@ -78,7 +78,7 @@ unit_test(func_test1, 16, log)
 
 nested_func_test = """
 var x := 5;
-letFunc f(y) { 
+fn f(y) { 
     return x + y; 
 }
 f(3);
@@ -86,9 +86,9 @@ f(3);
 unit_test(nested_func_test, 8, log)
 
 closure_test = """
-letFunc outer() {
+fn outer() {
     var x := 10;
-    letFunc inner() { 
+    fn inner() { 
         return x; 
     }
     return inner;
@@ -99,8 +99,8 @@ f();
 unit_test(closure_test, 10, log)
 
 closure_test1 = """
-letFunc outer(x) {
-    letFunc inner() { 
+fn outer(x) {
+    fn inner() { 
         return x; 
     }
     return inner;
@@ -113,9 +113,9 @@ unit_test(closure_test1, 10, log)
 closure_test2 = """
 var x := 6;
 
-letFunc F(x)
+fn F(x)
 {
-    letFunc G()
+    fn G()
     {
         return x;
     }
@@ -129,13 +129,13 @@ unit_test(closure_test2, 25, log)
 
 lexical_scoping_test = """
 var x := 5;
-letFunc f(y) 
+fn f(y) 
 {
     return x;
 } 
 print(x);
 print(f(2));
-letFunc g(z) 
+fn g(z) 
 { 
     var x := 6;
     return f(z);
@@ -157,7 +157,7 @@ print(x);
 unit_test(print_test1, "42\nNone", log, expect_print=True)
 
 print_test2 = """
-letFunc f(x) {
+fn f(x) {
     print(x * 2);
 }
 f(5);
@@ -166,7 +166,7 @@ unit_test(print_test2, "10\nNone", log, expect_print=True)
 
 # Recursion
 factorial_test = """
-letFunc fact(n) {
+fn fact(n) {
     if (n = 0) return 1;
     return n * fact(n - 1);
 }
@@ -176,7 +176,7 @@ unit_test(factorial_test, 120, log)
 
 # Complex Expressions
 unit_test("2 + 3 * (5 - 2) / 1.5;", 8.0, log)
-unit_test("letFunc f(x) { return x * \u221a(4); } f(3);", 6, log)
+unit_test("fn f(x) { return x * \u221a(4); } f(3);", 6, log)
 
 # Edge Cases
 unit_test("0 / 1;", 0, log)
