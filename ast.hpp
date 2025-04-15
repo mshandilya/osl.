@@ -32,12 +32,14 @@ namespace ast{
         }*/
     };
 
-    /*class AtomicASTNode : public ASTNode {
+    class AtomicASTNode : public ASTNode {
     public:
-        AtomicASTNode& const_resolve() override {
-            return *this;
-        }
-    };*/
+        virtual types::TYPES dataType() = 0;
+
+        // AtomicASTNode& const_resolve() override {
+        //     return *this;
+        // }
+    };
 
     // When storing the numerical values, it is important that the value we store has a type.
     // We shall, by default, analyse the numerical token and assign it a type that takes the
@@ -61,7 +63,7 @@ namespace ast{
         }
     };*/
     template <typename T>
-    class NumValue : public ASTNode {
+    class NumValue : public AtomicASTNode {
     public:
         T value;
         NumValue(T val): value(val) {
@@ -70,6 +72,10 @@ namespace ast{
         NodeType type() const override {
             return NUM_AST;
         }
+
+        types::TYPES dataType() override {
+            return T::dt;
+        };
     };
 
     class BoolValue : public ASTNode {
@@ -148,12 +154,12 @@ namespace ast{
 
     class VarType{
     public:
-        types::Type type;
+        types::TYPES type;
         types::MAX_BITS size;
 
         VarType() {};
-        VarType(types::Type type): type(type) {};
-        VarType(types::Type type, types::MAX_BITS size): type(type), size(size) {};
+        VarType(types::TYPES type): type(type) {};
+        VarType(types::TYPES type, types::MAX_BITS size): type(type), size(size) {};
     };
 
     class Variable: public ASTNode{

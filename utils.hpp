@@ -36,12 +36,29 @@ std::string regFormat(std::string s, std::string name);
 int numChar(int val);
 
 namespace types {
-    enum Type{
-        INT,
-        UNSIGNED,
-        FLOAT,
-        CHAR,
-        BOOL
+    enum TYPES {
+        UNRESOLVED,
+        BOOL,
+        CHAR_UNRESOLVED,
+        CHAR_8,
+        INT_UNRESOLVED,
+        INT_8,
+        INT_16,
+        INT_32,
+        INT_64,
+        INT_128,
+        UINT_UNRESOLVED,
+        UINT_8,
+        UINT_16,
+        UINT_32,
+        UINT_64,
+        UINT_128,
+        FLOAT_UNRESOLVED,
+        FLOAT_8,
+        FLOAT_16,
+        FLOAT_32,
+        FLOAT_64,
+        FLOAT_128
     };
 
     enum MAX_BITS {
@@ -50,6 +67,36 @@ namespace types {
         B32 = 32,
         B64 = 64,
         B128 = 128
+    };
+
+    template<MAX_BITS mb>
+    struct mInt {
+        static const TYPES dt = INT_UNRESOLVED;
+    };
+
+    template<>
+    struct mInt<B8> {
+        static const TYPES dt = INT_8;
+    };
+
+    template<>
+    struct mInt<B16> {
+        static const TYPES dt = INT_16;
+    };
+
+    template<>
+    struct mInt<B32> {
+        static const TYPES dt = INT_32;
+    };
+
+    template<>
+    struct mInt<B64> {
+        static const TYPES dt = INT_64;
+    };
+
+    template<>
+    struct mInt<B128> {
+        static const TYPES dt = INT_128;
     };
 
     /* Signed integers are defined by using the templated `Integer` class which also takes in the number
@@ -64,6 +111,8 @@ namespace types {
         unsigned char value[bitSize/8];
 
     public:
+        static constexpr TYPES dt = mInt<bitSize>::dt;
+        
         inline Integer() {
             for(unsigned char& b : value)
                 b = 0;
@@ -102,6 +151,31 @@ namespace types {
             for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
                 this->value[i] = value[i];
         }
+    };
+
+    template<>
+    class UnsignedInteger<B8> {
+        static const TYPES dt = INT_8;
+    };
+
+    template<>
+    class UnsignedInteger<B16> {
+        static const TYPES dt = INT_16;
+    };
+
+    template<>
+    class UnsignedInteger<B32> {
+        static const TYPES dt = INT_32;
+    };
+
+    template<>
+    class UnsignedInteger<B64> {
+        static const TYPES dt = INT_64;
+    };
+
+    template<>
+    class UnsignedInteger<B128> {
+        static const TYPES dt = INT_128;
     };
 
     typedef UnsignedInteger<B8> u8;

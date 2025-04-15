@@ -52,16 +52,16 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
 }
 
 ast::VarType ast::convertType(std::string type){
-    types::Type typ;
+    types::TYPES typ;
     types::MAX_BITS size;
     if(type[1] == 'I'){
-        typ = types::INT;
+        typ = types::INT_UNRESOLVED;
     }else if(type[1] == 'U'){
-        typ = types::UNSIGNED;
+        typ = types::UINT_UNRESOLVED;
     }else if(type[1] == 'F'){
-        typ = types::FLOAT;
+        typ = types::FLOAT_UNRESOLVED;
     }else if(type[1] == 'C'){
-        typ = types::CHAR;
+        typ = types::CHAR_UNRESOLVED;
     }else if(type[1] == 'B'){
         typ = types::BOOL;
     }
@@ -77,7 +77,7 @@ ast::VarType ast::convertType(std::string type){
     }else if(bits == "128"){
         size = types::B128;
     }
-    if(typ == types::CHAR || typ == types::BOOL){
+    if(typ == types::CHAR_UNRESOLVED || typ == types::BOOL){
         return VarType(typ);
     }else{
         return VarType(typ, size);
@@ -161,15 +161,15 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
             auto numUtil = utils::stringToNumberUtil(tree.val[tree.adj[nNode][0]]);
             switch (numUtil.first) {
                 case types::B8:
-                    return std::make_unique<NumValue<types::Integer<types::B8>>>(types::Integer<types::B8>(numUtil.second));
+                    return std::make_unique<NumValue<types::i8>>(types::i8(numUtil.second));
                 case types::B16:
-                    return std::make_unique<NumValue<types::Integer<types::B16>>>(types::Integer<types::B16>(numUtil.second));
+                    return std::make_unique<NumValue<types::i16>>(types::i16(numUtil.second));
                 case types::B32:
-                    return std::make_unique<NumValue<types::Integer<types::B32>>>(types::Integer<types::B32>(numUtil.second));
+                    return std::make_unique<NumValue<types::i32>>(types::i32(numUtil.second));
                 case types::B64:
-                    return std::make_unique<NumValue<types::Integer<types::B64>>>(types::Integer<types::B64>(numUtil.second));
+                    return std::make_unique<NumValue<types::i64>>(types::i64(numUtil.second));
                 case types::B128:
-                    return std::make_unique<NumValue<types::Integer<types::B128>>>(types::Integer<types::B128>(numUtil.second));
+                    return std::make_unique<NumValue<types::i128>>(types::i128(numUtil.second));
             }
         }
     }
