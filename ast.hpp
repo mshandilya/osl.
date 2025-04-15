@@ -62,8 +62,8 @@ namespace ast{
     };*/
     template <typename T>
     class NumValue : public ASTNode {
-        T value;
     public:
+        T value;
         NumValue(T val): value(val) {
         }
 
@@ -87,10 +87,10 @@ namespace ast{
     };
 
     enum OperatorType {
-        ATH_ADD,
-        ATH_UADD,
-        ATH_SUB,
-        ATH_USUB,
+        UNEG_OP, //Unary Neg
+        NOT_OP, //Not
+        ADD_OP,
+        SUB_OP,
         ATH_MUL,
         ATH_DIV,
         ATH_MOD,
@@ -112,7 +112,7 @@ namespace ast{
         OperatorType op;
         std::unique_ptr<ASTNode> leftChild, rightChild;
 
-        BinaryOperator(OperatorType operation, ASTNode& lc, ASTNode& rc): op(operation), leftChild(std::make_unique<ASTNode>(lc)), rightChild(std::make_unique<ASTNode>(rc)) {};
+        BinaryOperator(OperatorType operation, std::unique_ptr<ASTNode> lc, std::unique_ptr<ASTNode> rc): op(operation), leftChild(std::move(lc)), rightChild(std::move(rc)) {};
 
         NodeType type() const override {
             return BOP_AST;
@@ -124,7 +124,7 @@ namespace ast{
         OperatorType op;
         std::unique_ptr<ASTNode> child;
 
-        UnaryOperator(OperatorType operation, ASTNode& c): op(operation), child(std::make_unique<ASTNode>(c)) {};
+        UnaryOperator(OperatorType operation, std::unique_ptr<ASTNode> c): op(operation), child(std::move(c)) {};
 
         NodeType type() const override {
             return UOP_AST;
@@ -194,6 +194,8 @@ namespace ast{
     std::unique_ptr<ast::ASTNode> convertExp(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertAssn(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertUnAmb(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertUnaryOp(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertBinaryOp(int node, parser::parseTree &tree);
 
     void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }

@@ -31,6 +31,23 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << "Variable(varName=" << v->varName << ")" << std::endl;
             break;
         }
+        case NUM_AST: {
+            std::cout << "NumValue()" << std::endl;
+            break;
+        }
+        case UOP_AST: {
+            const UnaryOperator* u = dynamic_cast<const UnaryOperator*>(node.get());
+            std::cout << "UnaryOperator(op=" << u->op << ")" << std::endl;
+            vizTree(u->child, newPrefix, true);
+            break;
+        }
+        case BOP_AST: {
+            const BinaryOperator* b = dynamic_cast<const BinaryOperator*>(node.get());
+            std::cout << "BinaryOperator(op=" << b->op << ")" << std::endl;
+            vizTree(b->leftChild, newPrefix, false);
+            vizTree(b->rightChild, newPrefix, true);
+            break;
+        }
     }
 }
 
@@ -80,11 +97,57 @@ std::unique_ptr<ast::ASTNode> ast::convertVal(int node, parser::parseTree &tree)
     }
 }
 
+std::unique_ptr<ast::ASTNode> ast::convertUnaryOp(int node, parser::parseTree &tree){
+    OperatorType typ;
+    if(tree.id[node] == "<Not>"){
+        typ = NOT_OP;
+    }else if(tree.id[node] == "<UnaryNeg>"){
+        typ = UNEG_OP;
+    }
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<UnAmb>"){
+            return std::make_unique<UnaryOperator>(typ, convertUnAmb(nNode, tree));
+        }else if(tree.id[nNode] == tree.id[node]){
+            return std::make_unique<UnaryOperator>(typ, convertUnaryOp(nNode, tree));
+        }
+    }
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &tree){
+    std::string opNames[2] = {"<Add>", "<Subtract>"};
+    OperatorType typs[2] = {ADD_OP, SUB_OP};
+    std::string name = tree.id[node];
+    OperatorType typ;
+    for(int i = 0;i < 2;i++){
+        if(opNames[i] == name){
+            typ = typs[i];
+            break;
+        }
+    }
+    std::unique_ptr<ASTNode> lc = nullptr,rc = nullptr;
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<UnAmb>"){
+            if(lc == nullptr){
+                lc = std::move(convertUnAmb(nNode, tree));
+            }else{
+                rc = std::move(convertUnAmb(nNode, tree));
+            }
+        }else if(tree.id[nNode] == tree.id[node]){
+            rc = std::move(convertBinaryOp(nNode, tree));
+        }
+    }
+    return std::make_unique<BinaryOperator>(typ, std::move(lc), std::move(rc));
+}
+
 std::unique_ptr<ast::ASTNode> ast::convertExp(int node, parser::parseTree &tree){
     for(int nNode: tree.adj[node]){
         std::string name = tree.id[nNode];
         if(name == "<UnAmb>"){
             return convertUnAmb(nNode, tree);
+        }else if(name == "<Not>" || name == "<UnaryNeg>"){
+            return convertUnaryOp(nNode, tree);
+        }else{
+            return convertBinaryOp(nNode, tree);
         }
     }
 }
