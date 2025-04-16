@@ -1,2 +1,29 @@
-const i32 a := 2^(3|(6!&6));
-const i32 b := 1=2=3;
+if a = 3 {
+    a := 2;
+}elif b = 2{
+    b := 3;
+}
+
+if a = 3 {
+    a := 2;
+}elif b = 2{
+    b := 3;
+}else{
+    c := 4;
+}
+
+if a = 3 {
+    a := 2;
+}elif b = 2{
+    b := 3;
+}elif d = 2{
+    d := 3;
+}else{
+    c := 4;
+}
+
+if a = 3 {
+    a := 2;
+}else{
+    b := 3;
+}

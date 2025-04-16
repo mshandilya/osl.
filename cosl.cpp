@@ -10,9 +10,9 @@ int main(int argc, char* argv[]){
         return 1;
     }
     std::vector<Token> tokens = lex(argv[1]);
-    /*std::cout << "Lexer Result:\n";
+    //std::cout << "Lexer Result:\n";
     //std::string isValToken[] = {"IDEN","NUM","BOOL"};
-    for(Token token: tokens){
+    /*for(Token token: tokens){
         std::cout << token << std::endl;
         if(isValToken(token.getId())){
             std::cout << "Value: " << token.getVal() << std::endl;

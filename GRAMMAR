@@ -1,11 +1,11 @@
 <Prog> ::= <Decl> | <Decl> <Prog>
-<Block> ::= LBRACE RBRACE | LBRACE <Prog> RBRACE
 <Decl> ::= <VarDecl> | <Stmt> | <FunDecl>
 <FunCall> ::= IDEN LPAREN <Params> RPAREN
 <FunDecl> ::= FUN <Type> IDEN LPAREN <Params> RPAREN <Block> | FUN <Type> IDEN LPAREN RPAREN <Block>
 <Params> ::= <Param> | <Param> COMMA <Params>
 <Param> ::= <Type> IDEN
 <Stmt> ::= <ExpStmt> | <Block> | <IfStmt> | <LogStmt> | <RetStmt>
+<Block> ::= LBRACE RBRACE | LBRACE <Prog> RBRACE
 <RetStmt> ::= RETURN <ExpStmt>
 <IfStmt> ::= IF <Val> <Block> | IF <Val> <Block> <ElseStmt> | IF <Val> <Block> <ElifStmts> | IF <Val> <Block> <ElifStmts> <ElseStmt>
 <ElseStmt> ::= ELSE <Block>
@@ -39,6 +39,7 @@
 <LeftShift> ::= <Unamb> LSHIFT <Unamb>
 <RightShift> ::= <Unamb> RSHIFT <Unamb>
 <UnaryNeg> ::= NEG <UnAmb> | NEG <UnaryNeg>
-<UnAmb> ::= IDEN | <Number> | BOOL | LPAREN <Exp> RPAREN | <FunCall>
+<UnAmb> ::= IDEN | <Number> | <Bool> | LPAREN <Exp> RPAREN | <FunCall>
 <Number> ::= DEC | BIN | HEX | OCT
+<Bool> ::= TRUE | FALSE
 <Type> ::= TBOOL | TI8 | TI16 | TI32 | TI64 | TI128 | TU8 | TU16 | TU32 | TU64 | TU128 | TF8 | TF16 | TF32 | TF64 | TF128 | TCHAR

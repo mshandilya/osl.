@@ -69,6 +69,24 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             vizTree(b->rightChild, newPrefix, true);
             break;
         }
+        case ASSIGN_AST: {
+            const Assign* a = dynamic_cast<const Assign*>(node.get());
+            std::cout << "Assign" << std::endl;
+            vizTree(a->var, newPrefix, false);
+            vizTree(a->val, newPrefix, true);
+            break;
+        }
+        case IF_AST: {
+            const If* i = dynamic_cast<const If*>(node.get());
+            std::cout << "If" << std::endl;
+            vizTree(i->cond, newPrefix, false);
+            if(i->elseBody == nullptr){
+                vizTree(i->thenBody, newPrefix, true);    
+            }else{
+                vizTree(i->thenBody, newPrefix, false);
+                vizTree(i->elseBody, newPrefix, true);
+            }
+        }
     }
 }
 
@@ -200,12 +218,26 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
             }
         }else if(name == "<Exp>"){
             return convertExp(nNode, tree);
+        }else if(name == "<Bool>"){
+            
+        }else if(name == "<FunCall>"){
+
         }
     }
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertAssn(int node, parser::parseTree &tree){
-    
+    std::string iden = "";
+    int val = -1;
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "IDEN"){
+            iden = tree.val[nNode];
+        }else if(tree.id[nNode] == "<Val>"){
+            val = nNode;
+        }
+    }
+    auto ptr = std::make_unique<ast::Variable>(iden);
+    return std::make_unique<Assign>(std::move(ptr), convertVal(val, tree));
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &tree){
@@ -236,8 +268,7 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
             }
             auto ptr = std::make_unique<ast::Variable>(iden);
             if(val != -1){
-                auto value = convertVal(val, tree);
-                return std::make_unique<Let>(std::move(ptr), type, access, std::move(value));
+                return std::make_unique<Let>(std::move(ptr), type, access, convertVal(val, tree));
             }else{
                 return std::make_unique<Let>(std::move(ptr), type, access);
             }
@@ -245,18 +276,109 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
     }
 }
 
-std::unique_ptr<ast::ASTNode> ast::convertDecl(int node, parser::parseTree &tree){
-    for(auto nNode: tree.adj[node]){
-        if(tree.id[nNode] == "<VarDecl>") {
-            auto ret = convertVarDecl(nNode, tree);
-            return ret;
+std::unique_ptr<ast::ASTNode> ast::convertExpStmt(int node, parser::parseTree &tree){
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<Val>") {
+            return convertVal(nNode, tree);
         }
     }
 }
 
-std::unique_ptr<ast::ASTNode> ast::parseTreeToAST(parser::parseTree &tree) {
+std::unique_ptr<ast::ASTNode> ast::convertBlock(int node, parser::parseTree &tree){
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<Prog>"){
+            return convertProg(nNode, tree);
+        }
+    }
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertElseStmt(int node, parser::parseTree &tree){
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<Block>"){
+            return convertBlock(nNode, tree);
+        }
+    }
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertElifStmts(int node, parser::parseTree &tree, std::unique_ptr<ASTNode> finElse){
+    std::unique_ptr<ASTNode> ptrIf;
+    int elifNode = -1;
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<ElifStmt>"){
+            ptrIf = std::move(convertIfStmt(nNode, tree));
+        }else if(tree.id[nNode] == "<ElifStmts>"){
+            elifNode = nNode;
+        }
+    }
+    If* ptr = dynamic_cast<If*>(ptrIf.get());
+    if(elifNode != -1){
+        ptr->elseBody = std::move(convertElifStmts(elifNode, tree, std::move(finElse)));
+    }else{
+        ptr->elseBody = std::move(finElse);
+    }
+    return ptrIf;
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertIfStmt(int node, parser::parseTree &tree){
+    std::unique_ptr<ASTNode> cond, thenBody, elseBody = nullptr;
+    int elifNode = -1;
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<Val>"){
+            cond = convertVal(nNode, tree);
+        }else if(tree.id[nNode] == "<Block>"){
+            thenBody = convertBlock(nNode, tree);
+        }else if(tree.id[nNode] == "<ElseStmt>"){
+            elseBody = convertElseStmt(nNode, tree);
+        }else if(tree.id[nNode] == "<ElifStmts>"){
+            elifNode = nNode;
+        }
+    }
+    if(elifNode != -1){
+        if(elseBody == nullptr){
+            return std::make_unique<If>(std::move(cond), std::move(thenBody), convertElifStmts(elifNode, tree));
+        }else{
+            return std::make_unique<If>(std::move(cond), std::move(thenBody), convertElifStmts(elifNode, tree, std::move(elseBody)));
+        }
+    }else{
+        if(elseBody == nullptr){
+            return std::make_unique<If>(std::move(cond), std::move(thenBody));
+        }else{
+            return std::make_unique<If>(std::move(cond), std::move(thenBody), std::move(elseBody));
+        }
+    }
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree){
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<ExpStmt>") {
+            return convertExpStmt(nNode, tree);
+        }else if(tree.id[nNode] == "<Block>"){
+            return convertBlock(nNode, tree);
+        }else if(tree.id[nNode] == "<IfStmt>"){
+            return convertIfStmt(nNode, tree);
+        }else if(tree.id[nNode] == "<LogStmt>"){
+
+        }else if(tree.id[nNode] == "<RetStmt>"){
+
+        }
+    }
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertDecl(int node, parser::parseTree &tree){
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<VarDecl>") {
+            return convertVarDecl(nNode, tree);
+        }else if(tree.id[nNode] == "<Stmt>"){
+            return convertStmt(nNode, tree);
+        }else if(tree.id[nNode] == "<FunDecl>"){
+
+        }
+    }
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertProg(int node, parser::parseTree &tree){
     std::unique_ptr<ast::Prog> root = std::make_unique<ast::Prog>();
-    int curNode = 0;
+    int curNode = node;
     while(tree.adj[curNode].size() > 1){
         auto d = convertDecl(tree.adj[curNode][0], tree);
         root->addDecl(std::move(d));
@@ -265,4 +387,8 @@ std::unique_ptr<ast::ASTNode> ast::parseTreeToAST(parser::parseTree &tree) {
     auto d = convertDecl(tree.adj[curNode][0], tree);
     root->addDecl(std::move(d));
     return root;
+}
+
+std::unique_ptr<ast::ASTNode> ast::parseTreeToAST(parser::parseTree &tree) {
+    return convertProg(0, tree);
 }

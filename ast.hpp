@@ -15,7 +15,9 @@ namespace ast{
         UOP_AST,
         PROG_AST,
         LET_AST,
-        VAR_AST
+        ASSIGN_AST,
+        VAR_AST,
+        IF_AST
     };
 
     class AtomicASTNode;
@@ -194,7 +196,34 @@ namespace ast{
         }
     };
 
+    class Assign: public ASTNode{
+    public:
+        std::unique_ptr<ASTNode> var;
+        std::unique_ptr<ASTNode> val;
+
+        Assign(std::unique_ptr<ASTNode> var, std::unique_ptr<ASTNode> val): var(std::move(var)), val(std::move(val)) {};
+        
+        NodeType type() const override {
+            return ASSIGN_AST;
+        }
+    };
+
+    class If: public ASTNode{
+    public:
+        std::unique_ptr<ASTNode> cond;
+        std::unique_ptr<ASTNode> thenBody;
+        std::unique_ptr<ASTNode> elseBody;
+
+        If(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> thenBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(nullptr) {};
+        If(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> thenBody, std::unique_ptr<ASTNode> elseBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(std::move(elseBody)) {};
+    
+        NodeType type() const override {
+            return IF_AST;
+        }
+    };
+
     std::unique_ptr<ast::ASTNode> parseTreeToAST(parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertProg(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVarDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVal(int node, parser::parseTree &tree);
@@ -204,6 +233,12 @@ namespace ast{
     std::unique_ptr<ast::ASTNode> convertUnAmb(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertUnaryOp(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertBinaryOp(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertExpStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertBlock(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertIfStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertElseStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertElifStmts(int node, parser::parseTree &tree, std::unique_ptr<ASTNode> finElse=nullptr);
 
     void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }
