@@ -17,7 +17,7 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
         case LET_AST: {
             std::cout << "Let(";
             const Let* l = dynamic_cast<const Let*>(node.get());
-            std::cout << "type=" << l->typ.type << ", size=" << l->typ.size << ", access=" << l->acc << ")" << std::endl;
+            std::cout << "type=" << l->typ << ", access=" << l->acc << ")" << std::endl;
             if(l->val != nullptr){
                 vizTree(l->var, newPrefix, false);
                 vizTree(l->val, newPrefix, true);
@@ -110,36 +110,50 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
     }
 }
 
-ast::VarType ast::convertType(std::string type){
-    types::TYPES typ;
-    types::MAX_BITS size;
-    if(type[1] == 'I'){
-        typ = types::INT_UNRESOLVED;
-    }else if(type[1] == 'U'){
-        typ = types::UINT_UNRESOLVED;
-    }else if(type[1] == 'F'){
-        typ = types::FLOAT_UNRESOLVED;
-    }else if(type[1] == 'C'){
-        typ = types::CHAR_UNRESOLVED;
-    }else if(type[1] == 'B'){
-        typ = types::BOOL;
+types::TYPES ast::convertType(std::string type){
+    std::string bits = type.substr(2, type.length()-2);
+    if(type[1] == 'I') {
+        if(bits == "8")
+            return types::INT_8;
+        else if(bits == "16")
+            return types::INT_16;
+        else if(bits == "32")
+            return types::INT_32;
+        else if(bits == "64")
+            return types::INT_64;
+        else
+            return types::INT_128;
     }
-    std::string bits = type.substr(2,type.length()-2);
-    if(bits == "8"){
-        size = types::B8;
-    }else if(bits == "16"){
-        size = types::B16;
-    }else if(bits == "32"){
-        size = types::B32;
-    }else if(bits == "64"){
-        size = types::B64;
-    }else if(bits == "128"){
-        size = types::B128;
+    else if(type[1] == 'U') {
+        if(bits == "8")
+            return types::UINT_8;
+        else if(bits == "16")
+            return types::UINT_16;
+        else if(bits == "32")
+            return types::UINT_32;
+        else if(bits == "64")
+            return types::UINT_64;
+        else
+            return types::UINT_128;
     }
-    if(typ == types::CHAR_UNRESOLVED || typ == types::BOOL){
-        return VarType(typ);
-    }else{
-        return VarType(typ, size);
+    else if(type[1] == 'F') {
+        if(bits == "8")
+            return types::FLOAT_8;
+        else if(bits == "16")
+            return types::FLOAT_16;
+        else if(bits == "32")
+            return types::FLOAT_32;
+        else if(bits == "64")
+            return types::FLOAT_64;
+        else
+            return types::FLOAT_128;
+    }
+    else if(type[1] == 'C') {
+        if(bits == "8")
+            return types::CHAR_8;
+    }
+    else if(type[1] == 'B') {
+        return types::BOOL;
     }
 }
 
@@ -268,7 +282,7 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
             if(tree.id[nNode] == "<Immutable>"){
                 access = CONST;
             }
-            VarType type;
+            types::TYPES type;
             std::string iden;
             for(int tNode: tree.adj[nNode]){
                 std::string name = tree.id[tNode];
@@ -400,12 +414,12 @@ std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree
     }
 }
 
-std::pair<types::TYPES,std::unique_ptr<ast::Variable>> convertParam(int node, parser::parseTree &tree){
+std::pair<types::TYPES,std::unique_ptr<ast::Variable>> ast::convertParam(int node, parser::parseTree &tree){
     types::TYPES typ;
     std::string iden;
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<Type>"){
-            typ = convertType(tree.id[tree.adj[nNode][0]]);
+            typ = ast::convertType(tree.id[tree.adj[nNode][0]]);
         }else if(tree.id[nNode] == "IDEN"){
             iden = tree.val[nNode];
         }
@@ -415,7 +429,7 @@ std::pair<types::TYPES,std::unique_ptr<ast::Variable>> convertParam(int node, pa
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &tree){
-    VarType retType;
+    types::TYPES retType;
     std::string iden;
     std::unique_ptr<ASTNode> body;
     int paramNode = -1;

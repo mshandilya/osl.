@@ -259,7 +259,7 @@ namespace ast{
     std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVarDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVal(int node, parser::parseTree &tree);
-    VarType convertType(std::string type);
+    types::TYPES convertType(std::string type);
     std::unique_ptr<ast::ASTNode> convertExp(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertAssn(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertUnAmb(int node, parser::parseTree &tree);
