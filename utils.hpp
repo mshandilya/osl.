@@ -37,6 +37,7 @@ int numChar(int val);
 
 namespace types {
     enum TYPES {
+        NULL_0,
         UNRESOLVED,
         BOOL,
         CHAR_UNRESOLVED,
@@ -204,6 +205,12 @@ namespace types {
     typedef Float<B64> f64;
     typedef Float<B128> f128;
 
+    class Boolean {
+        unsigned char value;
+
+    public:
+        inline Boolean() : value(0) {}
+    };
 //    c8 // UTF 8
 //    c16 // UTF 16 --
 }

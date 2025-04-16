@@ -1,6 +1,9 @@
 #include "ast.hpp"
 
+#define LOG(x) //std::cout<<x<<std::endl;
+
 void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast){
+    LOG("inside viztree")
     std::cout << prefix;
     if (!prefix.empty())
         std::cout << "+-";
@@ -102,15 +105,45 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
         }
         case LETFUN_AST: {
             const LetFun* l = dynamic_cast<const LetFun*>(node.get());
-            std::cout << "LetFun(name=" << l->name << ", retType=" << l->retType << ")" << std::endl;
+            std::cout << "LetFun(name=" << l->name << ", retType=";
+            switch(l->retType){
+                case types::INT_8:
+                    std::cout << "int8";
+                    break;
+                case types::INT_16:
+                    std::cout << "int16";
+                    break;
+                case types::INT_32:
+                    std::cout << "int32";
+                    break;
+                case types::INT_64:
+                    std::cout << "int64";
+                    break;
+                case types::INT_128:
+                    std::cout << "int128";
+                    break;
+                case types::BOOL:
+                    std::cout << "boolean";
+                    break;
+                case types::CHAR_8:
+                    std::cout << "char8";
+                    break;
+                default:
+                    std::cout << "unknown";
+            }  
+            std::cout << ")" << std::endl;
+            std::cout << prefix << "+-Params=" << std::endl;
             for(size_t i = 0;i < l->params.size();i++){
                 vizTree(l->params[i].second, newPrefix, i==l->params.size()-1);
             }
+            std::cout << prefix << "+-Body=" << std::endl;
+            vizTree(l->body, newPrefix, true);
         }
     }
 }
 
 types::TYPES ast::convertType(std::string type){
+    LOG("inside type")
     std::string bits = type.substr(2, type.length()-2);
     if(type[1] == 'I') {
         if(bits == "8")
@@ -158,6 +191,7 @@ types::TYPES ast::convertType(std::string type){
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertVal(int node, parser::parseTree &tree){
+    LOG("inside val")
     for(int nNode: tree.adj[node]){
         std::string name = tree.id[nNode];
         if(name == "<Exp>"){
@@ -165,12 +199,13 @@ std::unique_ptr<ast::ASTNode> ast::convertVal(int node, parser::parseTree &tree)
         }else if(name == "<Assn>"){
             return convertAssn(nNode, tree);
         }else if(name == "NULL"){
-
+            return std::make_unique<ast::NullValue>();
         }
     }
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertUnaryOp(int node, parser::parseTree &tree){
+    LOG("inside unary op")
     OperatorType typ;
     if(tree.id[node] == "<Not>"){
         typ = NOT_OP;
@@ -187,6 +222,7 @@ std::unique_ptr<ast::ASTNode> ast::convertUnaryOp(int node, parser::parseTree &t
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &tree){
+    LOG("inside binary op")
     std::string opNames[] = {"<Add>", "<Subtract>", "<Multiply>", "<Divide>", "<Power>", "<Modulo>", "<Or>", "<And>", "<Xor>", "<Xand>", "<LeftShift>", "<RightShift>", "<Eq>", "<NotEq>", "<Lesser>", "<LessEqual>", "<Greater>", "<GreatEqual>"};
     OperatorType typs[] = {ADD_OP, SUB_OP, MUL_OP, DIV_OP, POW_OP, MOD_OP, OR_OP, AND_OP, XOR_OP, XAND_OP, LSHIFT_OP, RSHIFT_OP, EQ_OP, NEQ_OP, LE_OP, LEQ_OP, GE_OP, GEQ_OP};
     std::string name = tree.id[node];
@@ -219,6 +255,7 @@ std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertExp(int node, parser::parseTree &tree){
+    LOG("inside exp")
     for(int nNode: tree.adj[node]){
         std::string name = tree.id[nNode];
         if(name == "<UnAmb>"){
@@ -232,6 +269,7 @@ std::unique_ptr<ast::ASTNode> ast::convertExp(int node, parser::parseTree &tree)
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tree) {
+    LOG("inside unamb")
     for(int nNode: tree.adj[node]){
         std::string name = tree.id[nNode];
         if(name == "IDEN"){
@@ -261,6 +299,7 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertAssn(int node, parser::parseTree &tree){
+    LOG("inside assn")
     std::string iden = "";
     int val = -1;
     for(int nNode: tree.adj[node]){
@@ -275,6 +314,7 @@ std::unique_ptr<ast::ASTNode> ast::convertAssn(int node, parser::parseTree &tree
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &tree){
+    LOG("inside var decl")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode][0] == '<'){
             int val = -1;
@@ -311,6 +351,7 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertExpStmt(int node, parser::parseTree &tree){
+    LOG("inside exp stmt")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<Val>"){
             return convertVal(nNode, tree);
@@ -319,6 +360,7 @@ std::unique_ptr<ast::ASTNode> ast::convertExpStmt(int node, parser::parseTree &t
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertBlock(int node, parser::parseTree &tree){
+    LOG("inside block")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<Prog>"){
             return convertProg(nNode, tree);
@@ -327,6 +369,7 @@ std::unique_ptr<ast::ASTNode> ast::convertBlock(int node, parser::parseTree &tre
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertElseStmt(int node, parser::parseTree &tree){
+    LOG("inside else")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<Block>"){
             return convertBlock(nNode, tree);
@@ -335,6 +378,7 @@ std::unique_ptr<ast::ASTNode> ast::convertElseStmt(int node, parser::parseTree &
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertElifStmts(int node, parser::parseTree &tree, std::unique_ptr<ASTNode> finElse){
+    LOG("inside elif")
     std::unique_ptr<ASTNode> ptrIf;
     int elifNode = -1;
     for(int nNode: tree.adj[node]){
@@ -354,6 +398,7 @@ std::unique_ptr<ast::ASTNode> ast::convertElifStmts(int node, parser::parseTree 
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertIfStmt(int node, parser::parseTree &tree){
+    LOG("inside if")
     std::unique_ptr<ASTNode> cond, thenBody, elseBody = nullptr;
     int elifNode = -1;
     for(int nNode: tree.adj[node]){
@@ -383,6 +428,7 @@ std::unique_ptr<ast::ASTNode> ast::convertIfStmt(int node, parser::parseTree &tr
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertLogStmt(int node, parser::parseTree &tree){
+    LOG("inside log stmt")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<ExpStmt>"){
             return std::make_unique<Log>(convertExpStmt(nNode, tree));
@@ -391,6 +437,7 @@ std::unique_ptr<ast::ASTNode> ast::convertLogStmt(int node, parser::parseTree &t
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertRetStmt(int node, parser::parseTree &tree){
+    LOG("inside ret stmt")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<ExpStmt>"){
             return std::make_unique<Return>(convertExpStmt(nNode, tree));
@@ -399,6 +446,7 @@ std::unique_ptr<ast::ASTNode> ast::convertRetStmt(int node, parser::parseTree &t
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree){
+    LOG("inside stmt")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<ExpStmt>"){
             return convertExpStmt(nNode, tree);
@@ -415,6 +463,7 @@ std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree
 }
 
 std::pair<types::TYPES,std::unique_ptr<ast::Variable>> ast::convertParam(int node, parser::parseTree &tree){
+    LOG("inside param")
     types::TYPES typ;
     std::string iden;
     for(int nNode: tree.adj[node]){
@@ -429,6 +478,7 @@ std::pair<types::TYPES,std::unique_ptr<ast::Variable>> ast::convertParam(int nod
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &tree){
+    LOG("inside fun decl")
     types::TYPES retType;
     std::string iden;
     std::unique_ptr<ASTNode> body;
@@ -447,15 +497,23 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
     std::unique_ptr<LetFun> ptr = std::make_unique<LetFun>(retType, iden, std::move(body));
     int curNode = paramNode;
     while(tree.adj[curNode].size() > 1){
+        LOG("inside while at fun decl (trying to parse params)")
         auto d = convertParam(tree.adj[curNode][0], tree);
+        LOG("parsed a param")
         ptr->addParam(d.first, std::move(d.second));
+        LOG("added param")
         curNode = tree.adj[curNode][2];
     }
+    LOG("outside while loop")
     auto d = convertParam(tree.adj[curNode][0], tree);
+    LOG("another param parsed")
     ptr->addParam(d.first, std::move(d.second));
+    LOG("another param added")
+    return ptr;
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertDecl(int node, parser::parseTree &tree){
+    LOG("inside decl")
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<VarDecl>"){
             return convertVarDecl(nNode, tree);
@@ -471,12 +529,16 @@ std::unique_ptr<ast::ASTNode> ast::convertProg(int node, parser::parseTree &tree
     std::unique_ptr<ast::Prog> root = std::make_unique<ast::Prog>();
     int curNode = node;
     while(tree.adj[curNode].size() > 1){
+        LOG("branched at prog")
         auto d = convertDecl(tree.adj[curNode][0], tree);
         root->addDecl(std::move(d));
         curNode = tree.adj[curNode][1];
     }
+    LOG("out of loop at prog")
     auto d = convertDecl(tree.adj[curNode][0], tree);
+    LOG("decl done at prog")
     root->addDecl(std::move(d));
+    LOG("decl added at prog")
     return root;
 }
 

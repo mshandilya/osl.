@@ -39,7 +39,7 @@ else ELSE
 fn FUN
 return RETURN
 log LOG
-NULL NULL
+null NULL
 bool TBOOL
 i8 TI8
 i16 TI16

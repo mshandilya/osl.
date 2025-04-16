@@ -1,0 +1,8 @@
+var i32 a := 98;
+var i32 b := 78;
+if a = 98 {
+    log a;
+}
+else {
+    log b;
+}

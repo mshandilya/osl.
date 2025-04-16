@@ -94,6 +94,9 @@ namespace ast{
             return NULL_AST;
         }
 
+        types::TYPES dataType() const override {
+            return types::TYPES::NULL_0;
+        }
     };
 
     enum OperatorType {
