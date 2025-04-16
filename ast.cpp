@@ -32,7 +32,28 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             break;
         }
         case NUM_AST: {
-            std::cout << "NumValue()" << std::endl;
+            const AtomicASTNode* n = dynamic_cast<const AtomicASTNode*>(node.get());
+            std::cout << "NumValue(dataType=";
+            switch(n->dataType()){
+                case types::INT_8:
+                    std::cout << "int8";
+                    break;
+                case types::INT_16:
+                    std::cout << "int16";
+                    break;
+                case types::INT_32:
+                    std::cout << "int32";
+                    break;
+                case types::INT_64:
+                    std::cout << "int64";
+                    break;
+                case types::INT_128:
+                    std::cout << "int128";
+                    break;
+                default:
+                    std::cout << "unknown";
+            }
+            std::cout << ")" << std::endl;
             break;
         }
         case UOP_AST: {
@@ -114,11 +135,11 @@ std::unique_ptr<ast::ASTNode> ast::convertUnaryOp(int node, parser::parseTree &t
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &tree){
-    std::string opNames[2] = {"<Add>", "<Subtract>"};
-    OperatorType typs[2] = {ADD_OP, SUB_OP};
+    std::string opNames[] = {"<Add>", "<Subtract>", "<Multiply>", "<Divide>", "<Power>", "<Modulo>", "<Or>", "<And>", "<Xor>", "<Xand>", "<LeftShift>", "<RightShift>"};
+    OperatorType typs[] = {ADD_OP, SUB_OP, MUL_OP, DIV_OP, POW_OP, MOD_OP, OR_OP, AND_OP, XOR_OP, XAND_OP, LSHIFT_OP, RSHIFT_OP};
     std::string name = tree.id[node];
     OperatorType typ;
-    for(int i = 0;i < 2;i++){
+    for(int i = 0;i < sizeof(opNames)/sizeof(opNames[0]);i++){
         if(opNames[i] == name){
             typ = typs[i];
             break;
@@ -126,14 +147,20 @@ std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &
     }
     std::unique_ptr<ASTNode> lc = nullptr,rc = nullptr;
     for(int nNode: tree.adj[node]){
-        if(tree.id[nNode] == "<UnAmb>"){
+        if(tree.id[nNode][0] == '<'){
             if(lc == nullptr){
-                lc = std::move(convertUnAmb(nNode, tree));
+                if(tree.id[nNode] == "<UnAmb>"){
+                    lc = std::move(convertUnAmb(nNode, tree));
+                }else{
+                    lc = std::move(convertBinaryOp(nNode, tree));
+                }
             }else{
-                rc = std::move(convertUnAmb(nNode, tree));
+                if(tree.id[nNode] == "<UnAmb>"){
+                    rc = std::move(convertUnAmb(nNode, tree));
+                }else{
+                    rc = std::move(convertBinaryOp(nNode, tree));
+                }
             }
-        }else if(tree.id[nNode] == tree.id[node]){
-            rc = std::move(convertBinaryOp(nNode, tree));
         }
     }
     return std::make_unique<BinaryOperator>(typ, std::move(lc), std::move(rc));
@@ -171,6 +198,8 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
                 case types::B128:
                     return std::make_unique<NumValue<types::i128>>(types::i128(numUtil.second));
             }
+        }else if(name == "<Exp>"){
+            return convertExp(nNode, tree);
         }
     }
 }

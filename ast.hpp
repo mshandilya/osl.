@@ -34,7 +34,7 @@ namespace ast{
 
     class AtomicASTNode : public ASTNode {
     public:
-        virtual types::TYPES dataType() = 0;
+        virtual types::TYPES dataType() const = 0;
 
         // AtomicASTNode& const_resolve() override {
         //     return *this;
@@ -73,7 +73,7 @@ namespace ast{
             return NUM_AST;
         }
 
-        types::TYPES dataType() override {
+        types::TYPES dataType() const override {
             return T::dt;
         };
     };
@@ -97,20 +97,16 @@ namespace ast{
         NOT_OP, //Not
         ADD_OP,
         SUB_OP,
-        ATH_MUL,
-        ATH_DIV,
-        ATH_MOD,
-        ATH_POW,
-        ATH_NOT,
-        ATH_AND,
-        ATH_OR,
-        ATH_XOR,
-        ATH_XNOR,
-        ATH_NOR,
-        ATH_NAND,
-        ATH_LS,
-        ATH_RS,
-        BKT_PREC, // Precedence forced by brackets operator
+        MUL_OP,
+        DIV_OP,
+        POW_OP,
+        MOD_OP,
+        OR_OP,
+        AND_OP,
+        XOR_OP,
+        XAND_OP,
+        LSHIFT_OP,
+        RSHIFT_OP,
     };
 
     class BinaryOperator : public ASTNode {
