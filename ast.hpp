@@ -11,6 +11,7 @@ namespace ast{
         NUM_AST,
         BOOL_AST,
         CHAR_AST,
+        NULL_AST,
         BOP_AST,
         UOP_AST,
         PROG_AST,
@@ -48,24 +49,6 @@ namespace ast{
     // When storing the numerical values, it is important that the value we store has a type.
     // We shall, by default, analyse the numerical token and assign it a type that takes the
     // least amount of memory.
-    /*template <typename T>
-    class NumericalValue : public AtomicASTNode {
-        T value;
-    public:
-        NumericalValue(T val): value(val) {
-        }
-
-        NodeType type() const override {
-            return NUM_AST;
-        }
-    };
-
-    class BooleanValue : public AtomicASTNode {
-    public:
-        NodeType type() const override {
-            return BOOL_AST;
-        }
-    };*/
     template <typename T>
     class NumValue : public AtomicASTNode {
     public:
@@ -82,41 +65,57 @@ namespace ast{
         };
     };
 
-    class BoolValue : public ASTNode {
+    class BoolValue : public AtomicASTNode {
     public:
         NodeType type() const override {
             return BOOL_AST;
         }
+
+        types::TYPES dataType() const override {
+            return types::BOOL;
+        }
     };
 
-    class CharValue : public ASTNode {
+    class CharValue : public AtomicASTNode {
     public:
         NodeType type() const override {
             return CHAR_AST;
         }
+
+        types::TYPES dataType() const override {
+            return types::CHAR_8;
+        }
+    };
+
+    class NullValue : public AtomicASTNode {
+    public:
+        NodeType type() const override {
+            return NULL_AST;
+        }
+
     };
 
     enum OperatorType {
-        UNEG_OP, //Unary Neg
-        NOT_OP, //Not
-        ADD_OP,
-        SUB_OP,
-        MUL_OP,
-        DIV_OP,
-        POW_OP,
-        MOD_OP,
-        OR_OP,
-        AND_OP,
-        XOR_OP,
-        XAND_OP,
-        LSHIFT_OP,
-        RSHIFT_OP,
-        EQ_OP,
-        NEQ_OP,
-        LE_OP,
-        LEQ_OP,
-        GE_OP,
-        GEQ_OP
+        UNEG_OP,   // Unary Neg
+        NOT_OP,    // Unary Not
+        ADD_OP,    // Binary Add
+        SUB_OP,    // Binary Subtraction
+        MUL_OP,    // Binary Multiplication
+        DIV_OP,    // Binary Division
+        POW_OP,    // Binary Exponentiation
+        MOD_OP,    // Binary Modulo
+        OR_OP,     // Binary Or
+        AND_OP,    // Binary And
+        XOR_OP,    // Binary Xor
+        XAND_OP,   // Binary Xand
+        LSHIFT_OP, // Binary Left Shift Operator
+        RSHIFT_OP, // Binary Right Shift Operator
+        EQ_OP,     // Binary Equality
+        NEQ_OP,    // Binary Inequality
+        LE_OP,     // Binary Less Than
+        LEQ_OP,    // Binary Less Than Equal To
+        GE_OP,     // Binary Greater Than
+        GEQ_OP,    // Binary Greater Than Equal To
     };
 
     class BinaryOperator : public ASTNode {
@@ -158,16 +157,6 @@ namespace ast{
         }
     };
 
-    class VarType{
-    public:
-        types::TYPES type;
-        types::MAX_BITS size;
-
-        VarType() {};
-        VarType(types::TYPES type): type(type) {};
-        VarType(types::TYPES type, types::MAX_BITS size): type(type), size(size) {};
-    };
-
     class Variable: public ASTNode{
     public:
         std::string varName;
@@ -186,12 +175,12 @@ namespace ast{
     class Let: public ASTNode{
     public:
         std::unique_ptr<ASTNode> var;
-        VarType typ;
+        types::TYPES typ;
         Access acc;
         std::unique_ptr<ASTNode> val;
 
-        Let(std::unique_ptr<ASTNode> var, VarType type, Access acc): var(std::move(var)), typ(type), acc(acc), val(nullptr) {};
-        Let(std::unique_ptr<ASTNode> var, VarType type, Access acc, std::unique_ptr<ASTNode> val): var(std::move(var)), typ(type), acc(acc), val(std::move(val)) {};
+        Let(std::unique_ptr<ASTNode> var, types::TYPES type, Access acc): var(std::move(var)), typ(type), acc(acc), val(nullptr) {};
+        Let(std::unique_ptr<ASTNode> var, types::TYPES type, Access acc, std::unique_ptr<ASTNode> val): var(std::move(var)), typ(type), acc(acc), val(std::move(val)) {};
         
         NodeType type() const override {
             return LET_AST;
