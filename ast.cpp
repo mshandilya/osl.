@@ -135,8 +135,8 @@ std::unique_ptr<ast::ASTNode> ast::convertUnaryOp(int node, parser::parseTree &t
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &tree){
-    std::string opNames[] = {"<Add>", "<Subtract>", "<Multiply>", "<Divide>", "<Power>", "<Modulo>", "<Or>", "<And>", "<Xor>", "<Xand>", "<LeftShift>", "<RightShift>"};
-    OperatorType typs[] = {ADD_OP, SUB_OP, MUL_OP, DIV_OP, POW_OP, MOD_OP, OR_OP, AND_OP, XOR_OP, XAND_OP, LSHIFT_OP, RSHIFT_OP};
+    std::string opNames[] = {"<Add>", "<Subtract>", "<Multiply>", "<Divide>", "<Power>", "<Modulo>", "<Or>", "<And>", "<Xor>", "<Xand>", "<LeftShift>", "<RightShift>", "<Eq>", "<NotEq>", "<Lesser>", "<LessEqual>", "<Greater>", "<GreatEqual>"};
+    OperatorType typs[] = {ADD_OP, SUB_OP, MUL_OP, DIV_OP, POW_OP, MOD_OP, OR_OP, AND_OP, XOR_OP, XAND_OP, LSHIFT_OP, RSHIFT_OP, EQ_OP, NEQ_OP, LE_OP, LEQ_OP, GE_OP, GEQ_OP};
     std::string name = tree.id[node];
     OperatorType typ;
     for(int i = 0;i < sizeof(opNames)/sizeof(opNames[0]);i++){

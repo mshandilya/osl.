@@ -107,6 +107,12 @@ namespace ast{
         XAND_OP,
         LSHIFT_OP,
         RSHIFT_OP,
+        EQ_OP,
+        NEQ_OP,
+        LE_OP,
+        LEQ_OP,
+        GE_OP,
+        GEQ_OP
     };
 
     class BinaryOperator : public ASTNode {
