@@ -17,7 +17,9 @@ namespace ast{
         LET_AST,
         ASSIGN_AST,
         VAR_AST,
-        IF_AST
+        IF_AST,
+        LOG_AST,
+        RET_AST
     };
 
     class AtomicASTNode;
@@ -222,6 +224,28 @@ namespace ast{
         }
     };
 
+    class Log: public ASTNode{
+    public:
+        std::unique_ptr<ASTNode> val;
+
+        Log(std::unique_ptr<ASTNode> val): val(std::move(val)) {};
+
+        NodeType type() const override {
+            return LOG_AST;
+        }
+    };
+
+    class Return: public ASTNode{
+    public:
+        std::unique_ptr<ASTNode> val;
+
+        Return(std::unique_ptr<ASTNode> val): val(std::move(val)) {};
+
+        NodeType type() const override {
+            return RET_AST;
+        }
+    };
+
     std::unique_ptr<ast::ASTNode> parseTreeToAST(parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertProg(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree);
@@ -239,6 +263,8 @@ namespace ast{
     std::unique_ptr<ast::ASTNode> convertIfStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertElseStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertElifStmts(int node, parser::parseTree &tree, std::unique_ptr<ASTNode> finElse=nullptr);
+    std::unique_ptr<ast::ASTNode> convertLogStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertRetStmt(int node, parser::parseTree &tree);
 
     void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }

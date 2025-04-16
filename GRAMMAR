@@ -11,7 +11,7 @@
 <ElseStmt> ::= ELSE <Block>
 <ElifStmts> ::= <ElifStmt> | <ElifStmt> <ElifStmts>
 <ElifStmt> ::= ELIF <Val> <Block>
-<LogStmt> ::= LOG <Val> SEMC
+<LogStmt> ::= LOG <ExpStmt>
 <ExpStmt> ::= <Val> SEMC
 <VarDecl> ::= <Mutable> | <Immutable>
 <Mutable> ::= VAR <Type> IDEN SEMC | VAR <Type> <Assn> SEMC
