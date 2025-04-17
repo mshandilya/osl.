@@ -46,8 +46,8 @@
 <Calls> ::= <Call> | <Call> <Calls>
 <Call> ::= LPAREN <CallParams> RPAREN | LPAREN RPAREN
 <Loc> ::= IDEN | <ArrAcc>
-<ArrAcc> ::= IDEN DeclMats
-<Arr> ::= LBRACE Elems RBRACE
+<ArrAcc> ::= IDEN <DeclMats>
+<Arr> ::= LBRACE <Elems> RBRACE
 <Number> ::= DEC | BIN | HEX | OCT
 <Bool> ::= TRUE | FALSE
 <GenType> ::= <PrimType> | <ArrGenType>

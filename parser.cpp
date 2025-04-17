@@ -148,7 +148,7 @@ void parser::genParser::populateTree(int curNode, int curSym, int &pind, std::ve
 }
 
 parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
-    std::queue<std::tuple<std::stack<int>,std::vector<int>,int>> q;
+    std::queue<std::tuple<std::stack<int>, std::vector<int>, int>> q;
     std::stack<int> st;st.push(1);
     q.push({st,{},0});
     int longestPath = 0;
@@ -193,7 +193,7 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
         }else if(curPos == longestPath && expVal != curSym){
             single = false;
         }
-        if(!pda.isToken[curSym] && pda.leftMost[curSym].find(inpSym) == pda.leftMost[curSym].end()){
+        if(!pda.isToken[curSym] && (pda.leftMost[curSym].find(inpSym) == pda.leftMost[curSym].end())){
             continue;
         }
         if(pda.isToken[curSym]){
