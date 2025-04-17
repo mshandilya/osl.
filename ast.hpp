@@ -17,7 +17,7 @@ namespace ast{
         PROG_AST,
         LET_AST,
         ASSIGN_AST,
-        VAR_AST,
+        IDEN_AST,
         IF_AST,
         LOG_AST,
         RET_AST,
@@ -89,13 +89,16 @@ namespace ast{
     };
 
     class NullValue : public AtomicASTNode {
+        types::TYPES dt;
     public:
+        NullValue() : dt(types::UNRESOLVED) {}
+
         NodeType type() const override {
             return NULL_AST;
         }
 
         types::TYPES dataType() const override {
-            return types::TYPES::NULL_0;
+            return dt;
         }
     };
 
@@ -127,7 +130,7 @@ namespace ast{
         OperatorType op;
         std::unique_ptr<ASTNode> leftChild, rightChild;
 
-        BinaryOperator(OperatorType operation, std::unique_ptr<ASTNode> lc, std::unique_ptr<ASTNode> rc): op(operation), leftChild(std::move(lc)), rightChild(std::move(rc)) {};
+        BinaryOperator(OperatorType operation, std::unique_ptr<ASTNode>&& lc, std::unique_ptr<ASTNode>&& rc): op(operation), leftChild(std::move(lc)), rightChild(std::move(rc)) {};
 
         NodeType type() const override {
             return BOP_AST;
@@ -139,7 +142,7 @@ namespace ast{
         OperatorType op;
         std::unique_ptr<ASTNode> child;
 
-        UnaryOperator(OperatorType operation, std::unique_ptr<ASTNode> c): op(operation), child(std::move(c)) {};
+        UnaryOperator(OperatorType operation, std::unique_ptr<ASTNode>&& c): op(operation), child(std::move(c)) {};
 
         NodeType type() const override {
             return UOP_AST;
@@ -161,14 +164,14 @@ namespace ast{
         }
     };
 
-    class Variable: public ASTNode{
+    class Identifier: public ASTNode{
     public:
-        std::string varName;
+        std::string idenName;
 
-        Variable(std::string varName): varName(varName) {};
+        Identifier(std::string idenName): idenName(idenName) {};
         
         NodeType type() const override {
-            return VAR_AST;
+            return IDEN_AST;
         }
     };
 
@@ -178,13 +181,13 @@ namespace ast{
 
     class Let: public ASTNode{
     public:
-        std::unique_ptr<ASTNode> var;
         types::TYPES typ;
         Access acc;
+        std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        Let(std::unique_ptr<ASTNode> var, types::TYPES type, Access acc): var(std::move(var)), typ(type), acc(acc), val(nullptr) {};
-        Let(std::unique_ptr<ASTNode> var, types::TYPES type, Access acc, std::unique_ptr<ASTNode> val): var(std::move(var)), typ(type), acc(acc), val(std::move(val)) {};
+        Let(std::unique_ptr<ASTNode>&& var, types::TYPES type, Access acc): var(std::move(var)), typ(type), acc(acc), val(std::make_unique<NullValue>()) {};
+        Let(std::unique_ptr<ASTNode>&& var, types::TYPES type, Access acc, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), acc(acc), val(std::move(val)) {};
         
         NodeType type() const override {
             return LET_AST;
@@ -196,7 +199,7 @@ namespace ast{
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        Assign(std::unique_ptr<ASTNode> var, std::unique_ptr<ASTNode> val): var(std::move(var)), val(std::move(val)) {};
+        Assign(std::unique_ptr<ASTNode>&& var, std::unique_ptr<ASTNode>&& val): var(std::move(var)), val(std::move(val)) {};
         
         NodeType type() const override {
             return ASSIGN_AST;
@@ -209,8 +212,8 @@ namespace ast{
         std::unique_ptr<ASTNode> thenBody;
         std::unique_ptr<ASTNode> elseBody;
 
-        If(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> thenBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(nullptr) {};
-        If(std::unique_ptr<ASTNode> cond, std::unique_ptr<ASTNode> thenBody, std::unique_ptr<ASTNode> elseBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(std::move(elseBody)) {};
+        If(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(nullptr) {};
+        If(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody, std::unique_ptr<ASTNode>&& elseBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(std::move(elseBody)) {};
     
         NodeType type() const override {
             return IF_AST;
@@ -221,7 +224,7 @@ namespace ast{
     public:
         std::unique_ptr<ASTNode> val;
 
-        Log(std::unique_ptr<ASTNode> val): val(std::move(val)) {};
+        Log(std::unique_ptr<ASTNode>&& val): val(std::move(val)) {};
 
         NodeType type() const override {
             return LOG_AST;
@@ -232,7 +235,7 @@ namespace ast{
     public:
         std::unique_ptr<ASTNode> val;
 
-        Return(std::unique_ptr<ASTNode> val): val(std::move(val)) {};
+        Return(std::unique_ptr<ASTNode>&& val): val(std::move(val)) {};
 
         NodeType type() const override {
             return RET_AST;
@@ -242,18 +245,18 @@ namespace ast{
     class LetFun: public ASTNode{
     public:
         types::TYPES retType;
-        std::string name;
+        std::unique_ptr<ASTNode> name;
         std::vector<std::pair<types::TYPES,std::unique_ptr<ASTNode>>> params;
         std::unique_ptr<ASTNode> body;
 
-        LetFun(types::TYPES retType, std::string name, std::unique_ptr<ASTNode> body): retType(retType), name(name), body(std::move(body)) {};
+        LetFun(types::TYPES retType, std::unique_ptr<ASTNode>&& name, std::unique_ptr<ASTNode>&& body): retType(retType), name(std::move(name)), body(std::move(body)) {};
         
         NodeType type() const override {
             return LETFUN_AST;
         }
 
-        void addParam(types::TYPES typ, std::unique_ptr<ASTNode> param){
-            params.push_back({typ,std::move(param)});
+        void addParam(types::TYPES typ, std::unique_ptr<ASTNode>&& param){
+            params.emplace_back(typ, std::move(param));
         }
     };
 
@@ -277,7 +280,7 @@ namespace ast{
     std::unique_ptr<ast::ASTNode> convertLogStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertRetStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertFunDecl(int node, parser::parseTree &tree);
-    std::pair<types::TYPES,std::unique_ptr<ast::Variable>> convertParam(int node, parser::parseTree &tree);
+    std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> convertParam(int node, parser::parseTree &tree);
 
     void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }

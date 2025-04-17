@@ -1,0 +1,2 @@
+var i64 m := 54;
+var bool x;

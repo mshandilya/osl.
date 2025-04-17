@@ -29,9 +29,9 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             }
             break;
         }
-        case VAR_AST: {
-            const Variable* v = dynamic_cast<const Variable*>(node.get());
-            std::cout << "Variable(varName=" << v->varName << ")" << std::endl;
+        case IDEN_AST: {
+            const Identifier* v = dynamic_cast<const Identifier*>(node.get());
+            std::cout << "Variable(varName=" << v->idenName << ")" << std::endl;
             break;
         }
         case NUM_AST: {
@@ -57,6 +57,10 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
                     std::cout << "unknown";
             }
             std::cout << ")" << std::endl;
+            break;
+        }
+        case NULL_AST: {
+            std::cout << "NullValue()" << std::endl;
             break;
         }
         case UOP_AST: {
@@ -273,7 +277,7 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
     for(int nNode: tree.adj[node]){
         std::string name = tree.id[nNode];
         if(name == "IDEN"){
-            return std::make_unique<Variable>(tree.val[nNode]);
+            return std::make_unique<Identifier>(tree.val[nNode]);
         }else if(name == "<Number>"){
             auto numUtil = utils::stringToNumberUtil(tree.val[tree.adj[nNode][0]]);
             switch (numUtil.first) {
@@ -309,7 +313,7 @@ std::unique_ptr<ast::ASTNode> ast::convertAssn(int node, parser::parseTree &tree
             val = nNode;
         }
     }
-    auto ptr = std::make_unique<ast::Variable>(iden);
+    auto ptr = std::make_unique<ast::Identifier>(iden);
     return std::make_unique<Assign>(std::move(ptr), convertVal(val, tree));
 }
 
@@ -340,7 +344,7 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
                     iden = tree.val[tNode];
                 }
             }
-            auto ptr = std::make_unique<ast::Variable>(iden);
+            auto ptr = std::make_unique<ast::Identifier>(iden);
             if(val != -1){
                 return std::make_unique<Let>(std::move(ptr), type, access, convertVal(val, tree));
             }else{
@@ -462,7 +466,7 @@ std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree
     }
 }
 
-std::pair<types::TYPES,std::unique_ptr<ast::Variable>> ast::convertParam(int node, parser::parseTree &tree){
+std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> ast::convertParam(int node, parser::parseTree &tree){
     LOG("inside param")
     types::TYPES typ;
     std::string iden;
@@ -473,7 +477,7 @@ std::pair<types::TYPES,std::unique_ptr<ast::Variable>> ast::convertParam(int nod
             iden = tree.val[nNode];
         }
     }
-    auto ptr = std::make_unique<ast::Variable>(iden);
+    auto ptr = std::make_unique<ast::Identifier>(iden);
     return {typ, std::move(ptr)};
 }
 
@@ -494,7 +498,7 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
             paramNode = nNode;
         }
     }
-    std::unique_ptr<LetFun> ptr = std::make_unique<LetFun>(retType, iden, std::move(body));
+    std::unique_ptr<LetFun> ptr = std::make_unique<LetFun>(retType, std::make_unique<Identifier>(iden), std::move(body));
     int curNode = paramNode;
     while(tree.adj[curNode].size() > 1){
         LOG("inside while at fun decl (trying to parse params)")

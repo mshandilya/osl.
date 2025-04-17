@@ -37,7 +37,6 @@ int numChar(int val);
 
 namespace types {
     enum TYPES {
-        NULL_0,
         UNRESOLVED,
         BOOL,
         CHAR_UNRESOLVED,
