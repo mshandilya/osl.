@@ -75,6 +75,9 @@ parser::PDA::PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::
             if(isToken[possSym]){
                 leftMost[stSym][possSym] = true;
             }else{
+                if(leftMost[possSym].empty()){
+                    throw std::logic_error(rules[i][j][0]+" has to be defined below "+rules[i][0][0]);
+                }
                 for(auto possToken: leftMost[possSym]){
                     leftMost[stSym][possToken.first] = true;
                 }

@@ -37,8 +37,8 @@
 <Modulo> ::= <UnAmb> MOD <UnAmb>
 <Xor> ::= <UnAmb> XOR <UnAmb> | <UnAmb> XOR <Xor>
 <Xand> ::= <UnAmb> XAND <UnAmb> | <UnAmb> XAND <Xand>
-<LeftShift> ::= <Unamb> LSHIFT <Unamb>
-<RightShift> ::= <Unamb> RSHIFT <Unamb>
+<LeftShift> ::= <UnAmb> LSHIFT <UnAmb>
+<RightShift> ::= <UnAmb> RSHIFT <UnAmb>
 <UnaryNeg> ::= NEG <UnAmb> | NEG <UnaryNeg>
 <UnAmb> ::= IDEN | <Number> | <Bool> | LPAREN <Exp> RPAREN | <FunCall>
 <FunCall> ::= IDEN <Calls>
