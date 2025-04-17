@@ -157,7 +157,6 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
     std::pair<int,int> pos;
     int missVal = -1;
     bool single = false;
-    //int dep = 0;
     while(!q.empty()){
         std::tuple<std::stack<int>, std::vector<int>, std::pair<int,int>> cur = q.front();
         q.pop();
@@ -166,23 +165,6 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
         std::pair<int,int> posInfo = std::get<2>(cur);
         int curPos = posInfo.first;
         int endPos = posInfo.second;
-        //if(path.size() > dep){
-        //    dep = path.size();
-            //std::cout << "Depth " << dep << std::endl;
-        //}
-        //std::vector<int> expPath = {1, 2, 1, 1, 1, 1, 4, 1, 3, 1, 1, 2, 1};
-        //std::cout << "path: ";
-        //bool match = true;//path.size() == expPath.size();
-        //for(int i = 0;i < path.size();i++){
-        //    match &= path[i] == expPath[i];
-        //    std::cout << x << " ";
-        //}
-        //std::cout << std::endl;
-        /*if(match){
-            std::cout << curPos << " -> " << endPos << std::endl;
-            std::cout << st.size() << std::endl;
-            std::cout << pda.idSym[st.top()] << std::endl;
-        }*/
         if(st.empty()){
             if(curPos == endPos){
                 parseTree tree;
@@ -228,6 +210,10 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                 int nEndPos = endPos;
                 int cind = 1;
                 bool canTrans = true;
+                for(int i = cind;i < curTrans.size();i++){
+                    nst.push(curTrans[i]);
+                }
+                q.push({nst,npath,{curPos+1,nEndPos}});
                 while(cind < curTrans.size() && pda.isToken[curTrans[cind]]){
                     if(curPos+1 >= nEndPos){
                         canTrans = false;
@@ -236,6 +222,11 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                     if(pda.symId[tokens[nEndPos-1].getId()] == curTrans[cind]){
                         cind++;
                         nEndPos--;
+                        std::stack<int> nnst = st;
+                        for(int i = cind;i < curTrans.size();i++){
+                            nnst.push(curTrans[i]);
+                        }
+                        q.push({nnst,npath,{curPos+1,nEndPos}});
                     }else{
                         break;
                     }
@@ -243,10 +234,6 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                 if(!canTrans){
                     continue;
                 }
-                for(int i = cind;i < curTrans.size();i++){
-                    nst.push(curTrans[i]);
-                }
-                q.push({nst,npath,{curPos+1,nEndPos}});
             }
             //Add e-transitions
             for(std::vector<int> curTrans: pda.trans[0][curSym]){
@@ -256,6 +243,10 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                 int nEndPos = endPos;
                 int cind = 1;
                 bool canTrans = true;
+                for(int i = cind;i < curTrans.size();i++){
+                    nst.push(curTrans[i]);
+                }
+                q.push({nst,npath,{curPos,nEndPos}});
                 while(cind < curTrans.size() && pda.isToken[curTrans[cind]]){
                     if(curPos >= nEndPos){
                         canTrans = false;
@@ -264,6 +255,11 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                     if(pda.symId[tokens[nEndPos-1].getId()] == curTrans[cind]){
                         cind++;
                         nEndPos--;
+                        std::stack<int> nnst = st;
+                        for(int i = cind;i < curTrans.size();i++){
+                            nnst.push(curTrans[i]);
+                        }
+                        q.push({nnst,npath,{curPos,nEndPos}});
                     }else{
                         break;
                     }
@@ -271,10 +267,6 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                 if(!canTrans){
                     continue;
                 }
-                for(int i = cind;i < curTrans.size();i++){
-                    nst.push(curTrans[i]);
-                }
-                q.push({nst,npath,{curPos,nEndPos}});
             }
         }
     }
