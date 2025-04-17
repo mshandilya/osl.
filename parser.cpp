@@ -54,7 +54,7 @@ parser::PDA::PDA(std::vector<std::vector<std::vector<std::string>>> rules, std::
     for(int i = rules.size()-1;i >= 0;i--){
         int stSym = symId[rules[i][0][0]];
         if(!leftMost[stSym].empty()){
-            continue;
+            throw std::logic_error(rules[i][0][0]+" has been defined more than once");
         }
         desc[rules[i][0][0]] = rules[i][0][0].substr(1,rules[i][0][0].length()-2);
         std::string curDesc = "";
