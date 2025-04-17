@@ -3,6 +3,8 @@
 #include "ast.hpp"
 #include "resolver.hpp"
 
+#define LOG(x) //std::cout<<x<<std::endl;
+
 int main(int argc, char* argv[]){
     lexer::genLexer lexer("TOKENS");
     auto lex = lexer.getLexer();
@@ -28,6 +30,8 @@ int main(int argc, char* argv[]){
     }
     std::unique_ptr<ast::ASTNode> root = ast::parseTreeToAST(tree);
     ast::vizTree(root, "", true);
+    LOG("about to start resolution")
     Resolver resolver(root);
+    LOG("resolution done successfully")
     return 0;
 }
