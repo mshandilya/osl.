@@ -20,6 +20,7 @@
 <VarDecl> ::= <Mutable> | <Immutable>
 <Mutable> ::= VAR <DeclType> IDEN SEMC | VAR <DeclType> <Assn> SEMC
 <Immutable> ::= CONST <DeclType> <Assn> SEMC
+<Elems> ::= <Val> COMMA <Elems> | <Val> COMMA | <Val>
 <Val> ::= <Exp> | <Assn> | NULL
 <Assn> ::= <Loc> ASSIGN <Val>
 <Exp> ::= <UnAmb> | <Or> | <And> | <Not> | <Lesser> | <LessEqual> | <Greater> | <GreatEqual> | <Eq> | <NotEq> | <Add> | <Multiply> | <Divide> | <Subtract> | <Power> | <Modulo> | <Xor> | <Xand> | <LeftShift> | <RightShift> | <UnaryNeg>
@@ -47,7 +48,6 @@
 <Loc> ::= IDEN | <ArrAcc>
 <ArrAcc> ::= IDEN DeclMats
 <Arr> ::= LBRACE Elems RBRACE
-<Elems> ::= <Val> COMMA <Elems> | <Val> COMMA | <Val>
 <Number> ::= DEC | BIN | HEX | OCT
 <Bool> ::= TRUE | FALSE
 <GenType> ::= <PrimType> | <ArrGenType>

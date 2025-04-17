@@ -34,6 +34,42 @@ void Resolver::resolveNext(std::unique_ptr<ast::ASTNode>& node) {
 
 void Resolver::resolveProg(std::unique_ptr<ast::Prog>& node) {
     for(auto& child : node->decls) {
-
+        resolveNext(child);
     }
+}
+
+void Resolver::resolveLet(std::unique_ptr<ast::Let>& node) {
+    
+}
+
+void Resolver::resolveLetFun(std::unique_ptr<ast::LetFun>& node) {
+
+}
+
+void Resolver::resolveIf(std::unique_ptr<ast::If>& node) {
+
+}
+
+void Resolver::resolveLog(std::unique_ptr<ast::Log>& node) {
+
+}
+
+void Resolver::resolveReturn(std::unique_ptr<ast::Return>& node) {
+
+}
+
+void Resolver::resolveAssign(std::unique_ptr<ast::Assign>& node) {
+
+}
+
+void Resolver::resolveBinOp(std::unique_ptr<ast::BinaryOperator>& node) {
+
+}
+
+void Resolver::resolveUnOp(std::unique_ptr<ast::UnaryOperator>& node) {
+
+}
+
+void Resolver::resolveIden(std::unique_ptr<ast::Identifier>& node) {
+
 }
