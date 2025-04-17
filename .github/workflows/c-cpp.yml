@@ -17,7 +17,12 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Rename repository directory
-        run: mv "osl." osl
+        run: |
+          if [ -d osl ]; then
+            mv osl osl
+          elif [ -d "osl." ]; then
+            mv "osl." osl
+          fi
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential
@@ -39,7 +44,12 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Rename repository directory
-        run: rename "osl." osl
+        run: |
+          if [ -d osl ]; then
+            mv osl osl
+          elif [ -d "osl." ]; then
+            mv "osl." osl
+          fi
 
       - name: Set up MSYS2 environment
         uses: msys2/setup-msys2@v2
