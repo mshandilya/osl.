@@ -220,3 +220,23 @@ std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil
             //won't reach here
     }
 }
+
+std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToFloatUtil(std::string& source) {
+    // This function always returns a 64-bit float, later, this float is cast down as needed
+    std::vector<unsigned char> value;
+    double floatValue = std::stod(source);
+    types::MAX_BITS bitSize = types::B64;
+
+    union {
+        double d;
+        uint64_t i64;
+    } u;
+
+    u.d = floatValue;
+
+    value.resize(8);
+    for (int i = 0; i < 8; ++i)
+        value[i] = (u.i64 >> (i * 8)) & 0xFF;
+
+    return std::make_pair(bitSize, value);
+}

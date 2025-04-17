@@ -215,8 +215,14 @@ namespace types {
 //    c16 // UTF 16 --
 }
 
+// Both the functions below return an array of bytes
 namespace utils{
     std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source);
+}
+
+// This function always returns a 64-bit float, later, this float is cast down as needed
+namespace utils{
+    std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToFloatUtil(std::string& source);
 }
 
 #endif
