@@ -171,9 +171,19 @@ namespace ast{
     class Identifier: public ASTNode{
     public:
         std::string idenName;
+        types::TYPES boundDataType;
+        ast::Access access;
+        int id, scopeId;
 
         Identifier(std::string idenName): idenName(idenName) {};
         
+        void bind(types::TYPES boundDataType, Access access, int id, int scopeId) {
+            this->boundDataType = boundDataType;
+            this->access = access;
+            this->id = id;
+            this->scopeId = scopeId;
+        }
+
         NodeType type() const override {
             return IDEN_AST;
         }

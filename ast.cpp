@@ -336,7 +336,7 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
                     for(int iNode: tree.adj[tNode]){
                         if(tree.id[iNode] == "IDEN"){
                             iden = tree.val[iNode];
-                        }else if(tree.id[iNode] == "<Val>"){
+                        } else if(tree.id[iNode] == "<Val>"){
                             val = iNode;
                         }
                     }

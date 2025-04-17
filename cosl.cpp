@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "ast.hpp"
+#include "resolver.hpp"
 
 int main(int argc, char* argv[]){
     lexer::genLexer lexer("TOKENS");
@@ -27,5 +28,6 @@ int main(int argc, char* argv[]){
     }
     std::unique_ptr<ast::ASTNode> root = ast::parseTreeToAST(tree);
     ast::vizTree(root, "", true);
+    Resolver resolver(root);
     return 0;
 }
