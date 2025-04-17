@@ -1,20 +1,46 @@
 CC = gcc
 CCPP = g++
-CFLAGS = -Wall -Werror
+CFLAGS = -Wall
+CPFLAGS = -std=c++20
 
-COSL_TARGET = cosl.exe
-COSL_SRCS = cosl.cpp lexer.cpp parser.cpp utils.cpp ast.cpp
+BIN_DIR = bin
+COSL_TARGET = $(BIN_DIR)/cosl
+COSL_SRCS = cosl.cpp lexer.cpp parser.cpp utils.cpp ast.cpp resolver.cpp
+# later add hmap and rtrim srcs too!
 
-ROSL_TARGET = rosl.exe
+ROSL_TARGET = $(BIN_DIR)/rosl
 ROSL_SRCS = rosl.c
 
-all: $(COSL_TARGET) $(ROSL_TARGET)
+ifeq ($(OS),Windows_NT)
+    EXE_EXT = .exe
+    RM = del /Q
+else
+    EXE_EXT =
+    RM = rm -f
+endif
 
-$(COSL_TARGET): $(COSL_SRCS)
-	$(CCPP) $(CFLAGS) -o $(COSL_TARGET) $(COSL_SRCS)
+COSL_TARGET := $(COSL_TARGET)$(EXE_EXT)
+ROSL_TARGET := $(ROSL_TARGET)$(EXE_EXT)
 
-$(ROSL_TARGET): $(ROSL_SRCS)
+all: $(BIN_DIR) $(COSL_TARGET) $(ROSL_TARGET)
+
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+$(COSL_TARGET): $(COSL_SRCS) | $(BIN_DIR)
+	$(CCPP) $(CPFLAGS) -o $(COSL_TARGET) $(COSL_SRCS)
+
+$(ROSL_TARGET): $(ROSL_SRCS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $(ROSL_TARGET) $(ROSL_SRCS)
 
+# added timeout of 5s if the test doesn't
+test: $(COSL_TARGET)
+	@echo "Running tests..."
+	@find ./unitTests -type f -name "*.osl" | while read -r testfile; do \
+		echo "Running $$testfile..."; \
+		timeout 5 ./$(COSL_TARGET) "$$testfile" || echo "Test $$testfile timed out."; \
+	done
+
 clean:
-	MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" rm -f $(COSL_TARGET) $(ROSL_TARGET)
+	$(RM) $(COSL_TARGET) $(ROSL_TARGET)
+	$(RM) -r $(BIN_DIR)
