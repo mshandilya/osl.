@@ -1,6 +1,9 @@
 <Prog> ::= <Decl> | <Decl> <Prog>
 <Decl> ::= <VarDecl> | <Stmt> | <FunDecl>
-<FunCall> ::= IDEN LPAREN <Params> RPAREN
+<FunCall> ::= IDEN <Calls>
+<Calls> ::= <Call> | <Call> <Calls>
+<Call> ::= LPAREN <CallParams> RPAREN | LPAREN RPAREN
+<CallParams> ::= <Val> | <Val> COMMA <CallParams>
 <FunDecl> ::= FUN <Type> IDEN LPAREN <Params> RPAREN <Block> | FUN <Type> IDEN LPAREN RPAREN <Block>
 <Params> ::= <Param> | <Param> COMMA <Params>
 <Param> ::= <Type> IDEN
