@@ -7,13 +7,14 @@
 <FunDecl> ::= FUN <Type> IDEN LPAREN <Params> RPAREN <Block> | FUN <Type> IDEN LPAREN RPAREN <Block>
 <Params> ::= <Param> | <Param> COMMA <Params>
 <Param> ::= <Type> IDEN
-<Stmt> ::= <ExpStmt> | <Block> | <IfStmt> | <LogStmt> | <RetStmt>
+<Stmt> ::= <ExpStmt> | <Block> | <IfStmt> | <WhileStmt> | <LogStmt> | <RetStmt>
 <Block> ::= LBRACE RBRACE | LBRACE <Prog> RBRACE
 <RetStmt> ::= RETURN <ExpStmt>
 <IfStmt> ::= IF <Val> <Block> | IF <Val> <Block> <ElseStmt> | IF <Val> <Block> <ElifStmts> | IF <Val> <Block> <ElifStmts> <ElseStmt>
 <ElseStmt> ::= ELSE <Block>
 <ElifStmts> ::= <ElifStmt> | <ElifStmt> <ElifStmts>
 <ElifStmt> ::= ELIF <Val> <Block>
+<WhileStmt> ::= WHILE <Val> <Block>
 <LogStmt> ::= LOG <ExpStmt>
 <ExpStmt> ::= <Val> SEMC
 <VarDecl> ::= <Mutable> | <Immutable>

@@ -36,6 +36,7 @@ const CONST
 if IF
 elif ELIF
 else ELSE
+while WHILE
 fn FUN
 return RETURN
 log LOG
