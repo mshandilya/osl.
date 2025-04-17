@@ -21,7 +21,9 @@ namespace ast{
         IF_AST,
         LOG_AST,
         RET_AST,
-        LETFUN_AST
+        LETFUN_AST,
+        WHILE_AST,
+        FUNCALL_AST
     };
 
     enum OperatorType {
@@ -270,6 +272,34 @@ namespace ast{
         }
     };
 
+    class While: public ASTNode{
+    public:
+        std::unique_ptr<ASTNode> cond;
+        std::unique_ptr<ASTNode> body;
+        
+        While(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& body): cond(std::move(cond)), body(std::move(body)) {};
+    
+        NodeType type() const override {
+            return WHILE_AST;
+        }
+    };
+
+    class FunCall: public ASTNode{
+    public:
+        std::unique_ptr<ASTNode> name;
+        std::vector<std::unique_ptr<ASTNode>> params;
+        
+        FunCall(std::unique_ptr<ASTNode>&& name): name(std::move(name)) {};
+    
+        NodeType type() const override {
+            return FUNCALL_AST;
+        }
+
+        void addParam(std::unique_ptr<ASTNode>&& param){
+            params.push_back(std::move(param));
+        }
+    };
+
     types::TYPES convertType(std::string type);
     std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> convertParam(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> parseTreeToAST(parser::parseTree &tree);
@@ -291,6 +321,9 @@ namespace ast{
     std::unique_ptr<ast::ASTNode> convertLogStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertRetStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertFunDecl(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertWhileStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ast::ASTNode> convertFunCall(int node, parser::parseTree &tree);
+    std::vector<std::unique_ptr<ASTNode>> convertCallParams(int node, parser::parseTree &tree);
 
     void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }

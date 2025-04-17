@@ -135,7 +135,8 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
         }
         case LETFUN_AST: {
             const LetFun* l = dynamic_cast<const LetFun*>(node.get());
-            std::cout << "LetFun(name=" << l->name << ", retType=";
+            const Identifier* i = dynamic_cast<const Identifier*>(l->name.get());
+            std::cout << "LetFun(name=" << i->idenName << ", retType=";
             switch(l->retType){
                 case types::INT_8:
                     std::cout << "int8";
@@ -168,6 +169,27 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             }
             std::cout << prefix << "+-Body=" << std::endl;
             vizTree(l->body, newPrefix, true);
+            break;
+        }
+        case WHILE_AST: {
+            const While* w = dynamic_cast<const While*>(node.get());
+            std::cout << "While" << std::endl;
+            std::cout << prefix << "+-Cond=" << std::endl;
+            vizTree(w->cond, newPrefix, true);
+            std::cout << prefix << "+-Body=" << std::endl;
+            vizTree(w->body, newPrefix, true);
+            break;
+        }
+        case FUNCALL_AST: {
+            const FunCall* f = dynamic_cast<const FunCall*>(node.get());
+            std::cout << "FunCall" << std::endl;
+            std::cout << prefix << "+-Name=" << std::endl;
+            vizTree(f->name, newPrefix, true);
+            std::cout << prefix << "+-Params=" << std::endl;
+            for(size_t i = 0;i < f->params.size();i++){
+                vizTree(f->params[i], newPrefix, i==f->params.size()-1);
+            }
+            break;
         }
     }
 }
@@ -299,6 +321,82 @@ std::unique_ptr<ast::ASTNode> ast::convertExp(int node, parser::parseTree &tree)
     }
 }
 
+std::vector<std::unique_ptr<ast::ASTNode>> ast::convertCallParams(int node, parser::parseTree &tree){
+    std::vector<std::unique_ptr<ASTNode>> params;
+    int current = node;
+    while(true){
+        for(int child: tree.adj[current]){
+            if(tree.id[child] == "<Val>"){
+                params.push_back(convertVal(child, tree));
+                break;
+            }
+        }
+        bool foundComma = false;
+        int nextCallParams = -1;
+        for(size_t i = 0; i < tree.adj[current].size(); i++){
+            int child = tree.adj[current][i];
+            if(tree.id[child] == "COMMA"){
+                foundComma = true;
+                if(i+1 < tree.adj[current].size()){
+                    nextCallParams = tree.adj[current][i+1];
+                }
+                break;
+            }
+        }
+        if(foundComma && nextCallParams != -1){
+            current = nextCallParams;
+        }else{
+            break;
+        }
+    }
+    return params;
+}
+
+std::unique_ptr<ast::ASTNode> ast::convertFunCall(int node, parser::parseTree &tree){
+    std::unique_ptr<ASTNode> callee;
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "IDEN"){
+            callee = std::make_unique<Identifier>(tree.val[nNode]);
+        }
+    }
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<Calls>"){
+            int callsNode = nNode;
+            while(true){
+                bool processedCall = false;
+                for(int child: tree.adj[callsNode]) {
+                    if(tree.id[child] == "<Call>"){
+                        std::vector<std::unique_ptr<ASTNode>> params;
+                        for(int callChild : tree.adj[child]){
+                            if(tree.id[callChild] == "<CallParams>"){
+                                params = convertCallParams(callChild, tree);
+                            }
+                        }
+                        auto newCall = std::make_unique<FunCall>(std::move(callee));
+                        for(auto& param: params){
+                            newCall->addParam(std::move(param));
+                        }
+                        callee = std::move(newCall);
+                        processedCall = true;
+                    }
+                }
+                bool foundNextCalls = false;
+                for(int child: tree.adj[callsNode]){
+                    if(tree.id[child] == "<Calls>"){
+                        callsNode = child;
+                        foundNextCalls = true;
+                        break;
+                    }
+                }
+                if(!foundNextCalls){
+                    break;
+                }
+            }
+        }
+    }
+    return callee;
+}
+
 std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tree) {
     LOG("inside unamb")
     for(int nNode: tree.adj[node]){
@@ -328,7 +426,7 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
             // unimplemented    
         } 
         else if(name == "<FunCall>"){
-            // unimplemented
+            return convertFunCall(nNode, tree);
         }
     }
 }
@@ -402,6 +500,7 @@ std::unique_ptr<ast::ASTNode> ast::convertBlock(int node, parser::parseTree &tre
             return convertProg(nNode, tree);
         }
     }
+    return nullptr;
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertElseStmt(int node, parser::parseTree &tree){
@@ -481,6 +580,18 @@ std::unique_ptr<ast::ASTNode> ast::convertRetStmt(int node, parser::parseTree &t
     }
 }
 
+std::unique_ptr<ast::ASTNode> ast::convertWhileStmt(int node, parser::parseTree &tree){
+    std::unique_ptr<ASTNode> cond,body;
+    for(int nNode: tree.adj[node]){
+        if(tree.id[nNode] == "<Val>"){
+            cond = std::move(convertVal(nNode, tree));
+        }else if(tree.id[nNode] == "<Block>"){
+            body = std::move(convertBlock(nNode, tree));
+        }
+    }
+    return std::make_unique<While>(std::move(cond), std::move(body));
+}
+
 std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree){
     LOG("inside stmt")
     for(int nNode: tree.adj[node]){
@@ -494,6 +605,8 @@ std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree
             return convertLogStmt(nNode, tree);
         }else if(tree.id[nNode] == "<RetStmt>"){
             return convertRetStmt(nNode, tree);
+        }else if(tree.id[nNode] == "<WhileStmt>"){
+            return convertWhileStmt(nNode, tree);
         }
     }
 }
@@ -535,6 +648,9 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
         }
     }
     std::unique_ptr<LetFun> ptr = std::make_unique<LetFun>(retType, std::make_unique<Identifier>(iden), std::move(body));
+    if(paramNode == -1){
+        return ptr;
+    }
     int curNode = paramNode;
     while(tree.adj[curNode].size() > 1){
         LOG("inside while at fun decl (trying to parse params)")
