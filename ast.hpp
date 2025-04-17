@@ -24,6 +24,33 @@ namespace ast{
         LETFUN_AST
     };
 
+    enum OperatorType {
+        UNEG_OP,   // Unary Neg
+        NOT_OP,    // Unary Not
+        ADD_OP,    // Binary Add
+        SUB_OP,    // Binary Subtraction
+        MUL_OP,    // Binary Multiplication
+        DIV_OP,    // Binary Division
+        POW_OP,    // Binary Exponentiation
+        MOD_OP,    // Binary Modulo
+        OR_OP,     // Binary Or
+        AND_OP,    // Binary And
+        XOR_OP,    // Binary Xor
+        XAND_OP,   // Binary Xand
+        LSHIFT_OP, // Binary Left Shift Operator
+        RSHIFT_OP, // Binary Right Shift Operator
+        EQ_OP,     // Binary Equality
+        NEQ_OP,    // Binary Inequality
+        LE_OP,     // Binary Less Than
+        LEQ_OP,    // Binary Less Than Equal To
+        GE_OP,     // Binary Greater Than
+        GEQ_OP,    // Binary Greater Than Equal To
+    };
+
+    enum Access{
+        VAR, CONST
+    };
+
     class AtomicASTNode;
     
     class ASTNode {
@@ -102,29 +129,6 @@ namespace ast{
         }
     };
 
-    enum OperatorType {
-        UNEG_OP,   // Unary Neg
-        NOT_OP,    // Unary Not
-        ADD_OP,    // Binary Add
-        SUB_OP,    // Binary Subtraction
-        MUL_OP,    // Binary Multiplication
-        DIV_OP,    // Binary Division
-        POW_OP,    // Binary Exponentiation
-        MOD_OP,    // Binary Modulo
-        OR_OP,     // Binary Or
-        AND_OP,    // Binary And
-        XOR_OP,    // Binary Xor
-        XAND_OP,   // Binary Xand
-        LSHIFT_OP, // Binary Left Shift Operator
-        RSHIFT_OP, // Binary Right Shift Operator
-        EQ_OP,     // Binary Equality
-        NEQ_OP,    // Binary Inequality
-        LE_OP,     // Binary Less Than
-        LEQ_OP,    // Binary Less Than Equal To
-        GE_OP,     // Binary Greater Than
-        GEQ_OP,    // Binary Greater Than Equal To
-    };
-
     class BinaryOperator : public ASTNode {
     public:
         OperatorType op;
@@ -149,7 +153,7 @@ namespace ast{
         }
     };
 
-    class Prog: public ASTNode{
+    class Prog : public ASTNode{
     public:
         std::vector<std::unique_ptr<ASTNode>> decls;
 
@@ -173,10 +177,6 @@ namespace ast{
         NodeType type() const override {
             return IDEN_AST;
         }
-    };
-
-    enum Access{
-        VAR, CONST
     };
 
     class Let: public ASTNode{
@@ -260,12 +260,13 @@ namespace ast{
         }
     };
 
+    types::TYPES convertType(std::string type);
+    std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> convertParam(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> parseTreeToAST(parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertProg(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVarDecl(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertVal(int node, parser::parseTree &tree);
-    types::TYPES convertType(std::string type);
     std::unique_ptr<ast::ASTNode> convertExp(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertAssn(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertUnAmb(int node, parser::parseTree &tree);
@@ -280,7 +281,6 @@ namespace ast{
     std::unique_ptr<ast::ASTNode> convertLogStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertRetStmt(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> convertFunDecl(int node, parser::parseTree &tree);
-    std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> convertParam(int node, parser::parseTree &tree);
 
     void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }

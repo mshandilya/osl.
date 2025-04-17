@@ -1,0 +1,7 @@
+fn i32 a(i32 b, i32 c){
+    var i32 a := 3;
+    while a<b {
+        log b;
+        b := b - 4;
+    }    
+}

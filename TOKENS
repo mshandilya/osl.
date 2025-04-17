@@ -9,6 +9,8 @@ false FALSE
 ) RPAREN
 { LBRACE
 } RBRACE
+\[ LBOX
+\] RBOX
 \+ ADD
 \* MUL
 / DIV
