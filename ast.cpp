@@ -20,7 +20,33 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
         case LET_AST: {
             std::cout << "Let(";
             const Let* l = dynamic_cast<const Let*>(node.get());
-            std::cout << "type=" << l->typ << ", access=" << l->acc << ")" << std::endl;
+            std::cout << "type=";
+            switch(l->typ) {
+                case types::INT_8:
+                    std::cout << "int8";
+                    break;
+                case types::INT_16:
+                    std::cout << "int16";
+                    break;
+                case types::INT_32:
+                    std::cout << "int32";
+                    break;
+                case types::INT_64:
+                    std::cout << "int64";
+                    break;
+                case types::INT_128:
+                    std::cout << "int128";
+                    break;
+                case types::BOOL:
+                    std::cout << "boolean";
+                    break;
+                case types::CHAR_8:
+                    std::cout << "char8";
+                    break;
+                default:
+                    std::cout << "unknown";
+            }  
+            std::cout << ", access=" << l->acc << ")" << std::endl;
             if(l->val != nullptr){
                 vizTree(l->var, newPrefix, false);
                 vizTree(l->val, newPrefix, true);
@@ -148,6 +174,7 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
 
 types::TYPES ast::convertType(std::string type){
     LOG("inside type")
+    LOG(type)
     std::string bits = type.substr(2, type.length()-2);
     if(type[1] == 'I') {
         if(bits == "8")
@@ -276,9 +303,10 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
     LOG("inside unamb")
     for(int nNode: tree.adj[node]){
         std::string name = tree.id[nNode];
-        if(name == "IDEN"){
+        if(name == "IDEN") {
             return std::make_unique<Identifier>(tree.val[nNode]);
-        }else if(name == "<Number>"){
+        } 
+        else if(name == "<Number>"){
             auto numUtil = utils::stringToNumberUtil(tree.val[tree.adj[nNode][0]]);
             switch (numUtil.first) {
                 case types::B8:
@@ -292,12 +320,15 @@ std::unique_ptr<ast::ASTNode> ast::convertUnAmb(int node, parser::parseTree &tre
                 case types::B128:
                     return std::make_unique<NumValue<types::i128>>(types::i128(numUtil.second));
             }
-        }else if(name == "<Exp>"){
+        } 
+        else if(name == "<Exp>"){
             return convertExp(nNode, tree);
-        }else if(name == "<Bool>"){
-            
-        }else if(name == "<FunCall>"){
-
+        } 
+        else if(name == "<Bool>"){
+            // unimplemented    
+        } 
+        else if(name == "<FunCall>"){
+            // unimplemented
         }
     }
 }
@@ -307,9 +338,10 @@ std::unique_ptr<ast::ASTNode> ast::convertAssn(int node, parser::parseTree &tree
     std::string iden = "";
     int val = -1;
     for(int nNode: tree.adj[node]){
-        if(tree.id[nNode] == "IDEN"){
-            iden = tree.val[nNode];
-        }else if(tree.id[nNode] == "<Val>"){
+        if(tree.id[nNode] == "<Loc>") {
+            iden = tree.val[tree.adj[nNode][0]];
+        }
+        else if(tree.id[nNode] == "<Val>"){
             val = nNode;
         }
     }
@@ -330,13 +362,13 @@ std::unique_ptr<ast::ASTNode> ast::convertVarDecl(int node, parser::parseTree &t
             std::string iden;
             for(int tNode: tree.adj[nNode]){
                 std::string name = tree.id[tNode];
-                if(name == "<Type>"){
-                    type = convertType(tree.id[tree.adj[tNode][0]]);
+                if(name == "<DeclType>"){
+                    type = convertType(tree.id[tree.adj[tree.adj[tNode][0]][0]]);
                 }else if(name == "<Assn>"){
                     for(int iNode: tree.adj[tNode]){
-                        if(tree.id[iNode] == "IDEN"){
-                            iden = tree.val[iNode];
-                        }else if(tree.id[iNode] == "<Val>"){
+                        if(tree.id[iNode] == "<Loc>"){
+                            iden = tree.val[tree.adj[iNode][0]];
+                        } else if(tree.id[iNode] == "<Val>"){
                             val = iNode;
                         }
                     }
@@ -471,9 +503,10 @@ std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> ast::convertParam(int n
     types::TYPES typ;
     std::string iden;
     for(int nNode: tree.adj[node]){
-        if(tree.id[nNode] == "<Type>"){
-            typ = ast::convertType(tree.id[tree.adj[nNode][0]]);
-        }else if(tree.id[nNode] == "IDEN"){
+        if(tree.id[nNode] == "<GenType>"){
+            typ = ast::convertType(tree.id[tree.adj[tree.adj[nNode][0]][0]]);
+        }
+        else if(tree.id[nNode] == "IDEN"){
             iden = tree.val[nNode];
         }
     }
@@ -488,13 +521,16 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
     std::unique_ptr<ASTNode> body;
     int paramNode = -1;
     for(int nNode: tree.adj[node]){
-        if(tree.id[nNode] == "<Type>"){
-            retType = convertType(tree.id[tree.adj[nNode][0]]);
-        }else if(tree.id[nNode] == "IDEN"){
+        if(tree.id[nNode] == "<GenType>"){
+            retType = convertType(tree.id[tree.adj[tree.adj[nNode][0]][0]]);
+        } 
+        else if(tree.id[nNode] == "IDEN"){
             iden = tree.val[nNode];
-        }else if(tree.id[nNode] == "<Block>"){
+        } 
+        else if(tree.id[nNode] == "<Block>"){
             body = convertBlock(nNode, tree);
-        }else if(tree.id[nNode] == "<Params>"){
+        } 
+        else if(tree.id[nNode] == "<Params>"){
             paramNode = nNode;
         }
     }

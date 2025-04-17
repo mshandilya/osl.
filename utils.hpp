@@ -58,7 +58,8 @@ namespace types {
         FLOAT_16,
         FLOAT_32,
         FLOAT_64,
-        FLOAT_128
+        FLOAT_128,
+        FUNCTION
     };
 
     enum MAX_BITS {
