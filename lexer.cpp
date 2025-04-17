@@ -150,19 +150,28 @@ void lexer::DFA::insert(std::string sym, std::string name){
         }
     }
     node = nxtNode;
-    bool endAlphaNum = false;
-    char lastChar = sym[sym.size()-1];
-    if(lastChar == '+' || lastChar == '*' || lastChar == '|'){
-        lastChar = sym[sym.size()-2];
+    char lastChar = '\0';
+    for(int i = 0;i < sym.size();i++){
+        if(sym[i] == '\\'){
+            if(i+1 == sym.size()){
+                throw std::logic_error("Invalid regex: "+sym);
+            }
+            lastChar = sym[i+1];
+            i++;
+        }else if(sym[i] == '*' || sym[i] == '+' || sym[i] == '[' || sym[i] == ']' || sym[i] == '-' || sym[i] == '|'){
+            continue;
+        }else{
+            lastChar = sym[i];
+        }
     }
-    if((lastChar == '.') || (lastChar == '_') || (lastChar == ']') || ('a' <= lastChar && lastChar <= 'z') || ('A' <= lastChar && lastChar <= 'Z') || ('0' <= lastChar && lastChar <= '9')){
-        endAlphaNum = true;
-    }
+    bool endAlphaNum = (lastChar == '.') || (lastChar == '_') || ('a' <= lastChar && lastChar <= 'z') || ('A' <= lastChar && lastChar <= 'Z') || ('0' <= lastChar && lastChar <= '9');
+    std::string subName = name.substr(1,name.length()-1);
+    bool endSpBrac = subName == "PAREN" || subName == "BRACE" || subName == "BOX";
     for(int i = 1;i < 256;i++){
         char curChar = (char)i;
-        bool curEndAlphaNum = (curChar == '.') || (curChar == '_') || (curChar == ']') || ('a' <= curChar && curChar <= 'z') || ('A' <= curChar && curChar <= 'Z') || ('0' <= curChar && curChar <= '9');
+        bool curEndAlphaNum = (curChar == '.') || (curChar == '_') || ('a' <= curChar && curChar <= 'z') || ('A' <= curChar && curChar <= 'Z') || ('0' <= curChar && curChar <= '9');
         bool curEndSpace = (curChar == ' ' || curChar == '\n' || curChar == '\t');
-        if((endAlphaNum && (!curEndAlphaNum || curEndSpace)) || !endAlphaNum){
+        if((endAlphaNum && !curEndAlphaNum) || endSpBrac || (!endAlphaNum && !endSpBrac && (curEndAlphaNum || curEndSpace))){
             int nNode = initNode();
             nodes[node][i].push_back(nNode);
             term[nNode] = {true, name};

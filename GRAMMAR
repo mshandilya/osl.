@@ -1,8 +1,5 @@
 <Prog> ::= <Decl> | <Decl> <Prog>
 <Decl> ::= <VarDecl> | <Stmt> | <FunDecl>
-<FunCall> ::= IDEN <Calls>
-<Calls> ::= <Call> | <Call> <Calls>
-<Call> ::= LPAREN <CallParams> RPAREN | LPAREN RPAREN
 <CallParams> ::= <Val> | <Val> COMMA <CallParams>
 <FunDecl> ::= FUN <Type> IDEN LPAREN <Params> RPAREN <Block> | FUN <Type> IDEN LPAREN RPAREN <Block>
 <Params> ::= <Param> | <Param> COMMA <Params>
@@ -44,6 +41,9 @@
 <RightShift> ::= <Unamb> RSHIFT <Unamb>
 <UnaryNeg> ::= NEG <UnAmb> | NEG <UnaryNeg>
 <UnAmb> ::= IDEN | <Number> | <Bool> | LPAREN <Exp> RPAREN | <FunCall>
+<FunCall> ::= IDEN <Calls>
+<Calls> ::= <Call> | <Call> <Calls>
+<Call> ::= LPAREN <CallParams> RPAREN | LPAREN RPAREN
 <Number> ::= DEC | BIN | HEX | OCT
 <Bool> ::= TRUE | FALSE
 <Type> ::= TBOOL | TI8 | TI16 | TI32 | TI64 | TI128 | TU8 | TU16 | TU32 | TU64 | TU128 | TF8 | TF16 | TF32 | TF64 | TF128 | TCHAR

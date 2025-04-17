@@ -16,7 +16,6 @@ int main(int argc, char* argv[]){
         std::cout << token << std::endl;
         if(isValToken(token.getId())){
             std::cout << "Value: " << token.getVal() << std::endl;
-            break;
         }
     }*/
     parser::genParser parser("GRAMMAR", lexer.allTokens, lexer.dfa.desc, lexer.dfa.lines);
