@@ -21,7 +21,7 @@
 <Mutable> ::= VAR <DeclType> IDEN SEMC | VAR <DeclType> <Assn> SEMC
 <Immutable> ::= CONST <DeclType> <Assn> SEMC
 <Val> ::= <Exp> | <Assn> | NULL
-<Assn> ::= IDEN ASSIGN <Val>
+<Assn> ::= <Loc> ASSIGN <Val>
 <Exp> ::= <UnAmb> | <Or> | <And> | <Not> | <Lesser> | <LessEqual> | <Greater> | <GreatEqual> | <Eq> | <NotEq> | <Add> | <Multiply> | <Divide> | <Subtract> | <Power> | <Modulo> | <Xor> | <Xand> | <LeftShift> | <RightShift> | <UnaryNeg>
 <Or> ::= <UnAmb> OR <UnAmb> | <UnAmb> OR <Or>
 <And> ::= <UnAmb> AND <UnAmb> | <UnAmb> AND <And>
@@ -43,7 +43,9 @@
 <LeftShift> ::= <Unamb> LSHIFT <Unamb>
 <RightShift> ::= <Unamb> RSHIFT <Unamb>
 <UnaryNeg> ::= NEG <UnAmb> | NEG <UnaryNeg>
-<UnAmb> ::= IDEN | <Number> | <Bool> | <Arr> | LPAREN <Exp> RPAREN | <FunCall>
+<UnAmb> ::= IDEN | <Number> | <Bool> | <Arr> | LPAREN <Exp> RPAREN | <FunCall> | <ArrAcc>
+<Loc> ::= IDEN | <ArrAcc>
+<ArrAcc> ::= IDEN DeclMats
 <Arr> ::= LBRACE Elems RBRACE
 <Elems> ::= <Val> COMMA <Elems> | <Val> COMMA | <Val>
 <Number> ::= DEC | BIN | HEX | OCT
