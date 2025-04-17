@@ -18,10 +18,13 @@ jobs:
 
       - name: Rename repository directory
         run: |
-          if [ -d osl ]; then
-            mv osl osl
-          elif [ -d "osl." ]; then
+          if [ -d "osl." ]; then
             mv "osl." osl
+          elif [ -d osl ]; then
+            echo "Directory already named 'osl'"
+          else
+            echo "Error: Expected directory 'osl.' or 'osl' not found."
+            exit 1
           fi
 
       - name: Install dependencies
@@ -45,10 +48,13 @@ jobs:
 
       - name: Rename repository directory
         run: |
-          if [ -d osl ]; then
-            mv osl osl
-          elif [ -d "osl." ]; then
+          if [ -d "osl." ]; then
             mv "osl." osl
+          elif [ -d osl ]; then
+            echo "Directory already named 'osl'"
+          else
+            echo "Error: Expected directory 'osl.' or 'osl' not found."
+            exit 1
           fi
 
       - name: Set up MSYS2 environment
