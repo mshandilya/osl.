@@ -8,49 +8,58 @@ namespace ast{
 
     enum NodeType {
         DEF_AST,
-        NUM_AST,
-        BOOL_AST,
-        CHAR_AST,
-        NULL_AST,
+        PROG_AST,
+        BLOCK_AST,
+        LOOP_AST,
+        COND_AST,
+        RET_AST,
+        LOG_AST,
+        LETFUN_AST,
+        LETVAR_AST,
+        LETCONST_AST,
+        VAL_AST,
+        ASSIGN_AST,
+        LOC_AST,
         BOP_AST,
         UOP_AST,
-        PROG_AST,
-        LET_AST,
-        ASSIGN_AST,
+        FUNCALL_AST,
+        ARR_AST,
+        NUM_AST,
+        CHAR_AST,
+        BOOL_AST,
+        NULL_AST,
         IDEN_AST,
-        IF_AST,
-        LOG_AST,
-        RET_AST,
-        LETFUN_AST,
-        WHILE_AST,
-        FUNCALL_AST
     };
 
     enum OperatorType {
-        UNEG_OP,   // Unary Neg
-        NOT_OP,    // Unary Not
-        ADD_OP,    // Binary Add
-        SUB_OP,    // Binary Subtraction
-        MUL_OP,    // Binary Multiplication
-        DIV_OP,    // Binary Division
-        POW_OP,    // Binary Exponentiation
-        MOD_OP,    // Binary Modulo
-        OR_OP,     // Binary Or
-        AND_OP,    // Binary And
-        XOR_OP,    // Binary Xor
-        XAND_OP,   // Binary Xand
-        LSHIFT_OP, // Binary Left Shift Operator
-        RSHIFT_OP, // Binary Right Shift Operator
-        EQ_OP,     // Binary Equality
-        NEQ_OP,    // Binary Inequality
-        LE_OP,     // Binary Less Than
-        LEQ_OP,    // Binary Less Than Equal To
-        GE_OP,     // Binary Greater Than
-        GEQ_OP,    // Binary Greater Than Equal To
+        GT_OP,       // Binary Greater Than
+        GEQ_OP,      // Binary Greater Than Equal To
+        LT_OP,       // Binary Less Than
+        LEQ_OP,      // Binary Less Than Equal To
+        NEQ_OP,      // Binary Inequality
+        EQ_OP,       // Binary Equality
+        MUL_OP,      // Binary Multiplication
+        ADD_OP,      // Binary Add
+        DIV_OP,      // Binary Division
+        SUB_OP,      // Binary Subtraction
+        POW_OP,      // Binary Exponentiation
+        MOD_OP,      // Binary Modulo
+        OR_OP,       // Binary Or
+        AND_OP,      // Binary And
+        XOR_OP,      // Binary Xor
+        XAND_OP,     // Binary Xand
+        LSHIFT_OP,   // Binary Left Shift Operator
+        RSHIFT_OP,   // Binary Right Shift Operator
+        ARRACC_OP,   // Binary Operator for Array Access
+        UNEG_OP,     // Unary Neg
+        UNOT_OP,     // Unary Not
+        PTRREF_OP,   // Unary Reference
+        PTRDEREF_OP, // Unary Pointer Dereferencing
     };
 
     enum Access{
-        VAR, CONST
+        CONST,
+        VAR
     };
 
     class AtomicASTNode;
@@ -76,25 +85,41 @@ namespace ast{
         // }
     };
 
-    // When storing the numerical values, it is important that the value we store has a type.
-    // We shall, by default, analyse the numerical token and assign it a type that takes the
-    // least amount of memory.
-    template <typename T>
-    class NumValue : public AtomicASTNode {
+    class Identifier: public AtomicASTNode {
     public:
-        T value;
-        NumValue(T val): value(val) {
+        std::string idenName;
+        types::TYPES boundDataType;
+        ast::Access access;
+        int id, scopeId;
+
+        Identifier(std::string idenName): idenName(idenName) {};
+        
+        void bind(types::TYPES boundDataType, Access access, int id, int scopeId) {
+            this->boundDataType = boundDataType;
+            this->access = access;
+            this->id = id;
+            this->scopeId = scopeId;
         }
 
         NodeType type() const override {
-            return NUM_AST;
+            return IDEN_AST;
+        }
+    };
+    
+    class NullValue : public AtomicASTNode {
+        types::TYPES dt;
+    public:
+        NullValue() : dt(types::UNRESOLVED) {}
+
+        NodeType type() const override {
+            return NULL_AST;
         }
 
         types::TYPES dataType() const override {
-            return T::dt;
-        };
+            return dt;
+        }
     };
-
+    
     class BoolValue : public AtomicASTNode {
     public:
         NodeType type() const override {
@@ -116,30 +141,43 @@ namespace ast{
             return types::CHAR_8;
         }
     };
-
-    class NullValue : public AtomicASTNode {
-        types::TYPES dt;
+    
+    // When storing the numerical values, it is important that the value we store has a type.
+    // We shall, by default, analyse the numerical token and assign it a type that takes the
+    // least amount of memory.
+    template <typename T>
+    class NumValue : public AtomicASTNode {
     public:
-        NullValue() : dt(types::UNRESOLVED) {}
+        T value;
+        NumValue(T val): value(val) {
+        }
 
         NodeType type() const override {
-            return NULL_AST;
+            return NUM_AST;
         }
 
         types::TYPES dataType() const override {
-            return dt;
-        }
+            return T::dt;
+        };
     };
 
-    class BinaryOperator : public ASTNode {
+    class ArrValue : public ASTNode {
+
+    };
+
+    class FunctionCall : public ASTNode {
     public:
-        OperatorType op;
-        std::unique_ptr<ASTNode> leftChild, rightChild;
-
-        BinaryOperator(OperatorType operation, std::unique_ptr<ASTNode>&& lc, std::unique_ptr<ASTNode>&& rc): op(operation), leftChild(std::move(lc)), rightChild(std::move(rc)) {};
-
+        std::unique_ptr<ASTNode> name;
+        std::vector<std::unique_ptr<ASTNode>> params;
+        
+        FunctionCall(std::unique_ptr<ASTNode>&& name): name(std::move(name)) {};
+    
         NodeType type() const override {
-            return BOP_AST;
+            return FUNCALL_AST;
+        }
+
+        void addParam(std::unique_ptr<ASTNode>&& param){
+            params.push_back(std::move(param));
         }
     };
 
@@ -154,59 +192,24 @@ namespace ast{
             return UOP_AST;
         }
     };
-
-    class Prog : public ASTNode{
+    
+    class BinaryOperator : public ASTNode {
     public:
-        std::vector<std::unique_ptr<ASTNode>> decls;
+        OperatorType op;
+        std::unique_ptr<ASTNode> leftChild, rightChild;
 
-        Prog(){};
-        
-        void addDecl(std::unique_ptr<ASTNode>&& decl){
-            decls.push_back(std::move(decl));
-        }
+        BinaryOperator(OperatorType operation, std::unique_ptr<ASTNode>&& lc, std::unique_ptr<ASTNode>&& rc): op(operation), leftChild(std::move(lc)), rightChild(std::move(rc)) {};
 
         NodeType type() const override {
-            return PROG_AST;
+            return BOP_AST;
         }
     };
 
-    class Identifier: public ASTNode{
-    public:
-        std::string idenName;
-        types::TYPES boundDataType;
-        ast::Access access;
-        int id, scopeId;
+    class Location : public ASTNode {
 
-        Identifier(std::string idenName): idenName(idenName) {};
-        
-        void bind(types::TYPES boundDataType, Access access, int id, int scopeId) {
-            this->boundDataType = boundDataType;
-            this->access = access;
-            this->id = id;
-            this->scopeId = scopeId;
-        }
-
-        NodeType type() const override {
-            return IDEN_AST;
-        }
     };
 
-    class Let: public ASTNode{
-    public:
-        types::TYPES typ;
-        Access acc;
-        std::unique_ptr<ASTNode> var;
-        std::unique_ptr<ASTNode> val;
-
-        Let(std::unique_ptr<ASTNode>&& var, types::TYPES type, Access acc): var(std::move(var)), typ(type), acc(acc), val(std::make_unique<NullValue>()) {};
-        Let(std::unique_ptr<ASTNode>&& var, types::TYPES type, Access acc, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), acc(acc), val(std::move(val)) {};
-        
-        NodeType type() const override {
-            return LET_AST;
-        }
-    };
-
-    class Assign: public ASTNode{
+    class Assign : public ASTNode {
     public:
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
@@ -218,43 +221,40 @@ namespace ast{
         }
     };
 
-    class If: public ASTNode{
-    public:
-        std::unique_ptr<ASTNode> cond;
-        std::unique_ptr<ASTNode> thenBody;
-        std::unique_ptr<ASTNode> elseBody;
+    class Value : public ASTNode {
 
-        If(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(nullptr) {};
-        If(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody, std::unique_ptr<ASTNode>&& elseBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(std::move(elseBody)) {};
+    };
+
+    class LetConst: public ASTNode {
+    public:
+        types::TYPES typ;
+        Access acc;
+        std::unique_ptr<ASTNode> var;
+        std::unique_ptr<ASTNode> val;
+
+        LetConst(std::unique_ptr<ASTNode>&& var, types::TYPES type, Access acc, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), acc(acc), val(std::move(val)) {};
+        
+        NodeType type() const override {
+            return LETCONST_AST;
+        }
+    };
     
-        NodeType type() const override {
-            return IF_AST;
-        }
-    };
-
-    class Log: public ASTNode{
+    class LetVar: public ASTNode {
     public:
+        types::TYPES typ;
+        Access acc;
+        std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        Log(std::unique_ptr<ASTNode>&& val): val(std::move(val)) {};
-
+        LetVar(std::unique_ptr<ASTNode>&& var, types::TYPES type, Access acc): var(std::move(var)), typ(type), acc(acc), val(std::make_unique<NullValue>()) {};
+        LetVar(std::unique_ptr<ASTNode>&& var, types::TYPES type, Access acc, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), acc(acc), val(std::move(val)) {};
+        
         NodeType type() const override {
-            return LOG_AST;
+            return LETVAR_AST;
         }
     };
-
-    class Return: public ASTNode{
-    public:
-        std::unique_ptr<ASTNode> val;
-
-        Return(std::unique_ptr<ASTNode>&& val): val(std::move(val)) {};
-
-        NodeType type() const override {
-            return RET_AST;
-        }
-    };
-
-    class LetFun: public ASTNode{
+    
+    class LetFun: public ASTNode {
     public:
         types::TYPES retType;
         std::unique_ptr<ASTNode> name;
@@ -272,31 +272,70 @@ namespace ast{
         }
     };
 
-    class While: public ASTNode{
+    class Log: public ASTNode {
+    public:
+        std::unique_ptr<ASTNode> val;
+
+        Log(std::unique_ptr<ASTNode>&& val): val(std::move(val)) {};
+
+        NodeType type() const override {
+            return LOG_AST;
+        }
+    };
+
+    class Return: public ASTNode {
+    public:
+        std::unique_ptr<ASTNode> val;
+
+        Return(std::unique_ptr<ASTNode>&& val): val(std::move(val)) {};
+
+        NodeType type() const override {
+            return RET_AST;
+        }
+    };
+
+    class Conditional: public ASTNode {
+    public:
+        std::unique_ptr<ASTNode> cond;
+        std::unique_ptr<ASTNode> thenBody;
+        std::unique_ptr<ASTNode> elseBody;
+
+        Conditional(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(nullptr) {};
+        Conditional(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody, std::unique_ptr<ASTNode>&& elseBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(std::move(elseBody)) {};
+    
+        NodeType type() const override {
+            return COND_AST;
+        }
+    };
+
+    class Loop: public ASTNode {
     public:
         std::unique_ptr<ASTNode> cond;
         std::unique_ptr<ASTNode> body;
         
-        While(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& body): cond(std::move(cond)), body(std::move(body)) {};
+        Loop(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& body): cond(std::move(cond)), body(std::move(body)) {};
     
         NodeType type() const override {
-            return WHILE_AST;
+            return LOOP_AST;
         }
     };
 
-    class FunCall: public ASTNode{
+    class Block : public ASTNode {
+
+    };
+
+    class Prog : public ASTNode {
     public:
-        std::unique_ptr<ASTNode> name;
-        std::vector<std::unique_ptr<ASTNode>> params;
+        std::vector<std::unique_ptr<ASTNode>> decls;
+
+        Prog(){};
         
-        FunCall(std::unique_ptr<ASTNode>&& name): name(std::move(name)) {};
-    
-        NodeType type() const override {
-            return FUNCALL_AST;
+        void addDecl(std::unique_ptr<ASTNode>&& decl){
+            decls.push_back(std::move(decl));
         }
 
-        void addParam(std::unique_ptr<ASTNode>&& param){
-            params.push_back(std::move(param));
+        NodeType type() const override {
+            return PROG_AST;
         }
     };
 

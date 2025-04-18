@@ -71,6 +71,42 @@ namespace types {
         B128 = 128
     };
 
+    class Type {
+
+    };
+
+    class DeclType {
+
+    };
+
+    class CompundType : public Type {
+
+    };
+
+    class PointerType : public CompundType, public DeclType {
+
+    };
+
+    class FunctionType : public CompundType, public DeclType {
+
+    };
+
+    class ArrayDeclType : public DeclType {
+
+    };
+
+    class ArrayType : public CompundType {
+
+    };
+
+    class AtomicType : public DeclType, public Type {
+
+    };
+
+    class NumberType : public AtomicType {
+
+    };
+
     template<MAX_BITS mb>
     struct mInt {
         static const TYPES dt = INT_UNRESOLVED;
@@ -106,7 +142,7 @@ namespace types {
     the way to `i128` at powers of 2.
     */
     template<MAX_BITS bitSize>
-    class Integer {
+    class Integer : public NumberType {
         static_assert(bitSize%8==0, "Bit Size for class Integer must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class Integer must be a positive integer");
         // Values as stored in the Little Endian System
@@ -167,7 +203,7 @@ namespace types {
     specific bit sizes have been made as `u8` all the way to `u128` at powers of 2.
     */
     template<MAX_BITS bitSize>
-    class UnsignedInteger {
+    class UnsignedInteger : public NumberType {
         static_assert(bitSize%8==0, "Bit Size for class UnsignedInteger must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class UnsignedInteger must be a positive integer");
         // Values as stored in the Little Endian System
@@ -194,7 +230,7 @@ namespace types {
     typedef UnsignedInteger<B128> u128;
 
     template<MAX_BITS bitSize>
-    class Float {
+    class Float : public NumberType {
         static_assert(bitSize%8==0, "Bit Size for class Float must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class Float must be a positive integer");
         // Values as stored in the Little Endian System
@@ -212,14 +248,14 @@ namespace types {
     typedef Float<B64> f64;
     typedef Float<B128> f128;
 
-    class Boolean {
+    class Boolean : public AtomicType {
         unsigned char value;
 
     public:
         inline Boolean() : value(0) {}
     };
 
-    class Character {
+    class Character : public AtomicType {
         unsigned char value;
 
     public:
@@ -227,8 +263,8 @@ namespace types {
     };
 }
 
-namespace utils{
-    std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source);
-}
+// namespace utils{
+//     std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source);
+// }
 
 #endif
