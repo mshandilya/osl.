@@ -38,29 +38,36 @@ int numChar(int val);
 namespace types {
 
     enum TYPES {
+        ATOM,
+        PTR,
+        FN,
+        ARR,
+        ARRD
+    };
+    
+    enum ATOMTYPES {
         UNRESOLVED,
+        NULLV,
         BOOL,
-        CHAR_UNRESOLVED,
         CHAR_8,
-        INT_UNRESOLVED,
+        NUM,
+        INT,
         INT_8,
         INT_16,
         INT_32,
         INT_64,
         INT_128,
-        UINT_UNRESOLVED,
+        UINT,
         UINT_8,
         UINT_16,
         UINT_32,
         UINT_64,
         UINT_128,
-        FLOAT_UNRESOLVED,
-        FLOAT_8,
+        FLOAT,
         FLOAT_16,
         FLOAT_32,
         FLOAT_64,
         FLOAT_128,
-        FUNCTION
     };
 
     enum MAX_BITS {
@@ -72,69 +79,112 @@ namespace types {
     };
 
     class Type {
-
+    public:
+        virtual TYPES name() const = 0;
     };
 
     class DeclType {
-
+    public:
+        virtual TYPES name() const = 0;
     };
 
-    class CompundType : public Type {
-
-    };
+    class CompundType : public Type {};
 
     class PointerType : public CompundType, public DeclType {
+        std::unique_ptr<Type> underlyingType;
+    public:
+        TYPES name() const override {
+            return PTR;
+        }
 
+        PointerType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
     };
 
     class FunctionType : public CompundType, public DeclType {
+        std::unique_ptr<Type> returnType;
+        std::vector<std::unique_ptr<Type>> paramTypes;
+    public:
+        TYPES name() const override {
+            return FN;
+        }
 
+        FunctionType(std::unique_ptr<Type>&& rt, std::vector<std::unique_ptr<Type>>&& pt) : returnType(std::move(rt)), paramTypes(std::move(pt)) {}
+        FunctionType(std::unique_ptr<Type>&& rt) : returnType(std::move(rt)), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
+        FunctionType(std::vector<std::unique_ptr<Type>>&& pt) : returnType(std::make_unique<Null>()), paramTypes(std::move(pt)) {}
+        FunctionType() : returnType(std::make_unique<Null>()), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
+
+        inline void addParams(std::unique_ptr<Type>&& pt) {
+            paramTypes.push_back(std::move(pt));
+        }
     };
 
     class ArrayDeclType : public DeclType {
+        std::unique_ptr<DeclType> underlyingType;
+        uint32_t size;
+    public:
+        TYPES name() const override {
+            return ARRD;
+        }
 
+        ArrayDeclType(std::unique_ptr<DeclType>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz) {}
     };
 
     class ArrayType : public CompundType {
+        std::unique_ptr<Type> underlyingType;
+        uint32_t size;
+        bool sizeKnown;
+    public:
+        TYPES name() const override {
+            return ARR;
+        }
 
+        ArrayType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)), size(0), sizeKnown(false) {}
+        ArrayType(std::unique_ptr<Type>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz), sizeKnown(true) {}
     };
 
     class AtomicType : public DeclType, public Type {
+    public:
+        TYPES name() const override {
+            return ATOM;
+        }
 
+        virtual ATOMTYPES atomicName() const = 0;
     };
 
     class NumberType : public AtomicType {
-
+        ATOMTYPES atomicName() const override {
+            return NUM;
+        }
     };
 
     template<MAX_BITS mb>
     struct mInt {
-        static const TYPES dt = INT_UNRESOLVED;
+        static const ATOMTYPES dt = INT;
     };
 
     template<>
     struct mInt<B8> {
-        static const TYPES dt = INT_8;
+        static const ATOMTYPES dt = INT_8;
     };
 
     template<>
     struct mInt<B16> {
-        static const TYPES dt = INT_16;
+        static const ATOMTYPES dt = INT_16;
     };
 
     template<>
     struct mInt<B32> {
-        static const TYPES dt = INT_32;
+        static const ATOMTYPES dt = INT_32;
     };
 
     template<>
     struct mInt<B64> {
-        static const TYPES dt = INT_64;
+        static const ATOMTYPES dt = INT_64;
     };
 
     template<>
     struct mInt<B128> {
-        static const TYPES dt = INT_128;
+        static const ATOMTYPES dt = INT_128;
     };
 
     /* Signed integers are defined by using the templated `Integer` class which also takes in the number
@@ -149,7 +199,7 @@ namespace types {
         unsigned char value[bitSize/8];
 
     public:
-        static constexpr TYPES dt = mInt<bitSize>::dt;
+        static constexpr ATOMTYPES dt = mInt<bitSize>::dt;
         
         inline Integer() {
             for(unsigned char& b : value)
@@ -159,6 +209,10 @@ namespace types {
         inline Integer(std::vector<unsigned char>& value) {
             for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
                 this->value[i] = value[i];
+        }
+
+        ATOMTYPES atomicName() const override {
+            return dt;
         }
     };
 
@@ -170,32 +224,32 @@ namespace types {
 
     template<MAX_BITS mb>
     struct mUInt {
-        static const TYPES dt = UINT_UNRESOLVED;
+        static const ATOMTYPES dt = UINT;
     };
 
     template<>
     struct mUInt<B8> {
-        static const TYPES dt = UINT_8;
+        static const ATOMTYPES dt = UINT_8;
     };
 
     template<>
     struct mUInt<B16> {
-        static const TYPES dt = UINT_16;
+        static const ATOMTYPES dt = UINT_16;
     };
 
     template<>
     struct mUInt<B32> {
-        static const TYPES dt = UINT_32;
+        static const ATOMTYPES dt = UINT_32;
     };
 
     template<>
     struct mUInt<B64> {
-        static const TYPES dt = UINT_64;
+        static const ATOMTYPES dt = UINT_64;
     };
 
     template<>
     struct mUInt<B128> {
-        static const TYPES dt = UINT_128;
+        static const ATOMTYPES dt = UINT_128;
     };
     
     /* Unsigned integers are defined by using the templated `UnsignedInteger` class which also takes in 
@@ -210,7 +264,7 @@ namespace types {
         unsigned char value[bitSize/8];
 
     public:
-        static constexpr TYPES dt = mUInt<bitSize>::dt;
+        static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
 
         inline UnsignedInteger() {
             for(unsigned char& b : value)
@@ -221,6 +275,10 @@ namespace types {
             for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
                 this->value[i] = value[i];
         }
+    
+        ATOMTYPES atomicName() const override {
+            return dt;
+        }
     };
 
     typedef UnsignedInteger<B8> u8;
@@ -229,17 +287,51 @@ namespace types {
     typedef UnsignedInteger<B64> u64;
     typedef UnsignedInteger<B128> u128;
 
+    template<MAX_BITS mb>
+    struct mFloat {
+        static const ATOMTYPES dt = FLOAT;
+    };
+
+    template<>
+    struct mFloat<B16> {
+        static const ATOMTYPES dt = FLOAT_16;
+    };
+
+    template<>
+    struct mUInt<B32> {
+        static const ATOMTYPES dt = FLOAT_32;
+    };
+
+    template<>
+    struct mUInt<B64> {
+        static const ATOMTYPES dt = FLOAT_64;
+    };
+
+    template<>
+    struct mUInt<B128> {
+        static const ATOMTYPES dt = FLOAT_128;
+    };
+
     template<MAX_BITS bitSize>
     class Float : public NumberType {
         static_assert(bitSize%8==0, "Bit Size for class Float must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class Float must be a positive integer");
+
+        static_assert(bitSize==B32 or bitSize==B64, "Only single and double point precision floats allowed right now.");
+
         // Values as stored in the Little Endian System
         unsigned char value[bitSize/8];
 
     public:
+        static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
+
         inline Float() {
             for(unsigned char& b : value)
                 b = 0;
+        }
+
+        ATOMTYPES atomicName() const override {
+            return dt;
         }
     };
 
@@ -253,6 +345,10 @@ namespace types {
 
     public:
         inline Boolean() : value(0) {}
+
+        ATOMTYPES atomicName() const override {
+            return BOOL;
+        }
     };
 
     class Character : public AtomicType {
@@ -260,11 +356,22 @@ namespace types {
 
     public:
         inline Character() : value(0) {}
+
+        ATOMTYPES atomicName() const override {
+            return CHAR_8;
+        }
+    };
+
+    class Null : public AtomicType {
+    public:
+        ATOMTYPES atomicName() const override {
+            return NULLV;
+        }
     };
 }
 
-// namespace utils{
-//     std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source);
-// }
+namespace utils{
+    std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source);
+}
 
 #endif
