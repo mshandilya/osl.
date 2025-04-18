@@ -5,7 +5,7 @@ CPFLAGS = -std=c++20
 
 BIN_DIR = bin
 COSL_TARGET = $(BIN_DIR)/cosl
-COSL_SRCS = cosl.cpp lexer.cpp parser_opt_hmap.cpp utils.cpp ast.cpp resolver.cpp
+COSL_SRCS = cosl.cpp lexer.cpp parser.cpp utils.cpp ast.cpp resolver.cpp
 # later add hmap and rtrim srcs too!
 
 ROSL_TARGET = $(BIN_DIR)/rosl
