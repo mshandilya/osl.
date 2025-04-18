@@ -1,5 +1,7 @@
 #include "parser.hpp"
 
+#define LOG(x) //std::cout<<x<<std::endl;
+
 void parser::vizTree(const parser::parseTree &tree, int node, const std::string &prefix, bool isLast){
     std::cout << prefix;
     if(!prefix.empty()){
@@ -119,6 +121,7 @@ parser::genParser::genParser(std::string filename, std::vector<std::string> allT
     }
     std::vector<std::vector<std::vector<std::string>>> rules;
     std::string line;
+    LOG("about to look into rules")
     while(getline(fin, line)){
         std::vector<std::string> v = split(line," ::= ");
         std::vector<std::string> prods = split(v[1], " | ");
@@ -130,6 +133,7 @@ parser::genParser::genParser(std::string filename, std::vector<std::string> allT
         }
         rules.push_back(rule);
     }
+    LOG("looked at rules, gonna build PDA")
     pda = PDA(rules, allTokens, desc);
 }
 

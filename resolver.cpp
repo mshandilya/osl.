@@ -1,6 +1,6 @@
 #include "resolver.hpp"
 
-#define LOG(x) //std::cout<<x<<std::endl;
+#define LOG(x) std::cout<<x<<std::endl;
 
 void Resolver::resolveNext(std::unique_ptr<ast::ASTNode>& node, bool isDecl, types::TYPES dt, ast::Access ac) {
     LOG("inside resolve next")

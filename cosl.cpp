@@ -3,9 +3,10 @@
 #include "ast.hpp"
 #include "resolver.hpp"
 
-#define LOG(x) //std::cout<<x<<std::endl;
+#define LOG(x) std::cout<<x<<std::endl;
 
 int main(int argc, char* argv[]){
+    LOG("starting")
     lexer::genLexer lexer("TOKENS");
     auto lex = lexer.getLexer();
     if(argc < 2){
@@ -13,17 +14,23 @@ int main(int argc, char* argv[]){
         return 1;
     }
     std::vector<Token> tokens = lex(argv[1]);
+    LOG("Tokenized")
     //std::cout << "Lexer Result:\n";
     //std::string isValToken[] = {"IDEN","NUM","BOOL"};
-    /*for(Token token: tokens){
+    for(Token token: tokens){
         std::cout << token << std::endl;
         if(isValToken(token.getId())){
             std::cout << "Value: " << token.getVal() << std::endl;
         }
-    }*/
+    }
+    LOG("")
+    LOG("starting parse")
     parser::genParser parser("GRAMMAR", lexer.allTokens, lexer.dfa.desc, lexer.dfa.lines);
+    LOG("obj created")
     auto parse = parser.getParser();
+    LOG("parser generated")
     parser::parseTree tree = parse(tokens);
+    LOG("parsed")
     //std::cout << "\nParser Result:\n";
     if(tree.getNodeCnt() != 0){
         parser::vizTree(tree, 0, "", true);

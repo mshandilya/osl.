@@ -36,6 +36,7 @@ std::string regFormat(std::string s, std::string name);
 int numChar(int val);
 
 namespace types {
+
     enum TYPES {
         UNRESOLVED,
         BOOL,
@@ -131,6 +132,36 @@ namespace types {
     typedef Integer<B64> i64;
     typedef Integer<B128> i128;
 
+    template<MAX_BITS mb>
+    struct mUInt {
+        static const TYPES dt = UINT_UNRESOLVED;
+    };
+
+    template<>
+    struct mUInt<B8> {
+        static const TYPES dt = UINT_8;
+    };
+
+    template<>
+    struct mUInt<B16> {
+        static const TYPES dt = UINT_16;
+    };
+
+    template<>
+    struct mUInt<B32> {
+        static const TYPES dt = UINT_32;
+    };
+
+    template<>
+    struct mUInt<B64> {
+        static const TYPES dt = UINT_64;
+    };
+
+    template<>
+    struct mUInt<B128> {
+        static const TYPES dt = UINT_128;
+    };
+    
     /* Unsigned integers are defined by using the templated `UnsignedInteger` class which also takes in 
     the number of bits used to store the unsigned integer as a template parameter. Type aliases for 
     specific bit sizes have been made as `u8` all the way to `u128` at powers of 2.
@@ -143,6 +174,8 @@ namespace types {
         unsigned char value[bitSize/8];
 
     public:
+        static constexpr TYPES dt = mUInt<bitSize>::dt;
+
         inline UnsignedInteger() {
             for(unsigned char& b : value)
                 b = 0;
@@ -152,31 +185,6 @@ namespace types {
             for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
                 this->value[i] = value[i];
         }
-    };
-
-    template<>
-    class UnsignedInteger<B8> {
-        static const TYPES dt = INT_8;
-    };
-
-    template<>
-    class UnsignedInteger<B16> {
-        static const TYPES dt = INT_16;
-    };
-
-    template<>
-    class UnsignedInteger<B32> {
-        static const TYPES dt = INT_32;
-    };
-
-    template<>
-    class UnsignedInteger<B64> {
-        static const TYPES dt = INT_64;
-    };
-
-    template<>
-    class UnsignedInteger<B128> {
-        static const TYPES dt = INT_128;
     };
 
     typedef UnsignedInteger<B8> u8;
@@ -199,7 +207,6 @@ namespace types {
         }
     };
 
-    typedef Float<B8> f8;
     typedef Float<B16> f16;
     typedef Float<B32> f32;
     typedef Float<B64> f64;
@@ -211,8 +218,13 @@ namespace types {
     public:
         inline Boolean() : value(0) {}
     };
-//    c8 // UTF 8
-//    c16 // UTF 16 --
+
+    class Character {
+        unsigned char value;
+
+    public:
+        inline Character() : value(0) {}
+    };
 }
 
 namespace utils{
