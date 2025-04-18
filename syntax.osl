@@ -1,0 +1,24 @@
+var f32 _e := 0x24.3P-5;
+var f64 f1_ := 0o43.5e-6;
+var f32 g := 0b110.001e5;
+var f64 g := 0b110.01E-5;
+var c8 c := 'd';
+const c8[6] d := "Guntas"
+var bool e := true;
+var bool f := false;
+var bool f6 := null;
+const i32[2][3] arr := {{2, 3, 4}, {5, 6, 7}};
+var i32 x := 40;
+var #i32 ptr := #x;
+var #i32 y := #x;
+var ##i32 ptrr := #y;
+var i32 copy := @(@ptrr);
+
+fn foo(c8[][] b, i32 c) -> u8
+{
+    var c8 chr := b[c][c + 1];
+    var u8 dig := chr - 'a';
+    return dig;
+}
+
+var bool b1 := a & b !| c !& d >> e << f <= g >= h < i > j = k * l + m - n / p % q | r ~= s^t ~u;
