@@ -1,7 +1,5 @@
 #include "parser.hpp"
 
-#define LOG(x) //std::cout<<x<<std::endl;
-
 void parser::vizTree(const parser::parseTree &tree, int node, const std::string &prefix, bool isLast){
     std::cout << prefix;
     if(!prefix.empty()){
@@ -121,7 +119,6 @@ parser::genParser::genParser(std::string filename, std::vector<std::string> allT
     }
     std::vector<std::vector<std::vector<std::string>>> rules;
     std::string line;
-    LOG("about to look into rules")
     while(getline(fin, line)){
         std::vector<std::string> v = split(line," ::= ");
         std::vector<std::string> prods = split(v[1], " | ");
@@ -133,7 +130,6 @@ parser::genParser::genParser(std::string filename, std::vector<std::string> allT
         }
         rules.push_back(rule);
     }
-    LOG("looked at rules, gonna build PDA")
     pda = PDA(rules, allTokens, desc);
 }
 
@@ -152,13 +148,9 @@ void parser::genParser::populateTree(int curNode, int curSym, int &pind, std::ve
 }
 
 parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
-    std::queue<std::tuple<std::stack<int>, std::vector<int>, int, std::unordered_map<int,int>>> q;
+    std::queue<std::tuple<std::stack<int>, std::vector<int>, int>> q;
     std::stack<int> st;st.push(1);
-    std::unordered_map<int,int> th;
-    for(Token t: tokens){
-        th[pda.symId[t.getId()]]++;
-    }
-    q.push({st,{},0,th});
+    q.push({st,{},0});
     int longestPath = 0;
     int expVal;
     std::string befVal, aftVal;
@@ -166,12 +158,11 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
     int missVal = -1;
     bool single = false;
     while(!q.empty()){
-        std::tuple<std::stack<int>,std::vector<int>,int,std::unordered_map<int,int>> cur = q.front();
+        std::tuple<std::stack<int>,std::vector<int>,int> cur = q.front();
         q.pop();
         std::stack<int> st = std::get<0>(cur);
         std::vector<int> path = std::get<1>(cur);
         int curPos = std::get<2>(cur);
-        std::unordered_map<int,int> isP = std::get<3>(cur);
         if(st.empty()){
             if(curPos == tokens.size()){
                 parseTree tree;
@@ -207,46 +198,27 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
         }
         if(pda.isToken[curSym]){
             if(curSym == inpSym){
-                isP[pda.symId[tokens[curPos].getId()]]--;
-                q.push({st,path,curPos+1,isP});
+                q.push({st,path,curPos+1});
             }
         }else{
-            isP[pda.symId[tokens[curPos].getId()]]--;
             for(std::vector<int> curTrans: pda.trans[inpSym][curSym]){
                 std::stack<int> nst = st;
                 std::vector<int> npath = path;
                 npath.push_back(curTrans[0]);
-                bool skip = false;
                 for(int i = 1;i < curTrans.size();i++){
                     nst.push(curTrans[i]);
-                    if(pda.isToken[curTrans[i]] && (isP.find(curTrans[i]) == isP.end() || isP[curTrans[i]] == 0)){
-                        skip = true;
-                        break;
-                    }
                 }
-                if(skip){
-                    continue;
-                }
-                q.push({nst,npath,curPos+1,isP});
+                q.push({nst,npath,curPos+1});
             }
-            isP[pda.symId[tokens[curPos].getId()]]++;
             //Add e-transitions
             for(std::vector<int> curTrans: pda.trans[0][curSym]){
                 std::stack<int> nst = st;
                 std::vector<int> npath = path;
                 npath.push_back(curTrans[0]);
-                bool skip = false;
                 for(int i = 1;i < curTrans.size();i++){
                     nst.push(curTrans[i]);
-                    if(pda.isToken[curTrans[i]] && (isP.find(curTrans[i]) == isP.end() || isP[curTrans[i]] == 0)){
-                        skip = true;
-                        break;
-                    }
                 }
-                if(skip){
-                    continue;
-                }
-                q.push({nst,npath,curPos,isP});
+                q.push({nst,npath,curPos});
             }
         }
     }
