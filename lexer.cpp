@@ -29,6 +29,10 @@ int lexer::DFA::initNode(){
     return totNodes-1;
 }
 
+void lexer::DFA::reset() {
+    curNodes = {0};
+}
+
 void lexer::DFA::parse_union(std::string &sym, int &i, int &node){
     int j = i+1;
     while(j < sym.size() && sym[j] != ']'){
@@ -166,7 +170,7 @@ void lexer::DFA::insert(std::string sym, std::string name){
     }
     bool endAlphaNum = (lastChar == '.') || (lastChar == '_') || ('a' <= lastChar && lastChar <= 'z') || ('A' <= lastChar && lastChar <= 'Z') || ('0' <= lastChar && lastChar <= '9');
     std::string subName = name.substr(1,name.length()-1);
-    bool endSpBrac = name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX";
+    bool endSpBrac = name == "SCOM" || name == "SEMC" || name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX";
     for(int i = 1;i < 256;i++){
         char curChar = (char)i;
         bool curEndAlphaNum = (curChar == '.') || (curChar == '_') || ('a' <= curChar && curChar <= 'z') || ('A' <= curChar && curChar <= 'Z') || ('0' <= curChar && curChar <= '9');
@@ -314,6 +318,20 @@ std::vector<Token> lexer::genLexer::lex(std::string filename){
         }
         std::string cid = cur.getId();
         if(cid != "NONE"){
+            if(cid == "SCOM"){
+                while(c != '\n'){
+                    if(fin.get(c)){
+                        charNo++;
+                    }else{
+                        c = '\n';
+                        break;
+                    }
+                }
+                dfa.reset();
+                buf = '\0';
+                val = "";
+                goto fin;
+            }
             /*bool fval = false;
             for(std::string token: isValToken){
                 if(cid == token){
@@ -331,6 +349,7 @@ std::vector<Token> lexer::genLexer::lex(std::string filename){
         if(buf != '\0'){
             val += buf;
         }
+        fin:
         charNo++;
         if(c == '\n'){
             lineNo++;

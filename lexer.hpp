@@ -23,6 +23,7 @@ namespace lexer{
         DFA();
         DFA(std::vector<std::string> syms, std::vector<std::string> names);
         Token feed(char c, int lineNo, int charNo, char pc);
+        void reset();
     };
 
     class genLexer{
