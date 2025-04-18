@@ -1,0 +1,5 @@
+var i32 x := 40;
+var #i32 ptr := #x;
+var #i32 y := #x;
+var ##i32 ptrr := #y;
+var i32 copy := @(@ptrr);

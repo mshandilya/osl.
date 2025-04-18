@@ -170,7 +170,7 @@ void lexer::DFA::insert(std::string sym, std::string name){
     }
     bool endAlphaNum = (lastChar == '.') || (lastChar == '_') || ('a' <= lastChar && lastChar <= 'z') || ('A' <= lastChar && lastChar <= 'Z') || ('0' <= lastChar && lastChar <= '9');
     std::string subName = name.substr(1,name.length()-1);
-    bool endSpBrac = name == "SCOM" || name == "SEMC" || name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX";
+    bool endSpBrac = name == "SCOM" || name == "SEMC" || name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX" || name == "HASH" || name == "AT";
     for(int i = 1;i < 256;i++){
         char curChar = (char)i;
         bool curEndAlphaNum = (curChar == '.') || (curChar == '_') || ('a' <= curChar && curChar <= 'z') || ('A' <= curChar && curChar <= 'Z') || ('0' <= curChar && curChar <= '9');
