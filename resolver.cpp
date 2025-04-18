@@ -6,35 +6,47 @@ void Resolver::resolveNext(std::unique_ptr<ast::ASTNode>& node, bool isDecl, typ
     LOG("inside resolve next")
     LOG(node->type())
     switch(node->type()) {
-        case ast::NUM_AST:
-        case ast::BOOL_AST:
-        case ast::CHAR_AST:
-        case ast::NULL_AST:
-        // all of these are atomic ASTs
-            return;
-            break;
-        case ast::BOP_AST:
-            // this must be the value of the declaration, therefore, it is not part of the declaration
-            return resolveBinOp(node);
-        case ast::UOP_AST:
-            // this must be the value of the declaration, therefore, it is not part of the declaration
-            return resolveUnOp(node);
         case ast::PROG_AST:
             return resolveProg(node, isDecl, dt, ac);
-        case ast::LET_AST:
-            return resolveLet(node, isDecl, dt, ac);
-        case ast::ASSIGN_AST:
-            return resolveAssign(node, isDecl, dt, ac);
-        case ast::IDEN_AST:
-            return resolveIden(node, isDecl, dt, ac);
-        case ast::IF_AST:
-            return resolveIf(node, isDecl, dt, ac);
+        case ast::BLOCK_AST:
+            return resolveBlock(node, isDecl, dt, ac);
+        case ast::LOOP_AST:
+            return resolveLoop(node, isDecl, dt, ac);
+        case ast::COND_AST:
+            return resolveCond(node, isDecl, dt, ac);
+            case ast::RET_AST:
+            return resolveReturn(node, isDecl, dt, ac);
         case ast::LOG_AST:
             return resolveLog(node, isDecl, dt, ac);
-        case ast::RET_AST:
-            return resolveReturn(node, isDecl, dt, ac);
         case ast::LETFUN_AST:
             return resolveLetFun(node, isDecl, dt, ac);
+        case ast::LETVAR_AST:
+            return resolveLetVar(node, isDecl, dt, ac);
+        case ast::LETCONST_AST:
+            return resolveLetConst(node, isDecl, dt, ac);
+        case ast::VAL_AST:
+            // this must be the value of the declaration, therefore, it is not part of the declaration
+            return resolveValue(node);
+        case ast::ASSIGN_AST:
+            return resolveAssign(node, isDecl, dt, ac);
+        case ast::LOC_AST:
+            return resolveLocation(node, isDecl, dt, ac);
+        case ast::BOP_AST:
+            return resolveBinOp(node, isDecl, dt, ac);
+        case ast::UOP_AST:
+            return resolveUnOp(node, isDecl, dt, ac);
+        case ast::FUNCALL_AST:
+            return resolveFunCall(node, isDecl, dt, ac);
+        case ast::ARR_AST:
+            return resolveArray(node, isDecl, dt, ac);
+        case ast::NUM_AST:
+        case ast::CHAR_AST:
+        case ast::BOOL_AST:
+        case ast::NULL_AST:
+            // nothing to do for atomic AST nodes
+            return;
+        case ast::IDEN_AST:
+            return resolveIden(node, isDecl, dt, ac);
     }
 }
 
@@ -49,13 +61,13 @@ void Resolver::resolveProg(std::unique_ptr<ast::ASTNode>& node, bool isDecl, typ
     }
 }
 
-void Resolver::resolveLet(std::unique_ptr<ast::ASTNode>& node, bool isDecl, types::TYPES dt, ast::Access ac) {
+void Resolver::resolveLetVar(std::unique_ptr<ast::ASTNode>& node, bool isDecl, types::TYPES dt, ast::Access ac) {
     LOG("inside resolve let")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside another declaration.");
     }
     // these variables are newly declared, first the value is declared and then the identifier is declared.
-    auto nnode = dynamic_cast<ast::Let*>(node.get());
+    auto nnode = dynamic_cast<ast::LetVar*>(node.get());
     resolveNext(nnode->val, true, nnode->typ, nnode->acc);
     resolveNext(nnode->var, true, nnode->typ, nnode->acc);
 }
@@ -81,13 +93,13 @@ void Resolver::resolveLetFun(std::unique_ptr<ast::ASTNode>& node, bool isDecl, t
     currentScope--;
 }
 
-void Resolver::resolveIf(std::unique_ptr<ast::ASTNode>& node, bool isDecl, types::TYPES dt, ast::Access ac) {
+void Resolver::resolveCond(std::unique_ptr<ast::ASTNode>& node, bool isDecl, types::TYPES dt, ast::Access ac) {
     LOG("inside resolve if")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside an if statement.");
     }
     // must not be a declaration
-    auto nnode = dynamic_cast<ast::If*>(node.get());
+    auto nnode = dynamic_cast<ast::Conditional*>(node.get());
     resolveNext(nnode->cond);
     // scope enhances
     currentScope++;

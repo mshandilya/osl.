@@ -68,6 +68,14 @@ void lexer::DFA::parse_union(std::string &sym, int &i, int &node){
                 }
             }
             i += 3;
+        }else if(sym[i] == '_'){
+            for(int c = 0;c < 256;c++){
+                nodes[node][c].push_back(nxtNode);
+                if(plus || star){
+                    nodes[nxtNode][c].push_back(nxtNode);
+                }
+            }
+            i++;
         }else if(sym[i] == '['){
             parse_union(sym, i, node);
         }else if(sym[i] == ']' || sym[i] == '+' || sym[i] == '-' || sym[i] == '*' || sym[i] == '|'){
@@ -121,6 +129,13 @@ void lexer::DFA::parse(std::string &sym, int &i, int &node){
             }
             node = nxtNode;
             i += 3;
+        }else if(sym[i] == '_'){
+            int nxtNode = initNode();
+            for(int c = 0;c < 256;c++){
+                nodes[node][c].push_back(nxtNode);
+            }
+            node = nxtNode;
+            i++;
         }else if(sym[i] == ']' || sym[i] == '+' || sym[i] == '-' || sym[i] == '*'){
             throw std::logic_error("Invalid regex: "+sym);
         }else if(sym[i] == '|'){
@@ -170,7 +185,7 @@ void lexer::DFA::insert(std::string sym, std::string name){
     }
     bool endAlphaNum = (lastChar == '.') || (lastChar == '_') || ('a' <= lastChar && lastChar <= 'z') || ('A' <= lastChar && lastChar <= 'Z') || ('0' <= lastChar && lastChar <= '9');
     std::string subName = name.substr(1,name.length()-1);
-    bool endSpBrac = name == "SCOM" || name == "SEMC" || name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX" || name == "HASH" || name == "AT";
+    bool endSpBrac = lastChar == '\'' || name == "SCOM" || name == "SEMC" || name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX" || name == "HASH" || name == "AT";
     for(int i = 1;i < 256;i++){
         char curChar = (char)i;
         bool curEndAlphaNum = (curChar == '.') || (curChar == '_') || ('a' <= curChar && curChar <= 'z') || ('A' <= curChar && curChar <= 'Z') || ('0' <= curChar && curChar <= '9');

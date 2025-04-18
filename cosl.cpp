@@ -1,7 +1,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
-#include "ast.hpp"
-#include "resolver.hpp"
+//#include "ast.hpp"
+//#include "resolver.hpp"
 
 #define LOG(x) std::cout<<x<<std::endl;
 
@@ -35,10 +35,10 @@ int main(int argc, char* argv[]){
     if(tree.getNodeCnt() != 0){
         parser::vizTree(tree, 0, "", true);
     }
-    std::unique_ptr<ast::ASTNode> root = ast::parseTreeToAST(tree);
+    /*std::unique_ptr<ast::ASTNode> root = ast::parseTreeToAST(tree);
     ast::vizTree(root, "", true);
     LOG("about to start resolution")
     Resolver resolver(root);
-    LOG("resolution done successfully")
+    LOG("resolution done successfully")*/
     return 0;
 }
