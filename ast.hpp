@@ -78,7 +78,7 @@ namespace ast{
 
     class AtomicASTNode : public ASTNode {
     public:
-        virtual types::TYPES dataType() const = 0;
+        virtual types::ATOMTYPES dataType() const = 0;
 
         // AtomicASTNode& const_resolve() override {
         //     return *this;
@@ -109,15 +109,16 @@ namespace ast{
     class NullValue : public AtomicASTNode {
         std::unique_ptr<types::Type> dt;
     public:
-        NullValue() : dt(types::UNRESOLVED) {}
+        NullValue(std::unique_ptr<types::Type>&& dt) : dt(std::move(dt)) {}
 
         NodeType type() const override {
             return NULL_AST;
         }
 
-        types::TYPES dataType() const override {
-            return dt->name();
+        types::ATOMTYPES dataType() const override {
+            return types::NULLV;
         }
+
     };
     
     class BoolValue : public AtomicASTNode {
