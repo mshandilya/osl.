@@ -4,9 +4,10 @@
 <Decl> ::= <ConstDecl> | <VarDecl> | <FunDecl> | <Stmt>
 <Stmt> ::= <ExpStmt> | <LogStmt> | <RetStmt> | <Cond> | <Loop>
 <Loop> ::= WHILE <Val> <Block>
-<Cond> ::= IF <Val> <Block> | IF <Val> <Block> ELSE <Block> | IF <Val> <Block> <Elifs> | IF <Val> <Block> <Elifs> ELSE <Block>
+<Cond> ::= IF <Val> <Block> | IF <Val> <Block> <Else> | IF <Val> <Block> <Elifs> | IF <Val> <Block> <Elifs> <Else>
 <Elifs> ::= <Elif> | <Elif> <Elifs>
 <Elif> ::= ELIF <Val> <Block>
+<Else> ::= ELSE <Block>
 <RetStmt> ::= RETURN <Val> SEMC
 <LogStmt> ::= LOG <Val> SEMC
 <ExpStmt> ::= <Val> SEMC
