@@ -83,9 +83,7 @@ namespace types {
         virtual TYPES name() const = 0;
     };
 
-    class DeclType {
-    public:
-        virtual TYPES name() const = 0;
+    class DeclType : public Type {
     };
 
     class CompundType : public Type {};
@@ -142,7 +140,7 @@ namespace types {
         ArrayType(std::unique_ptr<Type>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz), sizeKnown(true) {}
     };
 
-    class AtomicType : public DeclType, public Type {
+    class AtomicType : public DeclType {
     public:
         TYPES name() const override {
             return ATOM;

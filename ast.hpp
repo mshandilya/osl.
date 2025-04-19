@@ -107,7 +107,7 @@ namespace ast{
     };
     
     class NullValue : public AtomicASTNode {
-        types::TYPES dt;
+        std::unique_ptr<types::Type> dt;
     public:
         NullValue() : dt(types::UNRESOLVED) {}
 
@@ -116,7 +116,7 @@ namespace ast{
         }
 
         types::TYPES dataType() const override {
-            return dt;
+            return dt->name();
         }
     };
     
@@ -126,7 +126,7 @@ namespace ast{
             return BOOL_AST;
         }
 
-        types::TYPES dataType() const override {
+        types::ATOMTYPES dataType() const override {
             return types::BOOL;
         }
     };
@@ -137,7 +137,7 @@ namespace ast{
             return CHAR_AST;
         }
 
-        types::TYPES dataType() const override {
+        types::ATOMTYPES dataType() const override {
             return types::CHAR_8;
         }
     };
@@ -156,7 +156,7 @@ namespace ast{
             return NUM_AST;
         }
 
-        types::TYPES dataType() const override {
+        types::ATOMTYPES dataType() const override {
             return T::dt;
         };
     };
