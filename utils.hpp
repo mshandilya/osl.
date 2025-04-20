@@ -85,7 +85,7 @@ namespace types {
 
     class DeclType : public Type {};
 
-    class CompundType : public Type {};
+    class CompoundType : public Type {};
 
     class PointerDeclType : public DeclType {
         std::unique_ptr<Type> underlyingType;
@@ -97,7 +97,7 @@ namespace types {
         PointerDeclType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
     };
 
-    class PointerType : public CompundType {
+    class PointerType : public CompoundType {
         std::unique_ptr<Type> underlyingType;
     public:
         TYPES name() const override {
@@ -125,7 +125,7 @@ namespace types {
         }
     };
 
-    class FunctionType : public CompundType {
+    class FunctionType : public CompoundType {
         std::unique_ptr<Type> returnType;
         std::vector<std::unique_ptr<Type>> paramTypes;
     public:
@@ -154,7 +154,7 @@ namespace types {
         ArrayDeclType(std::unique_ptr<DeclType>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz) {}
     };
 
-    class ArrayType : public CompundType {
+    class ArrayType : public CompoundType {
         std::unique_ptr<Type> underlyingType;
         uint32_t size;
         bool sizeKnown;
@@ -413,8 +413,8 @@ namespace types {
 }
 
 namespace utils{
-    types::NumberType stringToNumberUtil(std::string& source);
-    types::Character stringToCharUtil(std::string& source);
+    std::unique_ptr<types::NumberType> stringToNumberUtil(std::string& source);
+    std::unique_ptr<types::Character> stringToCharUtil(std::string& source);
 }
 
 #endif

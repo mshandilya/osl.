@@ -1,5 +1,5 @@
 <Prog> ::= <Decls>
-<Block> ::= LBRACE <Decls> RBRACE
+<Block> ::= LBRACE RBRACE | LBRACE <Decls> RBRACE
 <Decls> ::= <Decl> <Decls> | <Decl>
 <Decl> ::= <ConstDecl> | <VarDecl> | <FunDecl> | <Stmt>
 <Stmt> ::= <ExpStmt> | <LogStmt> | <RetStmt> | <Cond> | <Loop>
