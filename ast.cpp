@@ -421,9 +421,9 @@ std::unique_ptr<ast::ASTNode> ast::convertAtom(int node, parser::parseTree &tree
         if(tree.id[nNode] == "NULL"){
             // unimplemented
         }else if(tree.id[nNode] == "<Bool>"){
-            // unimplemented
+            
         }else if(tree.id[nNode] == "<Char>"){
-            // unimplemented
+            return std::make_unique<CharValue>(utils::stringToCharUtil(tree.val[tree.adj[nNode][0]]));
         }else if(tree.id[nNode] == "<Number>"){
             // unimplemented
         }

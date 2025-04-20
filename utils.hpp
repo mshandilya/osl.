@@ -408,6 +408,7 @@ namespace types {
 
 namespace utils{
     std::unique_ptr<types::NumberType> stringToNumberUtil(std::string& source);
+    types::Character stringToCharUtil(std::string& source);
 }
 
 #endif

@@ -225,3 +225,37 @@ std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source
             //won't reach here
     }
 }
+
+types::Character utils::stringToCharUtil(const std::string &s) {
+    if(s.size() < 3 || s.front() != '\'' || s.back() != '\'')
+        throw std::invalid_argument("Input must start and end with single quotes, e.g. '\\n'");
+    std::string inner = s.substr(1, s.size()-2);
+
+    if(inner.size() == 1 && inner[0] != '\\')
+        return types::Character(inner[0]);
+
+    // escape sequence
+    if(inner.size() >= 2 && inner[0] == '\\'){
+        char esc = inner[1];
+        switch (esc) {
+            case 'n':  return types::Character('\n');
+            case 't':  return types::Character('\t');
+            case 'r':  return types::Character('\r');
+            case '\\': return types::Character('\\');
+            case '\'': return types::Character('\'');
+            case '\"': return types::Character('\"');
+            case '0':  return types::Character('\0');
+            case 'x': {
+                // hex escape: \xNN
+                std::string hex_digits = inner.substr(2);
+                if (hex_digits.empty() || hex_digits.size() > 2 || !std::isxdigit(hex_digits[0]) || (hex_digits.size() == 2 && !std::isxdigit(hex_digits[1])))
+                    break;
+                int value = std::stoi(hex_digits, nullptr, 16);
+                return types::Character(static_cast<unsigned char>(value));
+            }
+            default:
+                break;
+        }
+    }
+    throw std::invalid_argument("Unsupported or malformed escape sequence: " + s);
+}
