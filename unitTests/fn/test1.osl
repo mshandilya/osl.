@@ -1,3 +1,5 @@
-fn i32 a(i32 b, i32 c){
-    var i32 a := 3;
+def i32 F(i32 b, i32 c)
+{
+    var i32 a := b + c;
+    return a;
 }

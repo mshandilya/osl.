@@ -1,0 +1,25 @@
+def i32 F(i32 b, i32 c, u8[][] bts, fn(i32)->null p, fn(u8[][] bytes, fn(i32)->null P)->c8 Q)
+{
+    var c8 chr := Q(bts, p);
+    var c8 chr1 = bts[b][c];
+    p();
+    var i32 a := b + c + chr;
+    return a;
+}
+
+var i32 a := 5;
+
+def null A(i32 x)
+{
+    a := x;
+}
+
+def c8 B(u8[][] bt, fn(i32)->null g)
+{
+    g(a);
+    var c8 x := 'F' + bt[1][1];
+    return x;
+}
+
+var fn(i32, i32, u8[][], fn(i32)->null, fn(u8[][], fn(i32)->null)->c8)->i32 G := F;
+var i32 gt := G(54, 54, {{5, 254},{24, 6}}, A, B);
