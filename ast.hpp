@@ -242,11 +242,11 @@ namespace ast{
 
     class LetConst: public ASTNode {
     public:
-        types::TYPES typ;
+        std::unique_ptr<types::Type> typ;
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        LetConst(std::unique_ptr<ASTNode>&& var, types::TYPES type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), val(std::move(val)) {};
+        LetConst(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), val(std::move(val)) {};
         
         NodeType type() const override {
             return LETCONST_AST;
@@ -255,12 +255,12 @@ namespace ast{
     
     class LetVar: public ASTNode {
     public:
-        types::TYPES typ;
+        std::unique_ptr<types::Type> typ;
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        LetVar(std::unique_ptr<ASTNode>&& var, types::TYPES type): var(std::move(var)), typ(type), val(std::make_unique<NullValue>()) {};
-        LetVar(std::unique_ptr<ASTNode>&& var, types::TYPES type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), val(std::move(val)) {};
+        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type): var(std::move(var)), typ(type), val(std::make_unique<NullValue>()) {};
+        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), val(std::move(val)) {};
         
         NodeType type() const override {
             return LETVAR_AST;
@@ -269,12 +269,12 @@ namespace ast{
     
     class LetFun: public ASTNode {
     public:
-        types::TYPES retType;
+        std::unique_ptr<types::Type> retType;
         std::unique_ptr<ASTNode> name;
         std::vector<std::pair<std::unique_ptr<types::Type>, std::unique_ptr<ASTNode>>> params;
         std::unique_ptr<ASTNode> body;
 
-        LetFun(types::TYPES retType, std::unique_ptr<ASTNode>&& name, std::unique_ptr<ASTNode>&& body): retType(retType), name(std::move(name)), body(std::move(body)) {};
+        LetFun(std::unique_ptr<types::Type>&& retType, std::unique_ptr<ASTNode>&& name, std::unique_ptr<ASTNode>&& body): retType(std::move(retType)), name(std::move(name)), body(std::move(body)) {};
         
         NodeType type() const override {
             return LETFUN_AST;
