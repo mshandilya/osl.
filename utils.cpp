@@ -89,7 +89,8 @@ int numChar(int val){
     return c;
 }
 
-std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil(std::string& source) {
+std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source) {
+
     unsigned short int bitSize = 8;
     size_t s = source.length();
     int base = 10, startPos = 0, neg = 0;
@@ -113,6 +114,9 @@ std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil
     }
 
     std::vector<unsigned char> value(1);
+    
+    //check for float (.)
+
     if(base==16) {
         int bitPos = 0, bytePos = 0, carry = 0, newVal;
         while(startPos < s) {
@@ -195,6 +199,7 @@ std::pair<types::MAX_BITS, std::vector<unsigned char>> utils::stringToNumberUtil
             bitPos %= 8;
         }
     }
+    
     if(neg) {
         for(unsigned char& b : value) {
             b = ~b;

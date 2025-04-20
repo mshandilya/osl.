@@ -87,16 +87,6 @@ namespace types {
 
     class CompundType : public Type {};
 
-    class PointerType : public CompundType {
-        std::unique_ptr<Type> underlyingType;
-    public:
-        TYPES name() const override {
-            return PTR;
-        }
-
-        PointerType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
-    };
-
     class PointerDeclType : public DeclType {
         std::unique_ptr<Type> underlyingType;
     public:
@@ -105,6 +95,16 @@ namespace types {
         }
 
         PointerDeclType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
+    };
+
+    class PointerType : public CompundType {
+        std::unique_ptr<Type> underlyingType;
+    public:
+        TYPES name() const override {
+            return PTR;
+        }
+
+        PointerType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
     };
 
     class FunctionDeclType : public DeclType {
@@ -371,6 +371,13 @@ namespace types {
     public:
         inline Boolean() : value(0) {}
 
+        inline Boolean(bool v) {
+            if(v)
+                value = 1;
+            else
+                value = 0;
+        }
+
         ATOMTYPES atomicName() const override {
             return BOOL;
         }
@@ -381,6 +388,8 @@ namespace types {
 
     public:
         inline Character() : value(0) {}
+
+        inline Character(unsigned char c) : value(c) {}
 
         ATOMTYPES atomicName() const override {
             return CHAR_8;
@@ -398,7 +407,7 @@ namespace types {
 }
 
 namespace utils{
-    std::pair<types::MAX_BITS, std::vector<unsigned char>> stringToNumberUtil(std::string& source);
+    std::unique_ptr<types::NumberType> stringToNumberUtil(std::string& source);
 }
 
 #endif

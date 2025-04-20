@@ -119,10 +119,17 @@ namespace ast{
             return types::NULLV;
         }
 
+        // functions for more information on what the enclosing data type is (dt)
+
     };
     
     class BoolValue : public AtomicASTNode {
+        types::Boolean val;
     public:
+        BoolValue() : val(false) {}
+
+        BoolValue(bool val) : val(val) {}
+
         NodeType type() const override {
             return BOOL_AST;
         }
@@ -133,7 +140,12 @@ namespace ast{
     };
 
     class CharValue : public AtomicASTNode {
+        types::Character val;
     public:
+        CharValue() : val(0) {}
+
+        CharValue(unsigned char c) : val(c) {}
+
         NodeType type() const override {
             return CHAR_AST;
         }
