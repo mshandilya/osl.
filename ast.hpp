@@ -144,7 +144,7 @@ namespace ast{
     public:
         CharValue() : val(0) {}
 
-        CharValue(unsigned char c) : val(c) {}
+        CharValue(types::Character& val): val(val) {}
 
         NodeType type() const override {
             return CHAR_AST;

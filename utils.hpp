@@ -413,6 +413,7 @@ namespace types {
 
 namespace utils{
     types::NumberType stringToNumberUtil(std::string& source);
+    types::Character stringToCharUtil(std::string& source);
 }
 
 #endif
