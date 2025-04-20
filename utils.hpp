@@ -355,6 +355,11 @@ namespace types {
                 b = 0;
         }
 
+        inline Float(std::vector<unsigned char>& value) {
+            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
+                this->value[i] = value[i];
+        }
+
         ATOMTYPES atomicName() const override {
             return dt;
         }
