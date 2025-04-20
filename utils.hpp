@@ -92,7 +92,7 @@ namespace types {
 
     DeclType gtc(DeclType& other); // global type copy
 
-    class CompundType : public Type {};
+    class CompoundType : public Type {};
 
     class PointerDeclType : public DeclType {
     public:
@@ -109,7 +109,7 @@ namespace types {
         }
     };
 
-    class PointerType : public CompundType {
+    class PointerType : public CompoundType {
         std::unique_ptr<Type> underlyingType;
     public:
         TYPES name() const override {
@@ -148,7 +148,7 @@ namespace types {
         }
     };
 
-    class FunctionType : public CompundType {
+    class FunctionType : public CompoundType {
         std::unique_ptr<Type> returnType;
         std::vector<std::unique_ptr<Type>> paramTypes;
     public:
@@ -189,7 +189,7 @@ namespace types {
         }
     };
 
-    class ArrayType : public CompundType {
+    class ArrayType : public CompoundType {
         std::unique_ptr<Type> underlyingType;
         uint32_t size;
         bool sizeKnown;

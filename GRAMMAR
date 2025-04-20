@@ -1,5 +1,9 @@
 <Prog> ::= <Decls>
+<<<<<<< HEAD
 <Block> ::= LBRACE <Decls> RBRACE | LBRACE RBRACE
+=======
+<Block> ::= LBRACE RBRACE | LBRACE <Decls> RBRACE
+>>>>>>> 567449885d0d2c96faa441b20d211730b560b66f
 <Decls> ::= <Decl> <Decls> | <Decl>
 <Decl> ::= <ConstDecl> | <VarDecl> | <FunDecl> | <Stmt>
 <Stmt> ::= <ExpStmt> | <LogStmt> | <RetStmt> | <Cond> | <Loop>

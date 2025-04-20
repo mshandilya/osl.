@@ -89,7 +89,7 @@ int numChar(int val){
     return c;
 }
 
-types::NumberType utils::stringToNumberUtil(std::string& source) {
+std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source) {
 
     unsigned short int bitSize = 8;
     bool isFloat = false, isUnsigned = true;
@@ -136,7 +136,7 @@ types::NumberType utils::stringToNumberUtil(std::string& source) {
                 value[i] = (unsigned char)(resval&(~((unsigned char)0)));
                 resval >>= 8;
             }
-            return types::f32(value);
+            return std::make_unique<types::f32>(value);
         }
         catch(std::out_of_range) {
             try {
@@ -148,7 +148,7 @@ types::NumberType utils::stringToNumberUtil(std::string& source) {
                     value[i] = (unsigned char)(resval&(~((unsigned char)0)));
                     resval >>= 8;
                 }
-                return types::f64(value);
+                return std::make_unique<types::f64>(value);
             }
             catch(std::out_of_range) {
                 throw std::logic_error("Float too big to represent in any available data type.");
@@ -263,15 +263,15 @@ types::NumberType utils::stringToNumberUtil(std::string& source) {
         if(isUnsigned) {
             switch (bitSize) {
                 case 8:
-                    return types::u8(value);
+                    return std::make_unique<types::u8>(value);
                 case 16:
-                    return types::u16(value);
+                    return std::make_unique<types::u16>(value);
                 case 32:
-                    return types::u32(value);
+                    return std::make_unique<types::u32>(value);
                 case 64:
-                    return types::u64(value);
+                    return std::make_unique<types::u64>(value);
                 case 128:
-                    return types::u128(value);
+                    return std::make_unique<types::u128>(value);
                 default:
                     throw std::logic_error("Unsigned Integer too big to represent in any available data type.");
             }
@@ -279,15 +279,15 @@ types::NumberType utils::stringToNumberUtil(std::string& source) {
         else {
             switch (bitSize) {
                 case 8:
-                    return types::i8(value);
+                    return std::make_unique<types::i8>(value);
                 case 16:
-                    return types::i16(value);
+                    return std::make_unique<types::i16>(value);
                 case 32:
-                    return types::i32(value);
+                    return std::make_unique<types::i32>(value);
                 case 64:
-                    return types::i64(value);
+                    return std::make_unique<types::i64>(value);
                 case 128:
-                    return types::i128(value);
+                    return std::make_unique<types::i128>(value);
                 default:
                     throw std::logic_error("Signed Integer too big to represent in any available data type.");
             }
@@ -295,32 +295,32 @@ types::NumberType utils::stringToNumberUtil(std::string& source) {
     }
 }
 
-types::Character utils::stringToCharUtil(const std::string &s) {
+std::unique_ptr<types::Character> utils::stringToCharUtil(const std::string &s) {
     if(s.size() < 3 || s.front() != '\'' || s.back() != '\'')
         throw std::invalid_argument("Input must start and end with single quotes, e.g. '\\n'");
     std::string inner = s.substr(1, s.size()-2);
 
     if(inner.size() == 1 && inner[0] != '\\')
-        return types::Character(inner[0]);
+        return std::make_unique<types::Character>(inner[0]);
 
     // escape sequence
     if(inner.size() >= 2 && inner[0] == '\\'){
         char esc = inner[1];
         switch (esc) {
-            case 'n':  return types::Character('\n');
-            case 't':  return types::Character('\t');
-            case 'r':  return types::Character('\r');
-            case '\\': return types::Character('\\');
-            case '\'': return types::Character('\'');
-            case '\"': return types::Character('\"');
-            case '0':  return types::Character('\0');
+            case 'n':  return std::make_unique<types::Character>('\n');
+            case 't':  return std::make_unique<types::Character>('\t');
+            case 'r':  return std::make_unique<types::Character>('\r');
+            case '\\': return std::make_unique<types::Character>('\\');
+            case '\'': return std::make_unique<types::Character>('\'');
+            case '\"': return std::make_unique<types::Character>('\"');
+            case '0':  return std::make_unique<types::Character>('\0');
             case 'x': {
                 // hex escape: \xNN
                 std::string hex_digits = inner.substr(2);
                 if (hex_digits.empty() || hex_digits.size() > 2 || !std::isxdigit(hex_digits[0]) || (hex_digits.size() == 2 && !std::isxdigit(hex_digits[1])))
                     break;
                 int value = std::stoi(hex_digits, nullptr, 16);
-                return types::Character(static_cast<unsigned char>(value));
+                return std::make_unique<types::Character>(static_cast<unsigned char>(value));
             }
             default:
                 break;
