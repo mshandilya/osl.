@@ -89,7 +89,7 @@ int numChar(int val){
     return c;
 }
 
-std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source) {
+types::NumberType utils::stringToNumberUtil(std::string& source) {
 
     unsigned short int bitSize = 8;
     bool isFloat = false, isUnsigned = true;
@@ -136,7 +136,7 @@ std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source
                 value[i] = (unsigned char)(resval&(~((unsigned char)0)));
                 resval >>= 8;
             }
-            return std::make_unique<types::f32>(value);
+            return types::f32(value);
         }
         catch(std::out_of_range) {
             try {
@@ -148,7 +148,7 @@ std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source
                     value[i] = (unsigned char)(resval&(~((unsigned char)0)));
                     resval >>= 8;
                 }
-                return std::make_unique<types::f64>(value);
+                return types::f64(value);
             }
             catch(std::out_of_range) {
                 throw std::logic_error("Float too big to represent in any available data type.");
@@ -263,15 +263,15 @@ std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source
         if(isUnsigned) {
             switch (bitSize) {
                 case 8:
-                    return std::make_unique<types::u8>(value);
+                    return types::u8(value);
                 case 16:
-                    return std::make_unique<types::u16>(value);
+                    return types::u16(value);
                 case 32:
-                    return std::make_unique<types::u32>(value);
+                    return types::u32(value);
                 case 64:
-                    return std::make_unique<types::u64>(value);
+                    return types::u64(value);
                 case 128:
-                    return std::make_unique<types::u128>(value);
+                    return types::u128(value);
                 default:
                     throw std::logic_error("Unsigned Integer too big to represent in any available data type.");
             }
@@ -279,15 +279,15 @@ std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source
         else {
             switch (bitSize) {
                 case 8:
-                    return std::make_unique<types::i8>(value);
+                    return types::i8(value);
                 case 16:
-                    return std::make_unique<types::i16>(value);
+                    return types::i16(value);
                 case 32:
-                    return std::make_unique<types::i32>(value);
+                    return types::i32(value);
                 case 64:
-                    return std::make_unique<types::i64>(value);
+                    return types::i64(value);
                 case 128:
-                    return std::make_unique<types::i128>(value);
+                    return types::i128(value);
                 default:
                     throw std::logic_error("Signed Integer too big to represent in any available data type.");
             }
