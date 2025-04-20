@@ -88,14 +88,14 @@ namespace ast{
     class Identifier: public AtomicASTNode {
     public:
         std::string idenName;
-        types::TYPES boundDataType;
+        std::unique_ptr<types::Type> boundDataType;
         ast::Access access;
         int id, scopeId;
 
         Identifier(std::string idenName): idenName(idenName) {};
         
-        void bind(types::TYPES boundDataType, Access access, int id, int scopeId) {
-            this->boundDataType = boundDataType;
+        void bind(std::unique_ptr<types::Type>&& boundDataType, Access access, int id, int scopeId) {
+            this->boundDataType = std::move(boundDataType);
             this->access = access;
             this->id = id;
             this->scopeId = scopeId;
@@ -163,7 +163,17 @@ namespace ast{
     };
 
     class ArrValue : public ASTNode {
+        std::vector<std::unique_ptr<ast::ASTNode>> elems;
+    public:
+        ArrValue() {}    
 
+        void addElem(std::unique_ptr<ast::ASTNode>&& elem) {
+            elems.push_back(std::move(elem));
+        }
+
+        NodeType type() const override {
+            return ARR_AST;
+        }
     };
 
     class FunctionCall : public ASTNode {
@@ -206,10 +216,6 @@ namespace ast{
         }
     };
 
-    class Location : public ASTNode {
-
-    };
-
     class Assign : public ASTNode {
     public:
         std::unique_ptr<ASTNode> var;
@@ -220,11 +226,6 @@ namespace ast{
         NodeType type() const override {
             return ASSIGN_AST;
         }
-    };
-
-    // is this class required?
-    class Value : public ASTNode {
-
     };
 
     class LetConst: public ASTNode {
@@ -258,7 +259,7 @@ namespace ast{
     public:
         types::TYPES retType;
         std::unique_ptr<ASTNode> name;
-        std::vector<std::pair<types::TYPES,std::unique_ptr<ASTNode>>> params;
+        std::vector<std::pair<std::unique_ptr<types::Type>, std::unique_ptr<ASTNode>>> params;
         std::unique_ptr<ASTNode> body;
 
         LetFun(types::TYPES retType, std::unique_ptr<ASTNode>&& name, std::unique_ptr<ASTNode>&& body): retType(retType), name(std::move(name)), body(std::move(body)) {};
@@ -267,8 +268,8 @@ namespace ast{
             return LETFUN_AST;
         }
 
-        void addParam(types::TYPES typ, std::unique_ptr<ASTNode>&& param){
-            params.emplace_back(typ, std::move(param));
+        void addParam(std::unique_ptr<types::Type>&& typ, std::unique_ptr<ASTNode>&& param){
+            params.emplace_back(std::move(typ), std::move(param));
         }
     };
 
@@ -350,8 +351,8 @@ namespace ast{
         }
     };
 
-    types::TYPES convertType(std::string type);
-    std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> convertParam(int node, parser::parseTree &tree);
+    std::unique_ptr<types::Type> convertType(std::string type);
+    std::pair<std::unique_ptr<types::Type>,std::unique_ptr<ast::Identifier>> convertParam(int node, parser::parseTree &tree);
     std::unique_ptr<ast::ASTNode> parseTreeToAST(parser::parseTree &tree); //Done
     std::unique_ptr<ast::ASTNode> convertProg(int node, parser::parseTree &tree); //Done
     std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree); //Done

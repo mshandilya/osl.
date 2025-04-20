@@ -83,12 +83,11 @@ namespace types {
         virtual TYPES name() const = 0;
     };
 
-    class DeclType : public Type {
-    };
+    class DeclType : public Type {};
 
     class CompundType : public Type {};
 
-    class PointerType : public CompundType, public DeclType {
+    class PointerType : public CompundType {
         std::unique_ptr<Type> underlyingType;
     public:
         TYPES name() const override {
@@ -98,7 +97,35 @@ namespace types {
         PointerType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
     };
 
-    class FunctionType : public CompundType, public DeclType {
+    class PointerDeclType : public DeclType {
+        std::unique_ptr<Type> underlyingType;
+    public:
+        TYPES name() const override {
+            return PTR;
+        }
+
+        PointerDeclType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
+    };
+
+    class FunctionDeclType : public DeclType {
+        std::unique_ptr<Type> returnType;
+        std::vector<std::unique_ptr<Type>> paramTypes;
+    public:
+        TYPES name() const override {
+            return FN;
+        }
+
+        FunctionDeclType(std::unique_ptr<Type>&& rt, std::vector<std::unique_ptr<Type>>&& pt) : returnType(std::move(rt)), paramTypes(std::move(pt)) {}
+        FunctionDeclType(std::unique_ptr<Type>&& rt) : returnType(std::move(rt)), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
+        FunctionDeclType(std::vector<std::unique_ptr<Type>>&& pt) : returnType(std::make_unique<Null>()), paramTypes(std::move(pt)) {}
+        FunctionDeclType() : returnType(std::make_unique<Null>()), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
+
+        inline void addParams(std::unique_ptr<Type>&& pt) {
+            paramTypes.push_back(std::move(pt));
+        }
+    };
+
+    class FunctionType : public CompundType {
         std::unique_ptr<Type> returnType;
         std::vector<std::unique_ptr<Type>> paramTypes;
     public:
@@ -359,6 +386,8 @@ namespace types {
             return CHAR_8;
         }
     };
+
+    typedef Character c8;
 
     class Null : public AtomicType {
     public:

@@ -2,244 +2,246 @@
 
 #define LOG(x) //std::cout<<x<<std::endl;
 
-void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast){
-    LOG("inside viztree")
-    std::cout << prefix;
-    if (!prefix.empty())
-        std::cout << "+-";
-    std::string newPrefix = prefix.empty() ? "   " : prefix + (isLast ? "   " : "| ");
-    switch(node->type()){
-        case PROG_AST: {
-            std::cout << "Prog" << std::endl;
-            const Prog* p = dynamic_cast<const Prog*>(node.get());
-            for(size_t i = 0;i < p->decls.size();i++){
-                vizTree(p->decls[i], newPrefix, i==p->decls.size()-1);
-            }
-            break;
-        }
-        case LET_AST: {
-            std::cout << "Let(";
-            const Let* l = dynamic_cast<const Let*>(node.get());
-            std::cout << "type=";
-            switch(l->typ) {
-                case types::INT_8:
-                    std::cout << "int8";
-                    break;
-                case types::INT_16:
-                    std::cout << "int16";
-                    break;
-                case types::INT_32:
-                    std::cout << "int32";
-                    break;
-                case types::INT_64:
-                    std::cout << "int64";
-                    break;
-                case types::INT_128:
-                    std::cout << "int128";
-                    break;
-                case types::BOOL:
-                    std::cout << "boolean";
-                    break;
-                case types::CHAR_8:
-                    std::cout << "char8";
-                    break;
-                default:
-                    std::cout << "unknown";
-            }  
-            std::cout << ", access=" << l->acc << ")" << std::endl;
-            if(l->val != nullptr){
-                vizTree(l->var, newPrefix, false);
-                vizTree(l->val, newPrefix, true);
-            }else{
-                vizTree(l->var, newPrefix, true);
-            }
-            break;
-        }
-        case IDEN_AST: {
-            const Identifier* v = dynamic_cast<const Identifier*>(node.get());
-            std::cout << "Variable(varName=" << v->idenName << ")" << std::endl;
-            break;
-        }
-        case NUM_AST: {
-            const AtomicASTNode* n = dynamic_cast<const AtomicASTNode*>(node.get());
-            std::cout << "NumValue(dataType=";
-            switch(n->dataType()){
-                case types::INT_8:
-                    std::cout << "int8";
-                    break;
-                case types::INT_16:
-                    std::cout << "int16";
-                    break;
-                case types::INT_32:
-                    std::cout << "int32";
-                    break;
-                case types::INT_64:
-                    std::cout << "int64";
-                    break;
-                case types::INT_128:
-                    std::cout << "int128";
-                    break;
-                default:
-                    std::cout << "unknown";
-            }
-            std::cout << ")" << std::endl;
-            break;
-        }
-        case NULL_AST: {
-            std::cout << "NullValue()" << std::endl;
-            break;
-        }
-        case UOP_AST: {
-            const UnaryOperator* u = dynamic_cast<const UnaryOperator*>(node.get());
-            std::cout << "UnaryOperator(op=" << u->op << ")" << std::endl;
-            vizTree(u->child, newPrefix, true);
-            break;
-        }
-        case BOP_AST: {
-            const BinaryOperator* b = dynamic_cast<const BinaryOperator*>(node.get());
-            std::cout << "BinaryOperator(op=" << b->op << ")" << std::endl;
-            vizTree(b->leftChild, newPrefix, false);
-            vizTree(b->rightChild, newPrefix, true);
-            break;
-        }
-        case ASSIGN_AST: {
-            const Assign* a = dynamic_cast<const Assign*>(node.get());
-            std::cout << "Assign" << std::endl;
-            vizTree(a->var, newPrefix, false);
-            vizTree(a->val, newPrefix, true);
-            break;
-        }
-        case IF_AST: {
-            const If* i = dynamic_cast<const If*>(node.get());
-            std::cout << "If" << std::endl;
-            vizTree(i->cond, newPrefix, false);
-            if(i->elseBody == nullptr){
-                vizTree(i->thenBody, newPrefix, true);    
-            }else{
-                vizTree(i->thenBody, newPrefix, false);
-                vizTree(i->elseBody, newPrefix, true);
-            }
-            break;
-        }
-        case LOG_AST: {
-            const Log* l = dynamic_cast<const Log*>(node.get());
-            std::cout << "Log" << std::endl;
-            vizTree(l->val, newPrefix, true);
-            break;
-        }
-        case RET_AST: {
-            const Return* r = dynamic_cast<const Return*>(node.get());
-            std::cout << "Return" << std::endl;
-            vizTree(r->val, newPrefix, true);
-            break;
-        }
-        case LETFUN_AST: {
-            const LetFun* l = dynamic_cast<const LetFun*>(node.get());
-            const Identifier* i = dynamic_cast<const Identifier*>(l->name.get());
-            std::cout << "LetFun(name=" << i->idenName << ", retType=";
-            switch(l->retType){
-                case types::INT_8:
-                    std::cout << "int8";
-                    break;
-                case types::INT_16:
-                    std::cout << "int16";
-                    break;
-                case types::INT_32:
-                    std::cout << "int32";
-                    break;
-                case types::INT_64:
-                    std::cout << "int64";
-                    break;
-                case types::INT_128:
-                    std::cout << "int128";
-                    break;
-                case types::BOOL:
-                    std::cout << "boolean";
-                    break;
-                case types::CHAR_8:
-                    std::cout << "char8";
-                    break;
-                default:
-                    std::cout << "unknown";
-            }  
-            std::cout << ")" << std::endl;
-            std::cout << prefix << "+-Params=" << std::endl;
-            for(size_t i = 0;i < l->params.size();i++){
-                vizTree(l->params[i].second, newPrefix, i==l->params.size()-1);
-            }
-            std::cout << prefix << "+-Body=" << std::endl;
-            vizTree(l->body, newPrefix, true);
-            break;
-        }
-        case WHILE_AST: {
-            const While* w = dynamic_cast<const While*>(node.get());
-            std::cout << "While" << std::endl;
-            std::cout << prefix << "+-Cond=" << std::endl;
-            vizTree(w->cond, newPrefix, true);
-            std::cout << prefix << "+-Body=" << std::endl;
-            vizTree(w->body, newPrefix, true);
-            break;
-        }
-        case FUNCALL_AST: {
-            const FunCall* f = dynamic_cast<const FunCall*>(node.get());
-            std::cout << "FunCall" << std::endl;
-            std::cout << prefix << "+-Name=" << std::endl;
-            vizTree(f->name, newPrefix, true);
-            std::cout << prefix << "+-Params=" << std::endl;
-            for(size_t i = 0;i < f->params.size();i++){
-                vizTree(f->params[i], newPrefix, i==f->params.size()-1);
-            }
-            break;
-        }
-    }
-}
+// void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast){
+//     LOG("inside viztree")
+//     std::cout << prefix;
+//     if (!prefix.empty())
+//         std::cout << "+-";
+//     std::string newPrefix = prefix.empty() ? "   " : prefix + (isLast ? "   " : "| ");
+//     switch(node->type()){
+//         case PROG_AST: {
+//             std::cout << "Prog" << std::endl;
+//             const Prog* p = dynamic_cast<const Prog*>(node.get());
+//             for(size_t i = 0;i < p->decls.size();i++){
+//                 vizTree(p->decls[i], newPrefix, i==p->decls.size()-1);
+//             }
+//             break;
+//         }
+//         case LET_AST: {
+//             std::cout << "Let(";
+//             const Let* l = dynamic_cast<const Let*>(node.get());
+//             std::cout << "type=";
+//             switch(l->typ) {
+//                 case types::INT_8:
+//                     std::cout << "int8";
+//                     break;
+//                 case types::INT_16:
+//                     std::cout << "int16";
+//                     break;
+//                 case types::INT_32:
+//                     std::cout << "int32";
+//                     break;
+//                 case types::INT_64:
+//                     std::cout << "int64";
+//                     break;
+//                 case types::INT_128:
+//                     std::cout << "int128";
+//                     break;
+//                 case types::BOOL:
+//                     std::cout << "boolean";
+//                     break;
+//                 case types::CHAR_8:
+//                     std::cout << "char8";
+//                     break;
+//                 default:
+//                     std::cout << "unknown";
+//             }  
+//             std::cout << ", access=" << l->acc << ")" << std::endl;
+//             if(l->val != nullptr){
+//                 vizTree(l->var, newPrefix, false);
+//                 vizTree(l->val, newPrefix, true);
+//             }else{
+//                 vizTree(l->var, newPrefix, true);
+//             }
+//             break;
+//         }
+//         case IDEN_AST: {
+//             const Identifier* v = dynamic_cast<const Identifier*>(node.get());
+//             std::cout << "Variable(varName=" << v->idenName << ")" << std::endl;
+//             break;
+//         }
+//         case NUM_AST: {
+//             const AtomicASTNode* n = dynamic_cast<const AtomicASTNode*>(node.get());
+//             std::cout << "NumValue(dataType=";
+//             switch(n->dataType()){
+//                 case types::INT_8:
+//                     std::cout << "int8";
+//                     break;
+//                 case types::INT_16:
+//                     std::cout << "int16";
+//                     break;
+//                 case types::INT_32:
+//                     std::cout << "int32";
+//                     break;
+//                 case types::INT_64:
+//                     std::cout << "int64";
+//                     break;
+//                 case types::INT_128:
+//                     std::cout << "int128";
+//                     break;
+//                 default:
+//                     std::cout << "unknown";
+//             }
+//             std::cout << ")" << std::endl;
+//             break;
+//         }
+//         case NULL_AST: {
+//             std::cout << "NullValue()" << std::endl;
+//             break;
+//         }
+//         case UOP_AST: {
+//             const UnaryOperator* u = dynamic_cast<const UnaryOperator*>(node.get());
+//             std::cout << "UnaryOperator(op=" << u->op << ")" << std::endl;
+//             vizTree(u->child, newPrefix, true);
+//             break;
+//         }
+//         case BOP_AST: {
+//             const BinaryOperator* b = dynamic_cast<const BinaryOperator*>(node.get());
+//             std::cout << "BinaryOperator(op=" << b->op << ")" << std::endl;
+//             vizTree(b->leftChild, newPrefix, false);
+//             vizTree(b->rightChild, newPrefix, true);
+//             break;
+//         }
+//         case ASSIGN_AST: {
+//             const Assign* a = dynamic_cast<const Assign*>(node.get());
+//             std::cout << "Assign" << std::endl;
+//             vizTree(a->var, newPrefix, false);
+//             vizTree(a->val, newPrefix, true);
+//             break;
+//         }
+//         case IF_AST: {
+//             const If* i = dynamic_cast<const If*>(node.get());
+//             std::cout << "If" << std::endl;
+//             vizTree(i->cond, newPrefix, false);
+//             if(i->elseBody == nullptr){
+//                 vizTree(i->thenBody, newPrefix, true);    
+//             }else{
+//                 vizTree(i->thenBody, newPrefix, false);
+//                 vizTree(i->elseBody, newPrefix, true);
+//             }
+//             break;
+//         }
+//         case LOG_AST: {
+//             const Log* l = dynamic_cast<const Log*>(node.get());
+//             std::cout << "Log" << std::endl;
+//             vizTree(l->val, newPrefix, true);
+//             break;
+//         }
+//         case RET_AST: {
+//             const Return* r = dynamic_cast<const Return*>(node.get());
+//             std::cout << "Return" << std::endl;
+//             vizTree(r->val, newPrefix, true);
+//             break;
+//         }
+//         case LETFUN_AST: {
+//             const LetFun* l = dynamic_cast<const LetFun*>(node.get());
+//             const Identifier* i = dynamic_cast<const Identifier*>(l->name.get());
+//             std::cout << "LetFun(name=" << i->idenName << ", retType=";
+//             switch(l->retType){
+//                 case types::INT_8:
+//                     std::cout << "int8";
+//                     break;
+//                 case types::INT_16:
+//                     std::cout << "int16";
+//                     break;
+//                 case types::INT_32:
+//                     std::cout << "int32";
+//                     break;
+//                 case types::INT_64:
+//                     std::cout << "int64";
+//                     break;
+//                 case types::INT_128:
+//                     std::cout << "int128";
+//                     break;
+//                 case types::BOOL:
+//                     std::cout << "boolean";
+//                     break;
+//                 case types::CHAR_8:
+//                     std::cout << "char8";
+//                     break;
+//                 default:
+//                     std::cout << "unknown";
+//             }  
+//             std::cout << ")" << std::endl;
+//             std::cout << prefix << "+-Params=" << std::endl;
+//             for(size_t i = 0;i < l->params.size();i++){
+//                 vizTree(l->params[i].second, newPrefix, i==l->params.size()-1);
+//             }
+//             std::cout << prefix << "+-Body=" << std::endl;
+//             vizTree(l->body, newPrefix, true);
+//             break;
+//         }
+//         case WHILE_AST: {
+//             const While* w = dynamic_cast<const While*>(node.get());
+//             std::cout << "While" << std::endl;
+//             std::cout << prefix << "+-Cond=" << std::endl;
+//             vizTree(w->cond, newPrefix, true);
+//             std::cout << prefix << "+-Body=" << std::endl;
+//             vizTree(w->body, newPrefix, true);
+//             break;
+//         }
+//         case FUNCALL_AST: {
+//             const FunCall* f = dynamic_cast<const FunCall*>(node.get());
+//             std::cout << "FunCall" << std::endl;
+//             std::cout << prefix << "+-Name=" << std::endl;
+//             vizTree(f->name, newPrefix, true);
+//             std::cout << prefix << "+-Params=" << std::endl;
+//             for(size_t i = 0;i < f->params.size();i++){
+//                 vizTree(f->params[i], newPrefix, i==f->params.size()-1);
+//             }
+//             break;
+//         }
+//     }
+// }
 
-types::TYPES ast::convertType(std::string type){
+std::unique_ptr<types::Type> ast::convertType(std::string type){
+    // to be added: functions and arrays and pointers
     LOG("inside type")
     LOG(type)
     std::string bits = type.substr(2, type.length()-2);
     if(type[1] == 'I') {
         if(bits == "8")
-            return types::INT_8;
+            return std::make_unique<types::i8>();
         else if(bits == "16")
-            return types::INT_16;
+            return std::make_unique<types::i16>();
         else if(bits == "32")
-            return types::INT_32;
+            return std::make_unique<types::i32>();
         else if(bits == "64")
-            return types::INT_64;
+            return std::make_unique<types::i64>();
         else
-            return types::INT_128;
+            return std::make_unique<types::i128>();
     }
     else if(type[1] == 'U') {
         if(bits == "8")
-            return types::UINT_8;
+            return std::make_unique<types::u8>();
         else if(bits == "16")
-            return types::UINT_16;
+            return std::make_unique<types::u16>();
         else if(bits == "32")
-            return types::UINT_32;
+            return std::make_unique<types::u32>();
         else if(bits == "64")
-            return types::UINT_64;
+            return std::make_unique<types::u64>();
         else
-            return types::UINT_128;
+            return std::make_unique<types::u128>();
     }
     else if(type[1] == 'F') {
-        if(bits == "8")
-            return types::FLOAT_8;
-        else if(bits == "16")
-            return types::FLOAT_16;
+        if(bits == "16")
+            return std::make_unique<types::f16>();
         else if(bits == "32")
-            return types::FLOAT_32;
+            return std::make_unique<types::f32>();
         else if(bits == "64")
-            return types::FLOAT_64;
+            return std::make_unique<types::f64>();
         else
-            return types::FLOAT_128;
+            return std::make_unique<types::f128>();
     }
     else if(type[1] == 'C') {
         if(bits == "8")
-            return types::CHAR_8;
+            return std::make_unique<types::c8>();
     }
     else if(type[1] == 'B') {
-        return types::BOOL;
+        return std::make_unique<types::Boolean>();
+    }
+    else if(type[1] == 'F') {
+        // a function
     }
 }
 
@@ -256,17 +258,30 @@ std::unique_ptr<ast::ASTNode> ast::convertVal(int node, parser::parseTree &tree)
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertUnaryOp(int node, parser::parseTree &tree){
+    // to be added: <PtrDeref> | <FunCall> | <ArrAcc> | <Ptr>
     LOG("inside unary op")
     OperatorType typ;
-    if(tree.id[node] == "<Not>"){
-        typ = NOT_OP;
-    }else if(tree.id[node] == "<UnaryNeg>"){
+    if(tree.id[node] == "<UnNot>") {
+        typ = UNOT_OP;
+    }
+    else if(tree.id[node] == "<UnSign>" and tree.val[node] == "NEG") {
         typ = UNEG_OP;
     }
-    for(int nNode: tree.adj[node]){
-        if(tree.id[nNode] == "<UnAmb>"){
+    else if(tree.id[node] == "<UnSign>") {
+        for(int nNode: tree.adj[node]){
+            if(tree.id[nNode] == "<UnAmb>") {
+                return convertUnAmb(nNode, tree);
+            }
+            else if(tree.id[nNode] == tree.id[node]) {
+                return convertUnaryOp(nNode, tree);
+            }
+        }
+    }
+    for(int nNode: tree.adj[node]) {
+        if(tree.id[nNode] == "<UnAmb>") {
             return std::make_unique<UnaryOperator>(typ, convertUnAmb(nNode, tree));
-        }else if(tree.id[nNode] == tree.id[node]){
+        }
+        else if(tree.id[nNode] == tree.id[node]) {
             return std::make_unique<UnaryOperator>(typ, convertUnaryOp(nNode, tree));
         }
     }
@@ -275,28 +290,31 @@ std::unique_ptr<ast::ASTNode> ast::convertUnaryOp(int node, parser::parseTree &t
 std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &tree){
     LOG("inside binary op")
     std::string opNames[] = {"<Add>", "<Subtract>", "<Multiply>", "<Divide>", "<Power>", "<Modulo>", "<Or>", "<And>", "<Xor>", "<Xand>", "<LeftShift>", "<RightShift>", "<Eq>", "<NotEq>", "<Lesser>", "<LessEqual>", "<Greater>", "<GreatEqual>"};
-    OperatorType typs[] = {ADD_OP, SUB_OP, MUL_OP, DIV_OP, POW_OP, MOD_OP, OR_OP, AND_OP, XOR_OP, XAND_OP, LSHIFT_OP, RSHIFT_OP, EQ_OP, NEQ_OP, LE_OP, LEQ_OP, GE_OP, GEQ_OP};
+    OperatorType typs[] = {ADD_OP, SUB_OP, MUL_OP, DIV_OP, POW_OP, MOD_OP, OR_OP, AND_OP, XOR_OP, XAND_OP, LSHIFT_OP, RSHIFT_OP, EQ_OP, NEQ_OP, LT_OP, LEQ_OP, GT_OP, GEQ_OP};
     std::string name = tree.id[node];
     OperatorType typ;
-    for(int i = 0;i < sizeof(opNames)/sizeof(opNames[0]);i++){
-        if(opNames[i] == name){
+    for(int i = 0;i < sizeof(opNames)/sizeof(opNames[0]);i++) {
+        if(opNames[i] == name) {
             typ = typs[i];
             break;
         }
     }
-    std::unique_ptr<ASTNode> lc = nullptr,rc = nullptr;
-    for(int nNode: tree.adj[node]){
-        if(tree.id[nNode][0] == '<'){
-            if(lc == nullptr){
-                if(tree.id[nNode] == "<UnAmb>"){
+    std::unique_ptr<ASTNode> lc = nullptr, rc = nullptr;
+    for(int nNode: tree.adj[node]) {
+        if(tree.id[nNode][0] == '<') {
+            if(lc == nullptr) {
+                if(tree.id[nNode] == "<UnAmb>") {
                     lc = std::move(convertUnAmb(nNode, tree));
-                }else{
+                }
+                else {
                     lc = std::move(convertBinaryOp(nNode, tree));
                 }
-            }else{
-                if(tree.id[nNode] == "<UnAmb>"){
+            }
+            else {
+                if(tree.id[nNode] == "<UnAmb>") {
                     rc = std::move(convertUnAmb(nNode, tree));
-                }else{
+                }
+                else {
                     rc = std::move(convertBinaryOp(nNode, tree));
                 }
             }
@@ -372,7 +390,7 @@ std::unique_ptr<ast::ASTNode> ast::convertFunCall(int node, parser::parseTree &t
                                 params = convertCallParams(callChild, tree);
                             }
                         }
-                        auto newCall = std::make_unique<FunCall>(std::move(callee));
+                        auto newCall = std::make_unique<FunctionCall>(std::move(callee));
                         for(auto& param: params){
                             newCall->addParam(std::move(param));
                         }
@@ -597,9 +615,9 @@ std::unique_ptr<ast::ASTNode> ast::convertStmt(int node, parser::parseTree &tree
     }
 }
 
-std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> ast::convertParam(int node, parser::parseTree &tree){
+std::pair<std::unique_ptr<types::Type>, std::unique_ptr<ast::Identifier>> ast::convertParam(int node, parser::parseTree &tree){
     LOG("inside param")
-    types::TYPES typ;
+    std::unique_ptr<types::Type> typ;
     std::string iden;
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<GenType>"){
@@ -610,12 +628,12 @@ std::pair<types::TYPES,std::unique_ptr<ast::Identifier>> ast::convertParam(int n
         }
     }
     auto ptr = std::make_unique<ast::Identifier>(iden);
-    return {typ, std::move(ptr)};
+    return {std::move(typ), std::move(ptr)};
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &tree){
     LOG("inside fun decl")
-    types::TYPES retType;
+    std::unique_ptr<types::Type> retType;
     std::string iden;
     std::unique_ptr<ASTNode> body;
     int paramNode = -1;
@@ -633,7 +651,7 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
             paramNode = nNode;
         }
     }
-    std::unique_ptr<LetFun> ptr = std::make_unique<LetFun>(retType, std::make_unique<Identifier>(iden), std::move(body));
+    std::unique_ptr<LetFun> ptr = std::make_unique<LetFun>(std::move(retType), std::make_unique<Identifier>(iden), std::move(body));
     if(paramNode == -1){
         return ptr;
     }
@@ -642,14 +660,14 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
         LOG("inside while at fun decl (trying to parse params)")
         auto d = convertParam(tree.adj[curNode][0], tree);
         LOG("parsed a param")
-        ptr->addParam(d.first, std::move(d.second));
+        ptr->addParam(std::move(d.first), std::move(d.second));
         LOG("added param")
         curNode = tree.adj[curNode][2];
     }
     LOG("outside while loop")
     auto d = convertParam(tree.adj[curNode][0], tree);
     LOG("another param parsed")
-    ptr->addParam(d.first, std::move(d.second));
+    ptr->addParam(std::move(d.first), std::move(d.second));
     LOG("another param added")
     return ptr;
 }
