@@ -1,7 +1,7 @@
-def i32 F(i32 b, i32 c, u8[][] bts, fn(i32)->null p, fn(u8[][] bytes, fn(i32)->null P)->c8 Q)
+def i32 F(i32 b, i32 c, u8[][] bts, fn(i32)->null p, fn(u8[][], fn(i32)->null)->c8 Q)
 {
     var c8 chr := Q(bts, p);
-    var c8 chr1 = bts[b][c];
+    var c8 chr1 := bts[b][c];
     p();
     var i32 a := b + c + chr;
     return a;
