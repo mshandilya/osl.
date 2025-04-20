@@ -109,6 +109,8 @@ namespace ast{
     class NullValue : public AtomicASTNode {
         std::unique_ptr<types::Type> dt;
     public:
+        NullValue(): dt(std::make_unique<types::Null>()) {}
+
         NullValue(std::unique_ptr<types::Type>&& dt) : dt(std::move(dt)) {}
 
         NodeType type() const override {
@@ -124,11 +126,9 @@ namespace ast{
     };
     
     class BoolValue : public AtomicASTNode {
-        types::Boolean val;
     public:
-        BoolValue() : val(false) {}
-
-        BoolValue(bool val) : val(val) {}
+        types::Boolean val;
+        BoolValue(types::Boolean&& val): val(std::move(val)) {}
 
         NodeType type() const override {
             return BOOL_AST;
@@ -140,11 +140,9 @@ namespace ast{
     };
 
     class CharValue : public AtomicASTNode {
-        types::Character val;
     public:
-        CharValue() : val(0) {}
-
-        CharValue(types::Character& val): val(val) {}
+        types::Character val;
+        CharValue(types::Character&& val): val(std::move(val)) {}
 
         NodeType type() const override {
             return CHAR_AST;
@@ -158,11 +156,10 @@ namespace ast{
     // When storing the numerical values, it is important that the value we store has a type.
     // We shall, by default, analyse the numerical token and assign it a type that takes the
     // least amount of memory.
-    template <typename T>
     class NumValue : public AtomicASTNode {
     public:
-        T value;
-        NumValue(T val): value(val) {
+        types::NumberType val;
+        NumValue(types::NumberType&& val): val(std::move(val)) {
         }
 
         NodeType type() const override {
@@ -170,7 +167,7 @@ namespace ast{
         }
 
         types::ATOMTYPES dataType() const override {
-            return T::dt;
+            return val.atomicName();
         };
     };
 

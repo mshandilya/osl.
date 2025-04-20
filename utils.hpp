@@ -177,6 +177,7 @@ namespace types {
     };
 
     class NumberType : public AtomicType {
+    public:
         ATOMTYPES atomicName() const override {
             return NUM;
         }
