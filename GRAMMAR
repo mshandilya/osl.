@@ -1,5 +1,5 @@
 <Prog> ::= <Decls>
-<Block> ::= LBRACE <Decls> RBRACE
+<Block> ::= LBRACE <Decls> RBRACE | LBRACE RBRACE
 <Decls> ::= <Decl> <Decls> | <Decl>
 <Decl> ::= <ConstDecl> | <VarDecl> | <FunDecl> | <Stmt>
 <Stmt> ::= <ExpStmt> | <LogStmt> | <RetStmt> | <Cond> | <Loop>
@@ -63,7 +63,7 @@
 <Ptr> ::= HASH <Loc>
 <ArrAcc> ::= <Arr> <VMats> | IDEN <VMats> | LPAREN <Exp> RPAREN <VMats>
 <Arr> ::= LBRACE <Elems> RBRACE
-<AtomType> ::= TBOOL | TCHAR | TU8 | TU16 | TU32 | TU64 | TU128 | TI8 | TI16 | TI32 | TI64 | TI128 | TF16 | TF32 | TF64 | TF128
+<AtomType> ::= NULL | TBOOL | TCHAR | TU8 | TU16 | TU32 | TU64 | TU128 | TI8 | TI16 | TI32 | TI64 | TI128 | TF16 | TF32 | TF64 | TF128
 <Atom> ::= NULL | <Bool> | <Char> | <Number>
 <Bool> ::= TRUE | FALSE
 <Char> ::= CHAR

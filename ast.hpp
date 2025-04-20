@@ -239,11 +239,11 @@ namespace ast{
 
     class LetConst: public ASTNode {
     public:
-        std::unique_ptr<types::Type> typ;
+        std::unique_ptr<types::Type> type;
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        LetConst(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), val(std::move(val)) {};
+        LetConst(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), type(std::move(type)), val(std::move(val)) {};
         
         NodeType type() const override {
             return LETCONST_AST;
@@ -252,12 +252,12 @@ namespace ast{
     
     class LetVar: public ASTNode {
     public:
-        std::unique_ptr<types::Type> typ;
+        std::unique_ptr<types::Type> type;
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type): var(std::move(var)), typ(type), val(std::make_unique<NullValue>()) {};
-        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), typ(type), val(std::move(val)) {};
+        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type): var(std::move(var)), type(std::move(type)), val(std::make_unique<NullValue>()) {};
+        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), type(std::move(type)), val(std::move(val)) {};
         
         NodeType type() const override {
             return LETVAR_AST;

@@ -38,6 +38,7 @@ int numChar(int val);
 namespace types {
 
     enum TYPES {
+        UNKNOWN,
         ATOM,
         PTR,
         FN,
@@ -80,21 +81,32 @@ namespace types {
 
     class Type {
     public:
-        virtual TYPES name() const = 0;
+        virtual TYPES name() const {
+            return UNKNOWN;
+        };
     };
 
+    Type gtc(Type& other); // global type copy
+
     class DeclType : public Type {};
+
+    DeclType gtc(DeclType& other); // global type copy
 
     class CompundType : public Type {};
 
     class PointerDeclType : public DeclType {
-        std::unique_ptr<Type> underlyingType;
     public:
+        std::unique_ptr<Type> underlyingType;
+
         TYPES name() const override {
             return PTR;
         }
 
         PointerDeclType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
+
+        PointerDeclType(PointerDeclType& other) {
+            this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
+        }
     };
 
     class PointerType : public CompundType {
@@ -105,6 +117,10 @@ namespace types {
         }
 
         PointerType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
+
+        PointerType(PointerType& other) {
+            this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
+        }
     };
 
     class FunctionDeclType : public DeclType {
@@ -119,6 +135,13 @@ namespace types {
         FunctionDeclType(std::unique_ptr<Type>&& rt) : returnType(std::move(rt)), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
         FunctionDeclType(std::vector<std::unique_ptr<Type>>&& pt) : returnType(std::make_unique<Null>()), paramTypes(std::move(pt)) {}
         FunctionDeclType() : returnType(std::make_unique<Null>()), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
+
+        FunctionDeclType(FunctionDeclType& other) {
+            this->returnType = std::make_unique<types::Type>(gtc(*(other.returnType)));
+            for(auto& param : other.paramTypes) {
+                this->paramTypes.push_back(std::make_unique<types::Type>(gtc(*(param))));
+            }
+        }
 
         inline void addParams(std::unique_ptr<Type>&& pt) {
             paramTypes.push_back(std::move(pt));
@@ -138,6 +161,13 @@ namespace types {
         FunctionType(std::vector<std::unique_ptr<Type>>&& pt) : returnType(std::make_unique<Null>()), paramTypes(std::move(pt)) {}
         FunctionType() : returnType(std::make_unique<Null>()), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
 
+        FunctionType(FunctionType& other) {
+            this->returnType = std::make_unique<types::Type>(gtc(*(other.returnType)));
+            for(auto& param : other.paramTypes) {
+                this->paramTypes.push_back(std::make_unique<types::Type>(gtc(*(param))));
+            }
+        }
+
         inline void addParams(std::unique_ptr<Type>&& pt) {
             paramTypes.push_back(std::move(pt));
         }
@@ -152,6 +182,11 @@ namespace types {
         }
 
         ArrayDeclType(std::unique_ptr<DeclType>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz) {}
+
+        ArrayDeclType(ArrayDeclType& other) {
+            this->underlyingType = std::make_unique<types::DeclType>(gtc(*(other.underlyingType)));
+            this->size = other.size;
+        }
     };
 
     class ArrayType : public CompundType {
@@ -165,6 +200,12 @@ namespace types {
 
         ArrayType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)), size(0), sizeKnown(false) {}
         ArrayType(std::unique_ptr<Type>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz), sizeKnown(true) {}
+
+        ArrayType(ArrayType& other) {
+            this->underlyingType = std::make_unique<types::DeclType>(gtc(*(other.underlyingType)));
+            this->size = other.size;
+            this->sizeKnown = other.sizeKnown;
+        }
     };
 
     class AtomicType : public DeclType {
@@ -237,6 +278,11 @@ namespace types {
                 this->value[i] = value[i];
         }
 
+        Integer<bitSize>(Integer<bitSize>& other) {
+            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
+                value[byte] = other.value[byte];
+        }
+
         ATOMTYPES atomicName() const override {
             return dt;
         }
@@ -302,6 +348,11 @@ namespace types {
                 this->value[i] = value[i];
         }
     
+        UnsignedInteger<bitSize>(UnsignedInteger<bitSize>& other) {
+            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
+                value[byte] = other.value[byte];
+        }
+
         ATOMTYPES atomicName() const override {
             return dt;
         }
@@ -324,17 +375,17 @@ namespace types {
     };
 
     template<>
-    struct mUInt<B32> {
+    struct mFloat<B32> {
         static const ATOMTYPES dt = FLOAT_32;
     };
 
     template<>
-    struct mUInt<B64> {
+    struct mFloat<B64> {
         static const ATOMTYPES dt = FLOAT_64;
     };
 
     template<>
-    struct mUInt<B128> {
+    struct mFloat<B128> {
         static const ATOMTYPES dt = FLOAT_128;
     };
 
@@ -361,6 +412,11 @@ namespace types {
                 this->value[i] = value[i];
         }
 
+        Float<bitSize>(Float<bitSize>& other) {
+            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
+                value[byte] = other.value[byte];
+        }
+
         ATOMTYPES atomicName() const override {
             return dt;
         }
@@ -384,6 +440,8 @@ namespace types {
                 value = 0;
         }
 
+        inline Boolean(Boolean& other) : value(other.value) {}
+
         ATOMTYPES atomicName() const override {
             return BOOL;
         }
@@ -396,6 +454,8 @@ namespace types {
         inline Character() : value(0) {}
 
         inline Character(unsigned char c) : value(c) {}
+
+        inline Character(Character& other) : value(other.value) {}
 
         ATOMTYPES atomicName() const override {
             return CHAR_8;
@@ -413,8 +473,8 @@ namespace types {
 }
 
 namespace utils{
-    types::NumberType stringToNumberUtil(std::string& source);
-    types::Character stringToCharUtil(std::string& source);
+    std::unique_ptr<types::NumberType> stringToNumberUtil(std::string& source);
+    std::unique_ptr<types::Character> stringToCharUtil(std::string& source);
 }
 
 #endif

@@ -1,3 +1,5 @@
-fn i32 a(i32 b, i32 c){
-    var i32 a := 3;
+def i32 a(i32 b, i32 c, fn(i32p[][], f64)->null f){
+    var i32 v := 3;
 }
+
+var fn(i32, i32)->i32 b = a;
