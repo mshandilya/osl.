@@ -763,11 +763,32 @@ std::unique_ptr<types::Type> ast::convertDeclType(int node, parser::parseTree &t
 
 std::unique_ptr<ast::ASTNode> ast::convertBinaryOpHelper(int node, parser::parseTree &tree){
     LOG("inside binary op helper")
-    if(tree.id[node] == "<Shift>"){
+    if(tree.id[node] == "<Shift>" || tree.id[node] == "<Less>" || tree.id[node] == "<Great>"){
         return convertBinaryOpHelper(tree.adj[node][0], tree);
     }
-    std::string opNames[] = {"<LShift>", "<RShift>", "<Xand>", "<Xor>", "<And>", "<Or>", "<Mod>", "<Pow>", "<Sub>", "<Div>", "<Add>", "<Mul>", "<Eq>", "<Neq>"};
-    OperatorType opCodes[] = {LSHIFT_OP, RSHIFT_OP, XAND_OP, XOR_OP, AND_OP, OR_OP, MOD_OP, POW_OP, SUB_OP, DIV_OP, ADD_OP, MUL_OP, EQ_OP, NEQ_OP};
+    std::string opNames[] = {"<LShift>", "<RShift>", "<Xand>", "<Xor>", "<And>", "<Or>", "<Mod>", "<Pow>", "<Sub>", "<Div>", "<Add>", "<Mul>", "<Eq>", "<Neq>", "<Lesser>", "<LesserEqual>", "<Greater>", "<GreaterEqual>"};
+    OperatorType opCodes[] = {LSHIFT_OP, RSHIFT_OP, XAND_OP, XOR_OP, AND_OP, OR_OP, MOD_OP, POW_OP, SUB_OP, DIV_OP, ADD_OP, MUL_OP, EQ_OP, NEQ_OP, LT_OP, LEQ_OP, GT_OP, GEQ_OP};
+    for(size_t i = 0;i < sizeof(opCodes)/sizeof(opCodes[0]);i++){
+        if(opNames[i] == tree.id[node]){
+            std::unique_ptr<ASTNode> lc = nullptr,rc;
+            for(int nNode: tree.adj[node]){
+                if(tree.id[nNode] == "<UnAmb>"){
+                    if(lc == nullptr){
+                        lc = std::move(convertUnAmb(nNode, tree));
+                    }else{
+                        rc = std::move(convertUnAmb(nNode, tree));
+                    }
+                }else if(tree.id[nNode][0] == '<'){
+                    if(lc == nullptr){
+                        lc = std::move(convertBinaryOpHelper(nNode, tree));
+                    }else{
+                        rc = std::move(convertBinaryOpHelper(nNode, tree));
+                    }
+                }
+            }
+            return std::make_unique<BinaryOperator>(opCodes[i], std::move(lc), std::move(rc));
+        }
+    }
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertChain(int node, parser::parseTree &tree){
@@ -810,7 +831,8 @@ std::unique_ptr<ast::ASTNode> ast::convertBinaryOp(int node, parser::parseTree &
         if(tree.id[nNode] == "<ArrAcc>"){
             return convertArrAcc(nNode, tree);
         }else if(tree.id[nNode] == "<Less>" || tree.id[nNode] == "<Great>"){
-            return convertChain(nNode, tree);
+            return convertBinaryOpHelper(nNode, tree);
+            //return convertChain(nNode, tree);
         }else{
             return convertBinaryOpHelper(nNode, tree);
         }
