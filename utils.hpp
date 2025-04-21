@@ -13,7 +13,7 @@
 #include<stack>
 #include<memory>
 
-class Token{
+class Token {
     private:
     std::string id;
     std::string val;
@@ -123,6 +123,39 @@ namespace types {
         virtual TYPES name() const {
             return UNKNOWN;
         };
+
+        bool operator==(const Type& other) const {
+            if(this->name() == other.name()) {
+                switch(other.name()) {
+                    case ATOM: {
+                        auto mptr = dynamic_cast<AtomicType*>(const_cast<Type*>(this));
+                        auto optr = dynamic_cast<AtomicType*>(const_cast<Type*>(&other));
+                        return (*mptr) == (*optr);
+                    }
+                    case PTR: {
+                        auto mptr = dynamic_cast<PointerType*>(const_cast<Type*>(this));
+                        auto optr = dynamic_cast<PointerType*>(const_cast<Type*>(&other));
+                        return (*mptr) == (*optr);
+                    }
+                    case FN: {
+                        auto mptr = dynamic_cast<FunctionType*>(const_cast<Type*>(this));
+                        auto optr = dynamic_cast<FunctionType*>(const_cast<Type*>(&other));
+                        return (*mptr) == (*optr);
+                    }
+                    case ARR: {
+                        auto mptr = dynamic_cast<ArrayType*>(const_cast<Type*>(this));
+                        auto optr = dynamic_cast<ArrayType*>(const_cast<Type*>(&other));
+                        return (*mptr) == (*optr);
+                    }
+                    case ARRD: {
+                        auto mptr = dynamic_cast<ArrayDeclType*>(const_cast<Type*>(this));
+                        auto optr = dynamic_cast<ArrayDeclType*>(const_cast<Type*>(&other));
+                        return (*mptr) == (*optr);
+                    }
+                }
+            }
+            return false;
+        }
     };
 
     Type gtc(Type& other); // global type copy
@@ -138,6 +171,10 @@ namespace types {
         }
 
         virtual ATOMTYPES atomicName() const = 0;
+
+        bool operator==(const AtomicType& other) const {
+            return this->atomicName() == other.atomicName();
+        }
     };
 
     class NumberType : public AtomicType {
@@ -407,11 +444,15 @@ namespace types {
         PointerDeclType(PointerDeclType& other) {
             this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
         }
+
+        bool operator==(const PointerDeclType& other) const {
+            return *(this->underlyingType) == *(other.underlyingType);
+        }
     };
 
     class PointerType : public CompoundType {
-        std::unique_ptr<Type> underlyingType;
     public:
+        std::unique_ptr<Type> underlyingType;
         TYPES name() const override {
             return PTR;
         }
@@ -421,12 +462,16 @@ namespace types {
         PointerType(PointerType& other) {
             this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
         }
+
+        bool operator==(const PointerType& other) const {
+            return *(this->underlyingType) == *(other.underlyingType);
+        }
     };
 
     class FunctionDeclType : public DeclType {
+    public:
         std::unique_ptr<Type> returnType;
         std::vector<std::unique_ptr<Type>> paramTypes;
-    public:
         TYPES name() const override {
             return FN;
         }
@@ -446,12 +491,23 @@ namespace types {
         inline void addParams(std::unique_ptr<Type>&& pt) {
             paramTypes.push_back(std::move(pt));
         }
+
+        bool operator==(const FunctionDeclType& other) const {
+            if((*returnType) == (*(other.returnType)) and paramTypes.size() == other.paramTypes.size()) {
+                for(size_t i = 0; i < paramTypes.size(); i++) {
+                    if((*(paramTypes[i])) != (*(other.paramTypes[i])))
+                        return false;
+                }
+                return true;
+            }
+            return false;
+        }
     };
 
     class FunctionType : public CompoundType {
+    public:
         std::unique_ptr<Type> returnType;
         std::vector<std::unique_ptr<Type>> paramTypes;
-    public:
         TYPES name() const override {
             return FN;
         }
@@ -471,6 +527,17 @@ namespace types {
         inline void addParams(std::unique_ptr<Type>&& pt) {
             paramTypes.push_back(std::move(pt));
         }
+
+        bool operator==(const FunctionType& other) const {
+            if((*returnType) == (*(other.returnType)) and paramTypes.size() == other.paramTypes.size()) {
+                for(size_t i = 0; i < paramTypes.size(); i++) {
+                    if((*(paramTypes[i])) != (*(other.paramTypes[i])))
+                        return false;
+                }
+                return true;
+            }
+            return false;
+        }
     };
 
     class ArrayDeclType : public DeclType {
@@ -484,6 +551,11 @@ namespace types {
 
         ArrayDeclType(std::unique_ptr<Type>&& ut, std::unique_ptr<ast::ASTNode>&& sz) : underlyingType(std::move(ut)), size(std::move(sz)) {}
 
+        bool operator==(const ArrayDeclType& other) const {
+            if(*underlyingType == *(other.underlyingType))
+                return true;
+            return false;
+        }
     };
 
     class ArrayType : public CompoundType {
@@ -516,10 +588,18 @@ namespace types {
             sizeKnown = false;
         }
 
+        bool operator==(const ArrayType& other) const {
+            if(*underlyingType == *(other.underlyingType))
+                return true;
+            return false;
+        }
     };
 
     class AnyType : public AtomicType {
-        
+    public:
+        ATOMTYPES atomicName() const override {
+            return CHAR_8;
+        }  
     };
 }
 

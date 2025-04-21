@@ -13,17 +13,22 @@ std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckNext(std::unique_p
         case ast::RET_AST:
             return typecheckReturn(std::move(root), expectedReturnType);
         case ast::LOG_AST:
+            // log's value cannot have a return statement
             return typecheckLog(std::move(root));
         case ast::LETFUN_AST:
             // return statement after this would link to another function
             return typecheckLetFun(std::move(root));
         case ast::LETARR_AST:
+            // let array won't have a return statement
             return typecheckLetArr(std::move(root));
         case ast::LETVAR_AST:
+            // let var won't have a return statement
             return typecheckLetVar(std::move(root));
         case ast::LETCONST_AST:
+            // let const won't have a return statement
             return typecheckLetConst(std::move(root));
         case ast::ASSIGN_AST:
+            // let assign won't have a return statement
             return typecheckAssign(std::move(root));
         case ast::BOP_AST:
             return typecheckBinOp(std::move(root));
@@ -108,13 +113,10 @@ std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckCond(std::unique_p
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckReturn(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
     auto node = dynamic_cast<ast::Return*>(root.get());
-
     auto child = typecheckNext(std::move(node->val));
     
-    // child's type must be that of the function's return type;
+    // child's type must be that of the function's return type
     
-
-
     if(lc->resultingType->name() == types::ATOM) {
         auto lcat = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
         if(lcat->atomicName() != types::BOOL or lcat->atomicName() != types::ANY) {
