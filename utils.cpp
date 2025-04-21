@@ -1,8 +1,6 @@
 #include "utils.hpp"
 #include "ast.hpp"
 
-#define LOG(x) std::cout<<x<<std::endl;
-
 Token::Token(): id("NONE"), val("") {};
 Token::Token(std::string x, int lineNo, int charNo): id(x), val(""), pos({lineNo,charNo}) {};
 Token::Token(std::string x, std::string y, int lineNo, int charNo): id(x), val(y), pos({lineNo,charNo}) {};
@@ -139,10 +137,11 @@ std::unique_ptr<types::Type> types::gtc(types::Type& other) {
         case ATOM: {
             LOG("about to copy an atomic")
             auto otherAtom = dynamic_cast<AtomicType*>(&other);
-            if(otherAtom!=nullptr)
+            if(otherAtom!=nullptr){
                 LOG("just casted myself to an atomic type")
-            else
+            }else{
                 LOG("lol: dynamic_cast didn't work")
+            }
             LOG(otherAtom->atomicName())
             switch(otherAtom->atomicName()) {
                 case UNRESOLVED: {

@@ -1,7 +1,5 @@
 #include "parser.hpp"
 
-#define LOG(x) //std::cout<<x<<std::endl;
-
 void parser::vizTree(const parser::parseTree &tree, int node, const std::string &prefix, bool isLast){
     std::cout << prefix;
     if(!prefix.empty()){

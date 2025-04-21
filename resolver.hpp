@@ -4,8 +4,6 @@
 #include "utils.hpp"
 #include "ast.hpp"
 
-#define LOG(x) std::cout<<x<<std::endl;
-
 class Resolver {
     int currentId, currentScope;
     std::unique_ptr<ast::ASTNode>& root;

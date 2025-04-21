@@ -13,7 +13,7 @@
 #include<stack>
 #include<memory>
 
-#define LOG(x) std::cout<<x<<std::endl;
+#define LOG(x) //std::cout<<x<<std::endl;
 
 class Token {
     private:
@@ -500,10 +500,11 @@ namespace types {
             for(auto& param : other.paramTypes) {
                 LOG("param type to be copied")
                 LOG("# param type: ")
-                if(param != nullptr)
+                if(param != nullptr){
                     LOG(param->name())
-                else
+                }else{
                     LOG("lol: nullptr as a type?")
+                }
                 this->paramTypes.push_back(gtc(*(param)));
                 LOG("param copied")
             }
