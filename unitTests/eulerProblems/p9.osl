@@ -1,0 +1,27 @@
+def i32 find_pythagorean_triplet()
+{
+    var i32 a := 1;
+    var i32 denom;
+    var i32 b;
+    var i32 c;
+    while a < 333
+    {
+        denom := 1000 - a;
+        if (500000 % denom) = 0
+        {
+            b := 1000 - (500000/denom);
+            if a < b
+            {
+                c := (1000 - a) - b;
+                if (b < c) & ((a * a) + (b * b) = (c * c))
+                {
+                    return a * b * c;
+                }
+                
+            }
+        }
+        a := a + 1;
+    }
+    return -1;
+}
+log find_pythagorean_triplet();

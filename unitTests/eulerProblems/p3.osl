@@ -1,0 +1,17 @@
+def i64 prime(i64 n, i64 i) 
+{
+    while (i * i) <= n
+    {
+        if (n % i) = 0
+        {
+            n := n / i;
+        } 
+        else 
+        {
+            i := i + 1;
+        }
+    }
+    return n;
+}
+var i64 n := 600851475143;
+log prime(n, 2);

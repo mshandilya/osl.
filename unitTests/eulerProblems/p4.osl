@@ -1,0 +1,31 @@
+def bool isPal(i32 n) 
+{
+    var i32 rev := 0;
+    var i32 nn := n;
+    while n > 0
+    {
+        rev := (rev * 10) + (n % 10);
+        n := n / 10;
+    }
+    return rev=nn;
+}
+
+var i32 maxPal := 0;
+var i32 i := 999;
+var i32 j;
+var i32 prod;
+while i >= 1 
+{
+    j := i;
+    while j >= 1
+    {
+        prod := i * j;
+        if (prod > maxPal) & isPal(prod)
+        {
+            maxPal := prod;
+        }
+        j := j - 1;
+    }
+    i := i - 1;
+}
+log maxPal;

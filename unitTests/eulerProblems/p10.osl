@@ -1,0 +1,46 @@
+def i64 find_nth_prime()
+{
+    var i32 limit := 2000000;
+    var bool[limit] is_prime;
+    
+    var i32 i := 0;
+    var i32 j;
+    
+    while i < limit
+    {
+        is_prime[i] := true;
+        i := i + 1;
+    }
+    
+    is_prime[0] := false;
+    is_prime[1] := false;
+    
+    i := 2;
+    while (i * i) < limit
+    {
+        if is_prime[i]
+        {
+            j := i * i;
+            while j < limit
+            {
+                is_prime[j] := false;
+                j := j + i;
+            }       
+        }
+        i := i + 1;
+    }
+    
+    var i64 sum := 0;
+    var i32 num := 2;
+    while num < limit
+    {
+        if is_prime[num]
+        {
+            sum := sum + num;
+        }
+        num := num + 1;
+    }
+    return sum;   
+}
+
+log find_nth_prime();
