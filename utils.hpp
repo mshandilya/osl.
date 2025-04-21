@@ -471,8 +471,8 @@ namespace types {
         bool operator==(const FunctionDeclType& other) const {
             if((*returnType) == (*(other.returnType)) and paramTypes.size() == other.paramTypes.size()) {
                 for(size_t i = 0; i < paramTypes.size(); i++) {
-                    if(!((*(paramTypes[i])) == (*(other.paramTypes[i]))))
-                        return false;
+                    if((*(paramTypes[i])) == (*(other.paramTypes[i]))){}
+                    else {return false;}
                 }
                 return true;
             }
@@ -517,8 +517,8 @@ namespace types {
         bool operator==(const FunctionType& other) const {
             if((*returnType) == (*(other.returnType)) and paramTypes.size() == other.paramTypes.size()) {
                 for(size_t i = 0; i < paramTypes.size(); i++) {
-                    if(!((*(paramTypes[i])) == (*(other.paramTypes[i]))))
-                        return false;
+                    if((*(paramTypes[i])) == (*(other.paramTypes[i]))) {}
+                    else {return false;}
                 }
                 return true;
             }
