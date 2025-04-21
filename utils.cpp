@@ -1,6 +1,8 @@
 #include "utils.hpp"
 #include "ast.hpp"
 
+#define LOG(x) std::cout<<x<<std::endl;
+
 Token::Token(): id("NONE"), val("") {};
 Token::Token(std::string x, int lineNo, int charNo): id(x), val(""), pos({lineNo,charNo}) {};
 Token::Token(std::string x, std::string y, int lineNo, int charNo): id(x), val(y), pos({lineNo,charNo}) {};
@@ -135,7 +137,14 @@ types::Type types::gtc(types::Type& other) {
         case UNKNOWN:
             throw std::logic_error("An empty type class created. Type must be one of the terminal classes.");
         case ATOM: {
+            LOG("about to copy an atomic")
             auto otherAtom = dynamic_cast<AtomicType*>(&other);
+            if(otherAtom!=nullptr)
+                LOG("just casted myself to an atomic type")
+            else
+                LOG("lol: dynamic_cast didn't work")
+            
+            LOG(otherAtom->atomicName())
             switch(otherAtom->atomicName()) {
                 case UNRESOLVED: {
                     throw std::logic_error("An empty atomic type class created. AtomicType must be one of the terminal classes.");
@@ -212,7 +221,9 @@ types::Type types::gtc(types::Type& other) {
                     return f32(*otherFloat);
                 }
                 case FLOAT_64: {
+                    LOG("copying f64")
                     auto otherFloat = dynamic_cast<f64*>(otherAtom);
+                    LOG("f64 pointer created, about to invoke copy constructor")
                     return f64(*otherFloat);
                 }
                 case FLOAT_128: {
@@ -226,6 +237,7 @@ types::Type types::gtc(types::Type& other) {
             return PointerType(*otherPtr);
         }
         case FN: {
+            LOG("copying a function")
             auto otherFn = dynamic_cast<FunctionType*>(&other);
             return FunctionType(*otherFn);
         }
@@ -236,6 +248,11 @@ types::Type types::gtc(types::Type& other) {
         case ARRD: {
             auto otherArrDecl = dynamic_cast<ArrayDeclType*>(&other);
             return ArrayType(*otherArrDecl);
+        }
+        default: {
+            LOG("help: what type is this?")
+            LOG(other.name())
+            throw std::logic_error("Unexpected type to be copied.");
         }
     }
 }

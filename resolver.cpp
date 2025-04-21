@@ -144,12 +144,20 @@ void Resolver::resolveLetFun(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
     }
     auto nnode = dynamic_cast<ast::LetFun*>(node.get());
     auto rt = std::make_unique<types::Type>(types::gtc(*(nnode->retType)));
+    LOG("return type constructed")
     std::vector<std::unique_ptr<types::Type>> pts;
-    for(auto& param : nnode->params)
+    for(auto& param : nnode->params) {
+        LOG("about to copy a param type")
+        
         pts.push_back(std::make_unique<types::Type>(types::gtc(*(param.first))));
+        LOG("copied the param")
+    }
+    LOG("parameters pushed")
     std::unique_ptr<types::Type> ft = std::make_unique<types::FunctionType>(std::move(rt), std::move(pts));
+    LOG("function type constructed")
     resolveNext(nnode->name, true, std::move(ft), ast::CONST);
     // scope enhances
+    LOG("about to resolve the body")
     currentScope++;
     for(auto& param : nnode->params) {
         resolveNext(param.second, true, std::make_unique<types::Type>(types::gtc(*(param.first))), ast::VAR);

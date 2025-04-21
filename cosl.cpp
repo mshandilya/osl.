@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
     std::unique_ptr<ast::ASTNode> root = ast::parseTreeToAST(tree);
     std::cout << "AST Tree Formed Successfully" << std::endl;
     LOG("ast formed")
-    // ast::vizTree(root, "", true);
+    ast::vizTree(root, "", true);
     LOG("about to start resolution")
     Resolver resolver(root);
     std::cout << "Resolution Performed Successfully" << std::endl;

@@ -13,6 +13,8 @@
 #include<stack>
 #include<memory>
 
+#define LOG(x) std::cout<<x<<std::endl;
+
 class Token {
     private:
     std::string id;
@@ -192,9 +194,9 @@ namespace types {
         static_assert(bitSize%8==0, "Bit Size for class Integer must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class Integer must be a positive integer");
         // Values as stored in the Little Endian System
+    public:
         unsigned char value[bitSize/8];
 
-    public:
         static constexpr ATOMTYPES dt = mInt<bitSize>::dt;
         
         inline Integer() {
@@ -262,9 +264,9 @@ namespace types {
         static_assert(bitSize%8==0, "Bit Size for class UnsignedInteger must be a multiple of 8");
         static_assert(bitSize>0, "Bit Size for class UnsignedInteger must be a positive integer");
         // Values as stored in the Little Endian System
+    public:
         unsigned char value[bitSize/8];
 
-    public:
         static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
 
         inline UnsignedInteger() {
@@ -324,10 +326,10 @@ namespace types {
         static_assert(bitSize>0, "Bit Size for class Float must be a positive integer");
 
         // Values as stored in the Little Endian System
+    public:
         unsigned char value[bitSize/8];
 
-    public:
-        static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
+        static constexpr ATOMTYPES dt = mFloat<bitSize>::dt;
 
         inline Float() {
             static_assert(bitSize==B32 or bitSize==B64, "Only single and double point precision floats allowed right now.");
@@ -357,9 +359,9 @@ namespace types {
     typedef Float<B128> f128;
 
     class Boolean : public AtomicType {
+    public:
         unsigned char value;
 
-    public:
         inline Boolean() : value(0) {}
 
         inline Boolean(bool v) {
@@ -377,9 +379,9 @@ namespace types {
     };
 
     class Character : public AtomicType {
+    public:
         unsigned char value;
 
-    public:
         inline Character() : value(0) {}
 
         inline Character(unsigned char c) : value(c) {}
@@ -491,9 +493,18 @@ namespace types {
         FunctionType() : returnType(std::make_unique<Null>()), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
 
         FunctionType(FunctionType& other) {
+            LOG("let's copy return type")
             this->returnType = std::make_unique<types::Type>(gtc(*(other.returnType)));
+            LOG("return type copied")
             for(auto& param : other.paramTypes) {
+                LOG("param type to be copied")
+                LOG("# param type: ")
+                if(param != nullptr)
+                    LOG(param->name())
+                else
+                    LOG("lol: nullptr as a type?")
                 this->paramTypes.push_back(std::make_unique<types::Type>(gtc(*(param))));
+                LOG("param copied")
             }
         }
 
@@ -532,10 +543,10 @@ namespace types {
     };
 
     class ArrayType : public CompoundType {
+    public:
         std::unique_ptr<Type> underlyingType;
         uint32_t size;
         bool sizeKnown;
-    public:
         TYPES name() const override {
             return ARR;
         }

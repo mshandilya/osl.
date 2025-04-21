@@ -823,7 +823,7 @@ std::unique_ptr<ast::ASTNode> ast::convertExp(int node, parser::parseTree &tree)
         }else if(name == "<UOp>"){
             return convertUnaryOp(nNode, tree);
         }else if(name == "<BinOp>"){
-            return convertBinaryOp(tree.adj[nNode][0], tree);
+            return convertBinaryOp(nNode, tree);
         }
     }
 }

@@ -129,16 +129,16 @@ std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLog(std::unique_pt
     auto child = typecheckNext(std::move(node->val));
     
     // child's type must be that of the function's return type
-    if(expectedReturnType != child->resultingType) {
-        std::cout << "code.osl: \033[31mTypeError\033[0m: Return type of the function was expected to be something else." << std::endl;
+    if(child->resultingType->name() == types::ATOM) {
+        std::cout << "code.osl: \033[31mTypeError\033[0m: Only atomic types are allowed to be logged." << std::endl;
         exit(0);
     }
 
-    return std::make_unique<codetree::UnaryCTN>(codetree::RET_CTN, std::move(child));
+    return std::make_unique<codetree::UnaryCTN>(codetree::LOG_CTN, std::move(child));
 }
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetFun(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+    
 }
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetArr(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {

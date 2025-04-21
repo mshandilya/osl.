@@ -1,4 +1,4 @@
-def i32 a(i32 b, i32 c, fn(i32[][], f64)->null f){
+def i32 a(i32 b, i32 c, fn(i32[][], f64)->nav f){
     var i32 v := 3;
 }
 
