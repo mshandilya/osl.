@@ -150,13 +150,14 @@ void parser::genParser::populateTree(int curNode, int curSym, int &pind, std::ve
 }
 
 parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
-    std::queue<std::tuple<std::stack<int>, std::vector<int>, int, std::unordered_map<int,int>>> q;
+    std::priority_queue<qInfo, std::vector<qInfo>, compQInfo> q;
+    //std::queue<qInfo> q;
     std::stack<int> st;st.push(1);
     std::unordered_map<int,int> th;
     for(Token t: tokens){
         th[pda.symId[t.getId()]]++;
     }
-    q.push({st,{},0,th});
+    q.push({0,st,{},th});
     int longestPath = 0;
     int expVal;
     std::string befVal, aftVal;
@@ -164,12 +165,14 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
     int missVal = -1;
     bool single = false;
     while(!q.empty()){
-        std::tuple<std::stack<int>,std::vector<int>,int,std::unordered_map<int,int>> cur = q.front();
+        qInfo cur = q.top();
+        //qInfo cur = q.front();
         q.pop();
-        std::stack<int> st = std::get<0>(cur);
-        std::vector<int> path = std::get<1>(cur);
-        int curPos = std::get<2>(cur);
+        std::stack<int> st = std::get<1>(cur);
+        std::vector<int> path = std::get<2>(cur);
+        int curPos = std::get<0>(cur);
         std::unordered_map<int,int> isP = std::get<3>(cur);
+        //std::cout << curPos << " -> " << st.size() << std::endl;
         if(st.empty()){
             if(curPos == tokens.size()){
                 parseTree tree;
@@ -206,7 +209,7 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
         if(pda.isToken[curSym]){
             if(curSym == inpSym){
                 isP[pda.symId[tokens[curPos].getId()]]--;
-                q.push({st,path,curPos+1,isP});
+                q.push({curPos+1,st,path,isP});
             }
         }else{
             isP[pda.symId[tokens[curPos].getId()]]--;
@@ -225,7 +228,7 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                 if(skip){
                     continue;
                 }
-                q.push({nst,npath,curPos+1,isP});
+                q.push({curPos+1,nst,npath,isP});
             }
             isP[pda.symId[tokens[curPos].getId()]]++;
             //Add e-transitions
@@ -244,7 +247,7 @@ parser::parseTree parser::genParser::parse(std::vector<Token> tokens){
                 if(skip){
                     continue;
                 }
-                q.push({nst,npath,curPos,isP});
+                q.push({curPos,nst,npath,isP});
             }
         }
     }

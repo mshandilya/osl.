@@ -47,6 +47,19 @@ namespace parser{
         genParser(std::string filename, std::vector<std::string> allTokens, std::map<std::string, std::string> des, std::unordered_map<int, std::string> lines);
         std::function<parseTree(std::vector<Token>)> getParser();
     };
+
+    typedef std::tuple<int, std::stack<int>, std::vector<int>, std::unordered_map<int,int>> qInfo;
+    class compQInfo {
+    public:
+        bool operator()(qInfo a, qInfo b){
+            if(std::get<0>(a) < std::get<0>(b)){
+                return true;
+            }else if(std::get<2>(a).size() < std::get<2>(b).size()){
+                return true;
+            }
+            return false;
+        }
+    };
 }
 
 #endif
