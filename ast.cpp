@@ -194,7 +194,7 @@
 //     }
 // }
 
-void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast){
+void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast, bool postResolve){
     std::cout << prefix;
     if (!prefix.empty()) std::cout << "+-";
 
@@ -204,14 +204,14 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             const Prog* p = dynamic_cast<const Prog*>(node.get());
             std::cout << "Prog" << std::endl;
             for(size_t i = 0; i < p->decls.size(); ++i)
-                vizTree(p->decls[i], newPrefix, i == p->decls.size() - 1);
+                vizTree(p->decls[i], newPrefix, i == p->decls.size() - 1, postResolve);
             break;
         }
         case BLOCK_AST: {
             const Block* b = dynamic_cast<const Block*>(node.get());
             std::cout << "Block" << std::endl;
             for(size_t i = 0; i < b->decls.size(); ++i)
-                vizTree(b->decls[i], newPrefix, i == b->decls.size() - 1);
+                vizTree(b->decls[i], newPrefix, i == b->decls.size() - 1, postResolve);
             break;
         }
         case LOOP_AST: {
@@ -221,13 +221,13 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Condition" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(l->cond, childPref, false);
+                vizTree(l->cond, childPref, false, postResolve);
             }
             // Body
             std::cout << newPrefix << "+-Body" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(l->body, childPref, true);
+                vizTree(l->body, childPref, true, postResolve);
             }
             break;
         }
@@ -238,20 +238,20 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Condition" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(c->cond, childPref, false);
+                vizTree(c->cond, childPref, false, postResolve);
             }
             // Then
             std::cout << newPrefix << "+-Then" << std::endl;
             {
                 bool hasElse = true;
                 std::string childPref = newPrefix + (hasElse ? "| " : "   ");
-                vizTree(c->thenBody, childPref, false);
+                vizTree(c->thenBody, childPref, false, postResolve);
             }
             // Else
             std::cout << newPrefix << "+-Else" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(c->elseBody, childPref, true);
+                vizTree(c->elseBody, childPref, true, postResolve);
             }
             break;
         }
@@ -261,7 +261,7 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Value" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(r->val, childPref, true);
+                vizTree(r->val, childPref, true, postResolve);
             }
             break;
         }
@@ -271,7 +271,7 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Value" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(l->val, childPref, true);
+                vizTree(l->val, childPref, true, postResolve);
             }
             break;
         }
@@ -286,7 +286,7 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Value" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(lc->val, childPref, true);
+                vizTree(lc->val, childPref, true, postResolve);
             }
             break;
         }
@@ -296,12 +296,12 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Name" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(lv->var, childPref, false);
+                vizTree(lv->var, childPref, false, postResolve);
             }
             std::cout << newPrefix << "+-Initializer" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(lv->val, childPref, true);
+                vizTree(lv->val, childPref, true, postResolve);
             }
             break;
         }
@@ -311,12 +311,12 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Name" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(la->name, childPref, false);
+                vizTree(la->name, childPref, false, postResolve);
             }
             std::cout << newPrefix << "+-Initializer" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(la->val, childPref, true);
+                vizTree(la->val, childPref, true, postResolve);
             }
             break;
         }
@@ -327,20 +327,20 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Name" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(lf->name, childPref, !lf->params.empty());
+                vizTree(lf->name, childPref, !lf->params.empty(), postResolve);
             }
             // Parameters
             std::cout << newPrefix << "+-Parameters" << std::endl;
             {
                 std::string paramPref = newPrefix + (lf->params.empty() ? "   " : "| ");
                 for(size_t i = 0; i < lf->params.size(); ++i)
-                    vizTree(lf->params[i].second, paramPref, i == lf->params.size() - 1);
+                    vizTree(lf->params[i].second, paramPref, i == lf->params.size() - 1, postResolve);
             }
             // Body
             std::cout << newPrefix << "+-Body" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(lf->body, childPref, true);
+                vizTree(lf->body, childPref, true, postResolve);
             }
             break;
         }
@@ -350,12 +350,12 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-LHS" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(a->var, childPref, false);
+                vizTree(a->var, childPref, false, postResolve);
             }
             std::cout << newPrefix << "+-RHS" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(a->val, childPref, true);
+                vizTree(a->val, childPref, true, postResolve);
             }
             break;
         }
@@ -365,12 +365,12 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Left" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(b->leftChild, childPref, false);
+                vizTree(b->leftChild, childPref, false, postResolve);
             }
             std::cout << newPrefix << "+-Right" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(b->rightChild, childPref, true);
+                vizTree(b->rightChild, childPref, true, postResolve);
             }
             break;
         }
@@ -380,7 +380,7 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Operand" << std::endl;
             {
                 std::string childPref = newPrefix + "   ";
-                vizTree(u->child, childPref, true);
+                vizTree(u->child, childPref, true, postResolve);
             }
             break;
         }
@@ -391,14 +391,14 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             std::cout << newPrefix << "+-Function" << std::endl;
             {
                 std::string childPref = newPrefix + "| ";
-                vizTree(fc->name, childPref, !fc->params.empty());
+                vizTree(fc->name, childPref, !fc->params.empty(), postResolve);
             }
             // Arguments
             std::cout << newPrefix << "+-Arguments" << std::endl;
             {
                 std::string argPref = newPrefix + (fc->params.empty() ? "   " : "| ");
                 for(size_t i = 0; i < fc->params.size(); ++i)
-                    vizTree(fc->params[i], argPref, i == fc->params.size() - 1);
+                    vizTree(fc->params[i], argPref, i == fc->params.size() - 1, postResolve);
             }
             break;
         }
@@ -409,7 +409,7 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
             {
                 std::string elemPref = newPrefix + "| ";
                 for(size_t i = 0; i < av->elems.size(); ++i)
-                    vizTree(av->elems[i], elemPref, i == av->elems.size() - 1);
+                    vizTree(av->elems[i], elemPref, i == av->elems.size() - 1, postResolve);
             }
             break;
         }
@@ -419,7 +419,10 @@ void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefi
         case NULL_AST:   std::cout << "Null" << std::endl;       break;
         case IDEN_AST: {
             const Identifier* v = dynamic_cast<const Identifier*>(node.get());
-            std::cout << "Identifier(name=" << v->idenName << ")" << std::endl;
+            if(postResolve)
+                std::cout << "Identifier(name=" << v->idenName << ", id=" << v->id << ", type=" << v->boundDataType->name() << ")" << std::endl;
+            else
+                std::cout << "Identifier(name=" << v->idenName << ")" << std::endl;
             break;
         }
         default:
@@ -958,7 +961,9 @@ std::pair<std::unique_ptr<types::Type>, std::unique_ptr<ast::ASTNode>> ast::conv
     std::string iden;
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<Type>"){
-            typ = ast::convertType(nNode, tree);
+            LOG("# decl param type detected")
+            typ = convertType(nNode, tree);
+            LOG(typ->name())
         }
         else if(tree.id[nNode] == "IDEN"){
             iden = tree.val[nNode];
@@ -997,6 +1002,7 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
         LOG("inside while at fun decl (trying to parse params)")
         auto d = convertDeclParam(tree.adj[curNode][0], tree);
         LOG("parsed a param")
+        LOG(d.first->name())
         ptr->addParam(std::move(d.first), std::move(d.second));
         LOG("added param")
         curNode = tree.adj[curNode][2];
@@ -1004,6 +1010,7 @@ std::unique_ptr<ast::ASTNode> ast::convertFunDecl(int node, parser::parseTree &t
     LOG("outside while loop")
     auto d = convertDeclParam(tree.adj[curNode][0], tree);
     LOG("another param parsed")
+    LOG(d.first->name())
     ptr->addParam(std::move(d.first), std::move(d.second));
     LOG("another param added")
     return ptr;

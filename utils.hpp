@@ -129,7 +129,7 @@ namespace types {
         bool operator==(const Type& other) const;
     };
 
-    Type gtc(Type& other); // global type copy
+    std::unique_ptr<Type> gtc(Type& other); // global type copy
 
     class DeclType : public Type {};
 
@@ -210,6 +210,7 @@ namespace types {
         }
 
         Integer(Integer<bitSize>& other) {
+            LOG("inside integer constructor (as expected)")
             for(unsigned short int byte = 0; byte < bitSize/8; byte++)
                 value[byte] = other.value[byte];
         }
@@ -413,7 +414,7 @@ namespace types {
         PointerDeclType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
 
         PointerDeclType(PointerDeclType& other) {
-            this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
+            this->underlyingType = gtc(*(other.underlyingType));
         }
 
         bool operator==(const PointerDeclType& other) const {
@@ -435,7 +436,7 @@ namespace types {
         PointerType(std::unique_ptr<Type>&& ut) : underlyingType(std::move(ut)) {}
 
         PointerType(PointerType& other) {
-            this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
+            this->underlyingType = gtc(*(other.underlyingType));
         }
 
         bool operator==(const PointerType& other) const {
@@ -457,9 +458,9 @@ namespace types {
         FunctionDeclType() : returnType(std::make_unique<Null>()), paramTypes(std::vector<std::unique_ptr<Type>>()) {}
 
         FunctionDeclType(FunctionDeclType& other) {
-            this->returnType = std::make_unique<types::Type>(gtc(*(other.returnType)));
+            this->returnType = gtc(*(other.returnType));
             for(auto& param : other.paramTypes) {
-                this->paramTypes.push_back(std::make_unique<types::Type>(gtc(*(param))));
+                this->paramTypes.push_back(gtc(*(param)));
             }
         }
 
@@ -494,7 +495,7 @@ namespace types {
 
         FunctionType(FunctionType& other) {
             LOG("let's copy return type")
-            this->returnType = std::make_unique<types::Type>(gtc(*(other.returnType)));
+            this->returnType = gtc(*(other.returnType));
             LOG("return type copied")
             for(auto& param : other.paramTypes) {
                 LOG("param type to be copied")
@@ -503,7 +504,7 @@ namespace types {
                     LOG(param->name())
                 else
                     LOG("lol: nullptr as a type?")
-                this->paramTypes.push_back(std::make_unique<types::Type>(gtc(*(param))));
+                this->paramTypes.push_back(gtc(*(param)));
                 LOG("param copied")
             }
         }
@@ -555,7 +556,11 @@ namespace types {
         ArrayType(std::unique_ptr<Type>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz), sizeKnown(true) {}
 
         ArrayType(ArrayType& other) {
-            this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
+            LOG("# \tinside array copy constructor")
+            LOG(other.underlyingType->name())
+            this->underlyingType = gtc(*(other.underlyingType));
+            LOG("inside arraytype, the underlying type received is:")
+            LOG(underlyingType->name())
             this->size = other.size;
             this->sizeKnown = other.sizeKnown;
         }
@@ -566,7 +571,9 @@ namespace types {
                 underlyingType = std::make_unique<ArrayType>(*ulArr);
             }
             else {
-                underlyingType = std::make_unique<Type>(gtc(*(other.underlyingType)));
+                underlyingType = gtc(*(other.underlyingType));
+                LOG("inside arraytype, the underlying type received is:")
+                LOG(underlyingType->name())
             }
             size = 0;
             sizeKnown = false;

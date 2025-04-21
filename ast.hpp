@@ -261,7 +261,9 @@ namespace ast{
         }
 
         void addParam(std::unique_ptr<types::Type>&& typ, std::unique_ptr<ASTNode>&& param){
-            params.emplace_back(std::move(typ), std::move(param));
+            params.push_back({std::move(typ), std::move(param)});
+            LOG("params.back().first->name()")
+            LOG(params.back().first->name())
         }
     };
 
@@ -384,7 +386,7 @@ namespace ast{
     std::unique_ptr<ASTNode> convertPtr(int node, parser::parseTree &tree);
     std::unique_ptr<ASTNode> convertChain(int node, parser::parseTree &tree);
 
-    void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
+    void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast, bool postResolve = false);
 }
 
 #endif

@@ -44,6 +44,7 @@ int main(int argc, char* argv[]){
     LOG("about to start resolution")
     Resolver resolver(root);
     std::cout << "Resolution Performed Successfully" << std::endl;
+    ast::vizTree(root, "", true, true);
     LOG("resolution done successfully")
     return 0;
 }

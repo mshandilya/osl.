@@ -143,13 +143,12 @@ void Resolver::resolveLetFun(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
         throw std::logic_error("Illegal Declaration: Function Declaration may not be inside another declaration.");
     }
     auto nnode = dynamic_cast<ast::LetFun*>(node.get());
-    auto rt = std::make_unique<types::Type>(types::gtc(*(nnode->retType)));
+    auto rt = types::gtc(*(nnode->retType));
     LOG("return type constructed")
     std::vector<std::unique_ptr<types::Type>> pts;
     for(auto& param : nnode->params) {
         LOG("about to copy a param type")
-        
-        pts.push_back(std::make_unique<types::Type>(types::gtc(*(param.first))));
+        pts.push_back(types::gtc(*(param.first)));
         LOG("copied the param")
     }
     LOG("parameters pushed")
@@ -160,7 +159,7 @@ void Resolver::resolveLetFun(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
     LOG("about to resolve the body")
     currentScope++;
     for(auto& param : nnode->params) {
-        resolveNext(param.second, true, std::make_unique<types::Type>(types::gtc(*(param.first))), ast::VAR);
+        resolveNext(param.second, true, types::gtc(*(param.first)), ast::VAR);
     }
     // no declaration in body
     resolveNext(nnode->body);
@@ -181,7 +180,7 @@ void Resolver::resolveLetArr(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
     // then resolve the val (without declaration)
     resolveNext(nnode->val);
     // finally resolve the name with declaration (at this point copy arraydecltype)
-    resolveNext(nnode->name, true, std::make_unique<types::Type>(types::gtc(*(nnode->myType))), nnode->access);
+    resolveNext(nnode->name, true, types::gtc(*(nnode->myType)), nnode->access);
 }
 
 void Resolver::resolveLetVar(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
@@ -192,10 +191,10 @@ void Resolver::resolveLetVar(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
     // these variables are newly declared, first the value is resolved and then the identifier is declared.
     auto nnode = dynamic_cast<ast::LetVar*>(node.get());
     if(nnode->val->type() == ast::ASSIGN_AST)
-        resolveNext(nnode->val, true, std::make_unique<types::Type>(types::gtc(*(nnode->myType))), ast::VAR);
+        resolveNext(nnode->val, true, types::gtc(*(nnode->myType)), ast::VAR);
     else
         resolveNext(nnode->val);
-    resolveNext(nnode->var, true, std::make_unique<types::Type>(types::gtc(*(nnode->myType))), ast::VAR);
+    resolveNext(nnode->var, true, types::gtc(*(nnode->myType)), ast::VAR);
 }
 
 void Resolver::resolveLetConst(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
@@ -205,17 +204,17 @@ void Resolver::resolveLetConst(std::unique_ptr<ast::ASTNode>& node, bool isDecl,
     // these variables are newly declared, first the value is resolved and then the identifier is declared.
     auto nnode = dynamic_cast<ast::LetConst*>(node.get());
     if(nnode->val->type() == ast::ASSIGN_AST)
-        resolveNext(nnode->val, true, std::make_unique<types::Type>(types::gtc(*(nnode->myType))), ast::CONST);
+        resolveNext(nnode->val, true, types::gtc(*(nnode->myType)), ast::CONST);
     else
         resolveNext(nnode->val);
-    resolveNext(nnode->var, true, std::make_unique<types::Type>(types::gtc(*(nnode->myType))), ast::CONST);    
+    resolveNext(nnode->var, true, types::gtc(*(nnode->myType)), ast::CONST);    
 }
 
 void Resolver::resolveAssign(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
     LOG("inside resolve assign")
     auto nnode = dynamic_cast<ast::Assign*>(node.get());
     if(isDecl) {
-        auto dt2 = std::make_unique<types::Type>(types::gtc(*dt));
+        auto dt2 = types::gtc(*dt);
         resolveNext(nnode->val, isDecl, std::move(dt), ac);
         resolveNext(nnode->var, isDecl, std::move(dt2), ac);
     }
@@ -229,7 +228,7 @@ void Resolver::resolveBinOp(std::unique_ptr<ast::ASTNode>& node, bool isDecl, st
     LOG("inside resolve bin op")
     auto nnode = dynamic_cast<ast::BinaryOperator*>(node.get());
     if(isDecl) {
-        auto dt2 = std::make_unique<types::Type>(types::gtc(*dt));
+        auto dt2 = types::gtc(*dt);
         resolveNext(nnode->leftChild, isDecl, std::move(dt), ac);
         resolveNext(nnode->rightChild, isDecl, std::move(dt2), ac);
     }
@@ -293,7 +292,7 @@ void Resolver::resolveIden(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std
     }
     else {
         if(iden != identifierIds.end() and !iden->second.empty()) {
-            nnode->bind(std::make_unique<types::Type>(*(((iden->second.back()))->boundDataType)), ((iden->second.back()))->access, ((iden->second.back()))->id, ((iden->second.back()))->scopeId);
+            nnode->bind(types::gtc(*(iden->second.back()->boundDataType)), ((iden->second.back()))->access, ((iden->second.back()))->id, ((iden->second.back()))->scopeId);
         }
         else {
             // identifier is not present

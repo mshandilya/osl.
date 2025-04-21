@@ -1,9 +1,7 @@
 def i32 a(i32[][] b, i32 c){
-    var i32 a := 3;
-    while (a~=b) {
+    var #i32 a := 3;
         log b;
         // b := b - 4;
-    }    
 }
 
 // const i32[2][3] arr := {{2, 3, 4}, {5, 6, 7}};
