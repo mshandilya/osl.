@@ -1,2 +1,3 @@
 var i64 m := 54;
 var bool x;
+var i32 n := x + m - n;

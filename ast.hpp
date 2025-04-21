@@ -6,31 +6,6 @@
 
 namespace ast{
 
-    enum NodeType {
-        DEF_AST,
-        PROG_AST,
-        BLOCK_AST,
-        LOOP_AST,
-        COND_AST,
-        RET_AST,
-        LOG_AST,
-        LETFUN_AST,
-        LETVAR_AST,
-        LETCONST_AST,
-        VAL_AST,
-        ASSIGN_AST,
-        LOC_AST,
-        BOP_AST,
-        UOP_AST,
-        FUNCALL_AST,
-        ARR_AST,
-        NUM_AST,
-        CHAR_AST,
-        BOOL_AST,
-        NULL_AST,
-        IDEN_AST,
-    };
-
     enum OperatorType {
         GT_OP,       // Binary Greater Than
         GEQ_OP,      // Binary Greater Than Equal To
@@ -63,18 +38,6 @@ namespace ast{
     };
 
     class AtomicASTNode;
-    
-    class ASTNode {
-    public:
-
-        virtual NodeType type() const {
-            return DEF_AST;
-        }
-
-        /*virtual AtomicASTNode& const_resolve() {
-            // unimplemented
-        }*/
-    };
 
     class AtomicASTNode : public ASTNode {
     public:
@@ -104,12 +67,16 @@ namespace ast{
         NodeType type() const override {
             return IDEN_AST;
         }
+
+        types::ATOMTYPES dataType() const override {
+            return types::ATOMTYPES::UNRESOLVED;
+        };
     };
     
     class NullValue : public AtomicASTNode {
         std::unique_ptr<types::Type> dt;
     public:
-        NullValue(): dt(std::make_unique<types::Null>()) {}
+        NullValue() : dt(std::make_unique<types::Type>(types::Null())) {}
 
         NullValue(std::unique_ptr<types::Type>&& dt) : dt(std::move(dt)) {}
 
@@ -172,8 +139,9 @@ namespace ast{
     };
 
     class ArrValue : public ASTNode {
-        std::vector<std::unique_ptr<ast::ASTNode>> elems;
     public:
+        std::vector<std::unique_ptr<ast::ASTNode>> elems;
+        
         ArrValue() {}    
 
         void addElem(std::unique_ptr<ast::ASTNode>&& elem) {
@@ -239,11 +207,11 @@ namespace ast{
 
     class LetConst: public ASTNode {
     public:
-        std::unique_ptr<types::Type> type;
+        std::unique_ptr<types::Type> myType;
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        LetConst(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), type(std::move(type)), val(std::move(val)) {};
+        LetConst(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), myType(std::move(type)), val(std::move(val)) {};
         
         NodeType type() const override {
             return LETCONST_AST;
@@ -252,18 +220,33 @@ namespace ast{
     
     class LetVar: public ASTNode {
     public:
-        std::unique_ptr<types::Type> type;
+        std::unique_ptr<types::Type> myType;
         std::unique_ptr<ASTNode> var;
         std::unique_ptr<ASTNode> val;
 
-        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type): var(std::move(var)), type(std::move(type)), val(std::make_unique<NullValue>()) {};
-        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), type(std::move(type)), val(std::move(val)) {};
+        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type): var(std::move(var)), myType(std::move(type)), val(std::make_unique<NullValue>()) {};
+        LetVar(std::unique_ptr<ASTNode>&& var, std::unique_ptr<types::Type>&& type, std::unique_ptr<ASTNode>&& val): var(std::move(var)), myType(std::move(type)), val(std::move(val)) {};
         
         NodeType type() const override {
             return LETVAR_AST;
         }
     };
     
+    class LetArray: public ASTNode {
+    public:
+        std::unique_ptr<types::ArrayDeclType> myType;
+        std::unique_ptr<ASTNode> name;
+        Access access;
+        std::unique_ptr<ASTNode> val;
+
+        NodeType type() const override {
+            return LETARR_AST;
+        }
+
+        LetArray(std::unique_ptr<types::ArrayDeclType>&& type, std::unique_ptr<ASTNode>&& name, Access& access): myType(std::move(type)), name(std::move(name)), access(access), val(std::make_unique<NullValue>()) {};
+        LetArray(std::unique_ptr<types::ArrayDeclType>&& type, std::unique_ptr<ASTNode>&& name, Access& access, std::unique_ptr<ASTNode>&& val): myType(std::move(type)), name(std::move(name)), access(access), val(std::move(val)) {};
+    };
+
     class LetFun: public ASTNode {
     public:
         std::unique_ptr<types::Type> retType;
@@ -310,7 +293,7 @@ namespace ast{
         std::unique_ptr<ASTNode> thenBody;
         std::unique_ptr<ASTNode> elseBody;
 
-        Conditional(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(nullptr) {};
+        Conditional(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(std::make_unique<NullValue>()) {};
         Conditional(std::unique_ptr<ASTNode>&& cond, std::unique_ptr<ASTNode>&& thenBody, std::unique_ptr<ASTNode>&& elseBody): cond(std::move(cond)), thenBody(std::move(thenBody)), elseBody(std::move(elseBody)) {};
     
         NodeType type() const override {
@@ -334,7 +317,7 @@ namespace ast{
     public:
         std::vector<std::unique_ptr<ASTNode>> decls;
 
-        Block() {};
+        Block() : decls(std::vector<std::unique_ptr<ASTNode>>()) {};
         
         void addDecl(std::unique_ptr<ASTNode>&& decl){
             decls.push_back(std::move(decl));
@@ -349,7 +332,7 @@ namespace ast{
     public:
         std::vector<std::unique_ptr<ASTNode>> decls;
 
-        Prog(){};
+        Prog() : decls(std::vector<std::unique_ptr<ASTNode>>()) {};
         
         void addDecl(std::unique_ptr<ASTNode>&& decl){
             decls.push_back(std::move(decl));
@@ -360,32 +343,32 @@ namespace ast{
         }
     };
 
-    // std::unique_ptr<types::Type> convertType(std::string type);
-    // std::pair<std::unique_ptr<types::Type>,std::unique_ptr<ast::Identifier>> convertParam(int node, parser::parseTree &tree);
-    std::unique_ptr<ast::ASTNode> parseTreeToAST(parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertProg(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertDecl(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertConstDecl(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertVarDecl(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertVal(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertExp(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertAssn(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertUnAmb(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertAtom(int node, parser::parseTree &tree); //Done
-    // std::unique_ptr<ast::ASTNode> convertUnaryOp(int node, parser::parseTree &tree);
-    // std::unique_ptr<ast::ASTNode> convertBinaryOp(int node, parser::parseTree &tree);
-    std::unique_ptr<ast::ASTNode> convertStmt(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertExpStmt(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertBlock(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertCond(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertElse(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertElifs(int node, parser::parseTree &tree, std::unique_ptr<ASTNode> finElse=nullptr); //Done
-    std::unique_ptr<ast::ASTNode> convertLogStmt(int node, parser::parseTree &tree); //Done
-    std::unique_ptr<ast::ASTNode> convertRetStmt(int node, parser::parseTree &tree); //Done
-    // std::unique_ptr<ast::ASTNode> convertFunDecl(int node, parser::parseTree &tree);
-    std::unique_ptr<ast::ASTNode> convertLoop(int node, parser::parseTree &tree); //Done
-    // std::unique_ptr<ast::ASTNode> convertFunCall(int node, parser::parseTree &tree);
-    // std::vector<std::unique_ptr<ASTNode>> convertCallParams(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> parseTreeToAST(parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertProg(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertBlock(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertDecl(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertLoop(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertCond(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertRetStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertLogStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertExpStmt(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertFunDecl(int node, parser::parseTree &tree);
+    std::pair<std::unique_ptr<types::Type>, std::unique_ptr<ASTNode>> convertDeclParam(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertVarDecl(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertConstDecl(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertVal(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertAssn(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertLoc(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertExp(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertBinaryOp(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertBinaryOpHelper(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertUnaryOp(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertFunCall(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertUnAmb(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertAtom(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertElse(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertElifs(int node, parser::parseTree &tree, std::unique_ptr<ASTNode> finElse=nullptr);
     std::unique_ptr<types::Type> convertDeclType(int node, parser::parseTree &tree);
     std::unique_ptr<types::Type> convertAtomType(int node, parser::parseTree &tree);
     std::unique_ptr<types::Type> convertFunType(int node, parser::parseTree &tree);
@@ -393,6 +376,13 @@ namespace ast{
     std::unique_ptr<types::Type> convertType(int node, parser::parseTree &tree);
     std::unique_ptr<types::Type> convertCompType(int node, parser::parseTree &tree);
     std::unique_ptr<types::Type> convertArrType(int node, parser::parseTree &tree);
+    std::unique_ptr<types::Type> convertPtrType(int node, parser::parseTree &tree);
+    std::unique_ptr<types::Type> convertArrDeclType(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertPtrDeref(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertArrAcc(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertArr(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertPtr(int node, parser::parseTree &tree);
+    std::unique_ptr<ASTNode> convertChain(int node, parser::parseTree &tree);
 
     void vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast);
 }

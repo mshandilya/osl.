@@ -185,7 +185,7 @@ void lexer::DFA::insert(std::string sym, std::string name){
     }
     bool endAlphaNum = (lastChar == '.') || (lastChar == '_') || ('a' <= lastChar && lastChar <= 'z') || ('A' <= lastChar && lastChar <= 'Z') || ('0' <= lastChar && lastChar <= '9');
     std::string subName = name.substr(1,name.length()-1);
-    bool endSpBrac = lastChar == '\'' || name == "SCOM" || name == "SEMC" || name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX" || name == "HASH" || name == "AT";
+    bool endSpBrac = lastChar == '\'' || subName == "COM" || name == "SEMC" || name == "COMMA" || subName == "PAREN" || subName == "BRACE" || subName == "BOX" || name == "HASH" || name == "AT";
     for(int i = 1;i < 256;i++){
         char curChar = (char)i;
         bool curEndAlphaNum = (curChar == '.') || (curChar == '_') || ('a' <= curChar && curChar <= 'z') || ('A' <= curChar && curChar <= 'Z') || ('0' <= curChar && curChar <= '9');
@@ -346,19 +346,9 @@ std::vector<Token> lexer::genLexer::lex(std::string filename){
                 buf = '\0';
                 val = "";
                 goto fin;
+            }else if(cid != "MCOM"){
+                tokens.push_back(Token(cid, val, lineNo, charNo));
             }
-            /*bool fval = false;
-            for(std::string token: isValToken){
-                if(cid == token){
-                    tokens.push_back(Token(cid, val, lineNo, charNo));
-                    fval = true;
-                    break;
-                }
-            }
-            if(!fval){
-                tokens.push_back(cur);
-            }*/
-            tokens.push_back(Token(cid, val, lineNo, charNo));
             val = "";
         }
         if(buf != '\0'){

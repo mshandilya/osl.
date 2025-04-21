@@ -3,12 +3,12 @@
 0[oO][0-7]+|0[oO][0-7]+.[0-7]+|0[oO][0-7]+[eE][0-7]+|0[oO][0-7]+[eE][\+\-][0-7]+|0[oO][0-7]+.[0-7]+[eE][0-7]+|0[oO][0-7]+.[0-7]+[eE][\+\-][0-7]+ OCT
 0[bB][01]+|0[bB][01]+.[01]+|0[bB][01]+[eE][01]+|0[bB][01]+[eE][\+\-][01]+|0[bB][01]+.[01]+[eE][01]+|0[bB][01]+.[01]+[eE][\+\-][01]+ BIN
 [A-Za-z][\_A-Za-z0-9]* IDEN
-'[_]' CHAR
+'_' CHAR
 true TRUE
 false FALSE
-null NULL
+nav NULL
 bool TBOOL
-c8 TCHAR
+c8 TC8
 u8 TU8
 u16 TU16
 u32 TU32
@@ -65,3 +65,4 @@ elif ELIF
 else ELSE
 while WHILE
 // SCOM
+/\*[_]*\*/ MCOM

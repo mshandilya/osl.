@@ -77,7 +77,7 @@ std::string regFormat(std::string s, std::string name){
     return res;
 }
 
-int numChar(int val){
+int numChar(int val) {
     if(val == 0){
         return 1;
     }
@@ -87,6 +87,116 @@ int numChar(int val){
         c++;
     }
     return c;
+}
+
+types::Type types::gtc(types::Type& other) {
+    switch(other.name()) {
+        case UNKNOWN:
+            throw std::logic_error("An empty type class created. Type must be one of the terminal classes.");
+        case ATOM: {
+            auto otherAtom = dynamic_cast<AtomicType*>(&other);
+            switch(otherAtom->atomicName()) {
+                case UNRESOLVED: {
+                    throw std::logic_error("An empty atomic type class created. AtomicType must be one of the terminal classes.");
+                }
+                case NULLV: {
+                    return Null();
+                }
+                case BOOL: {
+                    auto otherBool = dynamic_cast<Boolean*>(otherAtom);
+                    return Boolean(*otherBool);
+                }
+                case CHAR_8: {
+                    auto otherChar = dynamic_cast<Character*>(otherAtom);
+                    return Character(*otherChar);
+                }
+                case NUM: {
+                    throw std::logic_error("An empty number type class created. NumberType must be one of the terminal classes.");
+                }
+                case INT: {
+                    throw std::logic_error("An empty integer class created. Integer must be one of the terminal classes.");
+                }
+                case INT_8: {
+                    auto otherInt = dynamic_cast<i8*>(otherAtom);
+                    return i8(*otherInt);
+                }
+                case INT_16: {
+                    auto otherInt = dynamic_cast<i16*>(otherAtom);
+                    return i16(*otherInt);
+                }
+                case INT_32: {
+                    auto otherInt = dynamic_cast<i32*>(otherAtom);
+                    return i32(*otherInt);
+                }
+                case INT_64: {
+                    auto otherInt = dynamic_cast<i64*>(otherAtom);
+                    return i64(*otherInt);
+                }
+                case INT_128: {
+                    auto otherInt = dynamic_cast<i128*>(otherAtom);
+                    return i128(*otherInt);
+                }
+                case UINT: {
+                    throw std::logic_error("An empty integer class created. Integer must be one of the terminal classes.");
+                }
+                case UINT_8: {
+                    auto otherUInt = dynamic_cast<u8*>(otherAtom);
+                    return u8(*otherUInt);
+                }
+                case UINT_16: {
+                    auto otherUInt = dynamic_cast<u16*>(otherAtom);
+                    return u16(*otherUInt);
+                }
+                case UINT_32: {
+                    auto otherUInt = dynamic_cast<u32*>(otherAtom);
+                    return u32(*otherUInt);
+                }
+                case UINT_64: {
+                    auto otherUInt = dynamic_cast<u64*>(otherAtom);
+                    return u64(*otherUInt);
+                }
+                case UINT_128: {
+                    auto otherUInt = dynamic_cast<u128*>(otherAtom);
+                    return u128(*otherUInt);
+                }
+                case FLOAT: {
+                    throw std::logic_error("An empty float class created. Float must be one of the terminal classes.");
+                }
+                case FLOAT_16: {
+                    auto otherFloat = dynamic_cast<f16*>(otherAtom);
+                    return f16(*otherFloat);
+                }
+                case FLOAT_32: {
+                    auto otherFloat = dynamic_cast<f32*>(otherAtom);
+                    return f32(*otherFloat);
+                }
+                case FLOAT_64: {
+                    auto otherFloat = dynamic_cast<f64*>(otherAtom);
+                    return f64(*otherFloat);
+                }
+                case FLOAT_128: {
+                    auto otherFloat = dynamic_cast<f128*>(otherAtom);
+                    return f128(*otherFloat);
+                }
+            }
+        }
+        case PTR: {
+            auto otherPtr = dynamic_cast<PointerType*>(&other);
+            return PointerType(*otherPtr);
+        }
+        case FN: {
+            auto otherFn = dynamic_cast<FunctionType*>(&other);
+            return FunctionType(*otherFn);
+        }
+        case ARR: {
+            auto otherArr = dynamic_cast<ArrayType*>(&other);
+            return ArrayType(*otherArr);
+        }
+        case ARRD: {
+            auto otherArrDecl = dynamic_cast<ArrayDeclType*>(&other);
+            return ArrayType(*otherArrDecl);
+        }
+    }
 }
 
 std::unique_ptr<types::NumberType> utils::stringToNumberUtil(std::string& source) {

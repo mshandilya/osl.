@@ -5,7 +5,7 @@
 #include "ast.hpp"
 
 enum OPCODES {
-    PUSH, // to be extended
+    PUSH,
     POP,
     DUP,
     SWAP,

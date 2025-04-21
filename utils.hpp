@@ -35,6 +35,44 @@ std::string charFormat(char c);
 std::string regFormat(std::string s, std::string name);
 int numChar(int val);
 
+namespace ast {
+    enum NodeType {
+        DEF_AST,
+        PROG_AST,
+        BLOCK_AST,
+        LOOP_AST,
+        COND_AST,
+        RET_AST,
+        LOG_AST,
+        LETFUN_AST,
+        LETARR_AST,
+        LETVAR_AST,
+        LETCONST_AST,
+        ASSIGN_AST,
+        BOP_AST,
+        UOP_AST,
+        FUNCALL_AST,
+        ARR_AST,
+        NUM_AST,
+        CHAR_AST,
+        BOOL_AST,
+        NULL_AST,
+        IDEN_AST,
+    };
+
+    class ASTNode {
+    public:
+
+        virtual NodeType type() const {
+            return DEF_AST;
+        }
+
+        /*virtual AtomicASTNode& const_resolve() {
+            // unimplemented
+        }*/
+    };
+}
+
 namespace types {
 
     enum TYPES {
@@ -48,6 +86,7 @@ namespace types {
     
     enum ATOMTYPES {
         UNRESOLVED,
+        ANY,
         NULLV,
         BOOL,
         CHAR_8,
@@ -68,7 +107,7 @@ namespace types {
         FLOAT_16,
         FLOAT_32,
         FLOAT_64,
-        FLOAT_128,
+        FLOAT_128
     };
 
     enum MAX_BITS {
@@ -90,9 +129,270 @@ namespace types {
 
     class DeclType : public Type {};
 
-    DeclType gtc(DeclType& other); // global type copy
-
     class CompoundType : public Type {};
+
+    class AtomicType : public DeclType {
+    public:
+        TYPES name() const override {
+            return ATOM;
+        }
+
+        virtual ATOMTYPES atomicName() const = 0;
+    };
+
+    class NumberType : public AtomicType {
+    public:
+        ATOMTYPES atomicName() const override {
+            return NUM;
+        }
+    };
+
+    template<MAX_BITS mb>
+    struct mInt {
+        static const ATOMTYPES dt = INT;
+    };
+
+    template<>
+    struct mInt<B8> {
+        static const ATOMTYPES dt = INT_8;
+    };
+
+    template<>
+    struct mInt<B16> {
+        static const ATOMTYPES dt = INT_16;
+    };
+
+    template<>
+    struct mInt<B32> {
+        static const ATOMTYPES dt = INT_32;
+    };
+
+    template<>
+    struct mInt<B64> {
+        static const ATOMTYPES dt = INT_64;
+    };
+
+    template<>
+    struct mInt<B128> {
+        static const ATOMTYPES dt = INT_128;
+    };
+
+    /* Signed integers are defined by using the templated `Integer` class which also takes in the number
+    of bits used to store the integer. Type aliases for specific bit sizes have been made as `i8` all
+    the way to `i128` at powers of 2.
+    */
+    template<MAX_BITS bitSize>
+    class Integer : public NumberType {
+        static_assert(bitSize%8==0, "Bit Size for class Integer must be a multiple of 8");
+        static_assert(bitSize>0, "Bit Size for class Integer must be a positive integer");
+        // Values as stored in the Little Endian System
+        unsigned char value[bitSize/8];
+
+    public:
+        static constexpr ATOMTYPES dt = mInt<bitSize>::dt;
+        
+        inline Integer() {
+            for(unsigned char& b : value)
+                b = 0;
+        }
+
+        inline Integer(std::vector<unsigned char>& value) {
+            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
+                this->value[i] = value[i];
+        }
+
+        Integer(Integer<bitSize>& other) {
+            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
+                value[byte] = other.value[byte];
+        }
+
+        ATOMTYPES atomicName() const override {
+            return dt;
+        }
+    };
+
+    typedef Integer<B8> i8;
+    typedef Integer<B16> i16;
+    typedef Integer<B32> i32;
+    typedef Integer<B64> i64;
+    typedef Integer<B128> i128;
+
+    template<MAX_BITS mb>
+    struct mUInt {
+        static const ATOMTYPES dt = UINT;
+    };
+
+    template<>
+    struct mUInt<B8> {
+        static const ATOMTYPES dt = UINT_8;
+    };
+
+    template<>
+    struct mUInt<B16> {
+        static const ATOMTYPES dt = UINT_16;
+    };
+
+    template<>
+    struct mUInt<B32> {
+        static const ATOMTYPES dt = UINT_32;
+    };
+
+    template<>
+    struct mUInt<B64> {
+        static const ATOMTYPES dt = UINT_64;
+    };
+
+    template<>
+    struct mUInt<B128> {
+        static const ATOMTYPES dt = UINT_128;
+    };
+    
+    /* Unsigned integers are defined by using the templated `UnsignedInteger` class which also takes in 
+    the number of bits used to store the unsigned integer as a template parameter. Type aliases for 
+    specific bit sizes have been made as `u8` all the way to `u128` at powers of 2.
+    */
+    template<MAX_BITS bitSize>
+    class UnsignedInteger : public NumberType {
+        static_assert(bitSize%8==0, "Bit Size for class UnsignedInteger must be a multiple of 8");
+        static_assert(bitSize>0, "Bit Size for class UnsignedInteger must be a positive integer");
+        // Values as stored in the Little Endian System
+        unsigned char value[bitSize/8];
+
+    public:
+        static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
+
+        inline UnsignedInteger() {
+            for(unsigned char& b : value)
+                b = 0;
+        }
+
+        inline UnsignedInteger(std::vector<unsigned char>& value) {
+            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
+                this->value[i] = value[i];
+        }
+    
+        UnsignedInteger(UnsignedInteger<bitSize>& other) {
+            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
+                value[byte] = other.value[byte];
+        }
+
+        ATOMTYPES atomicName() const override {
+            return dt;
+        }
+    };
+
+    typedef UnsignedInteger<B8> u8;
+    typedef UnsignedInteger<B16> u16;
+    typedef UnsignedInteger<B32> u32;
+    typedef UnsignedInteger<B64> u64;
+    typedef UnsignedInteger<B128> u128;
+
+    template<MAX_BITS mb>
+    struct mFloat {
+        static const ATOMTYPES dt = FLOAT;
+    };
+
+    template<>
+    struct mFloat<B16> {
+        static const ATOMTYPES dt = FLOAT_16;
+    };
+
+    template<>
+    struct mFloat<B32> {
+        static const ATOMTYPES dt = FLOAT_32;
+    };
+
+    template<>
+    struct mFloat<B64> {
+        static const ATOMTYPES dt = FLOAT_64;
+    };
+
+    template<>
+    struct mFloat<B128> {
+        static const ATOMTYPES dt = FLOAT_128;
+    };
+
+    template<MAX_BITS bitSize>
+    class Float : public NumberType {
+        static_assert(bitSize%8==0, "Bit Size for class Float must be a multiple of 8");
+        static_assert(bitSize>0, "Bit Size for class Float must be a positive integer");
+
+        // Values as stored in the Little Endian System
+        unsigned char value[bitSize/8];
+
+    public:
+        static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
+
+        inline Float() {
+            static_assert(bitSize==B32 or bitSize==B64, "Only single and double point precision floats allowed right now.");
+            for(unsigned char& b : value)
+                b = 0;
+        }
+
+        inline Float(std::vector<unsigned char>& value) {
+            static_assert(bitSize==B32 or bitSize==B64, "Only single and double point precision floats allowed right now.");
+            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
+                this->value[i] = value[i];
+        }
+
+        Float(Float<bitSize>& other) {
+            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
+                value[byte] = other.value[byte];
+        }
+
+        ATOMTYPES atomicName() const override {
+            return dt;
+        }
+    };
+
+    typedef Float<B16> f16;
+    typedef Float<B32> f32;
+    typedef Float<B64> f64;
+    typedef Float<B128> f128;
+
+    class Boolean : public AtomicType {
+        unsigned char value;
+
+    public:
+        inline Boolean() : value(0) {}
+
+        inline Boolean(bool v) {
+            if(v)
+                value = 1;
+            else
+                value = 0;
+        }
+
+        inline Boolean(Boolean& other) : value(other.value) {}
+
+        ATOMTYPES atomicName() const override {
+            return BOOL;
+        }
+    };
+
+    class Character : public AtomicType {
+        unsigned char value;
+
+    public:
+        inline Character() : value(0) {}
+
+        inline Character(unsigned char c) : value(c) {}
+
+        inline Character(Character& other) : value(other.value) {}
+
+        ATOMTYPES atomicName() const override {
+            return CHAR_8;
+        }
+    };
+
+    typedef Character c8;
+
+    class Null : public AtomicType {
+    public:
+        ATOMTYPES atomicName() const override {
+            return NULLV;
+        }
+    };
 
     class PointerDeclType : public DeclType {
     public:
@@ -174,19 +474,16 @@ namespace types {
     };
 
     class ArrayDeclType : public DeclType {
-        std::unique_ptr<DeclType> underlyingType;
-        uint32_t size;
     public:
+        std::unique_ptr<Type> underlyingType;
+        std::unique_ptr<ast::ASTNode> size;
+
         TYPES name() const override {
             return ARRD;
         }
 
-        ArrayDeclType(std::unique_ptr<DeclType>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz) {}
+        ArrayDeclType(std::unique_ptr<Type>&& ut, std::unique_ptr<ast::ASTNode>&& sz) : underlyingType(std::move(ut)), size(std::move(sz)) {}
 
-        ArrayDeclType(ArrayDeclType& other) {
-            this->underlyingType = std::make_unique<types::DeclType>(gtc(*(other.underlyingType)));
-            this->size = other.size;
-        }
     };
 
     class ArrayType : public CompoundType {
@@ -202,279 +499,33 @@ namespace types {
         ArrayType(std::unique_ptr<Type>&& ut, uint32_t sz) : underlyingType(std::move(ut)), size(sz), sizeKnown(true) {}
 
         ArrayType(ArrayType& other) {
-            this->underlyingType = std::make_unique<types::DeclType>(gtc(*(other.underlyingType)));
+            this->underlyingType = std::make_unique<types::Type>(gtc(*(other.underlyingType)));
             this->size = other.size;
             this->sizeKnown = other.sizeKnown;
         }
-    };
 
-    class AtomicType : public DeclType {
-    public:
-        TYPES name() const override {
-            return ATOM;
+        ArrayType(ArrayDeclType& other) {
+            if(other.underlyingType->name() == ARRD) {
+                auto ulArr = dynamic_cast<ArrayDeclType*>(other.underlyingType.get());
+                underlyingType = std::make_unique<ArrayType>(*ulArr);
+            }
+            else {
+                underlyingType = std::make_unique<Type>(gtc(*(other.underlyingType)));
+            }
+            size = 0;
+            sizeKnown = false;
         }
 
-        virtual ATOMTYPES atomicName() const = 0;
     };
 
-    class NumberType : public AtomicType {
-    public:
-        ATOMTYPES atomicName() const override {
-            return NUM;
-        }
-    };
-
-    template<MAX_BITS mb>
-    struct mInt {
-        static const ATOMTYPES dt = INT;
-    };
-
-    template<>
-    struct mInt<B8> {
-        static const ATOMTYPES dt = INT_8;
-    };
-
-    template<>
-    struct mInt<B16> {
-        static const ATOMTYPES dt = INT_16;
-    };
-
-    template<>
-    struct mInt<B32> {
-        static const ATOMTYPES dt = INT_32;
-    };
-
-    template<>
-    struct mInt<B64> {
-        static const ATOMTYPES dt = INT_64;
-    };
-
-    template<>
-    struct mInt<B128> {
-        static const ATOMTYPES dt = INT_128;
-    };
-
-    /* Signed integers are defined by using the templated `Integer` class which also takes in the number
-    of bits used to store the integer. Type aliases for specific bit sizes have been made as `i8` all
-    the way to `i128` at powers of 2.
-    */
-    template<MAX_BITS bitSize>
-    class Integer : public NumberType {
-        static_assert(bitSize%8==0, "Bit Size for class Integer must be a multiple of 8");
-        static_assert(bitSize>0, "Bit Size for class Integer must be a positive integer");
-        // Values as stored in the Little Endian System
-        unsigned char value[bitSize/8];
-
-    public:
-        static constexpr ATOMTYPES dt = mInt<bitSize>::dt;
+    class AnyType : public AtomicType {
         
-        inline Integer() {
-            for(unsigned char& b : value)
-                b = 0;
-        }
-
-        inline Integer(std::vector<unsigned char>& value) {
-            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
-                this->value[i] = value[i];
-        }
-
-        Integer<bitSize>(Integer<bitSize>& other) {
-            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
-                value[byte] = other.value[byte];
-        }
-
-        ATOMTYPES atomicName() const override {
-            return dt;
-        }
-    };
-
-    typedef Integer<B8> i8;
-    typedef Integer<B16> i16;
-    typedef Integer<B32> i32;
-    typedef Integer<B64> i64;
-    typedef Integer<B128> i128;
-
-    template<MAX_BITS mb>
-    struct mUInt {
-        static const ATOMTYPES dt = UINT;
-    };
-
-    template<>
-    struct mUInt<B8> {
-        static const ATOMTYPES dt = UINT_8;
-    };
-
-    template<>
-    struct mUInt<B16> {
-        static const ATOMTYPES dt = UINT_16;
-    };
-
-    template<>
-    struct mUInt<B32> {
-        static const ATOMTYPES dt = UINT_32;
-    };
-
-    template<>
-    struct mUInt<B64> {
-        static const ATOMTYPES dt = UINT_64;
-    };
-
-    template<>
-    struct mUInt<B128> {
-        static const ATOMTYPES dt = UINT_128;
-    };
-    
-    /* Unsigned integers are defined by using the templated `UnsignedInteger` class which also takes in 
-    the number of bits used to store the unsigned integer as a template parameter. Type aliases for 
-    specific bit sizes have been made as `u8` all the way to `u128` at powers of 2.
-    */
-    template<MAX_BITS bitSize>
-    class UnsignedInteger : public NumberType {
-        static_assert(bitSize%8==0, "Bit Size for class UnsignedInteger must be a multiple of 8");
-        static_assert(bitSize>0, "Bit Size for class UnsignedInteger must be a positive integer");
-        // Values as stored in the Little Endian System
-        unsigned char value[bitSize/8];
-
-    public:
-        static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
-
-        inline UnsignedInteger() {
-            for(unsigned char& b : value)
-                b = 0;
-        }
-
-        inline UnsignedInteger(std::vector<unsigned char>& value) {
-            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
-                this->value[i] = value[i];
-        }
-    
-        UnsignedInteger<bitSize>(UnsignedInteger<bitSize>& other) {
-            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
-                value[byte] = other.value[byte];
-        }
-
-        ATOMTYPES atomicName() const override {
-            return dt;
-        }
-    };
-
-    typedef UnsignedInteger<B8> u8;
-    typedef UnsignedInteger<B16> u16;
-    typedef UnsignedInteger<B32> u32;
-    typedef UnsignedInteger<B64> u64;
-    typedef UnsignedInteger<B128> u128;
-
-    template<MAX_BITS mb>
-    struct mFloat {
-        static const ATOMTYPES dt = FLOAT;
-    };
-
-    template<>
-    struct mFloat<B16> {
-        static const ATOMTYPES dt = FLOAT_16;
-    };
-
-    template<>
-    struct mFloat<B32> {
-        static const ATOMTYPES dt = FLOAT_32;
-    };
-
-    template<>
-    struct mFloat<B64> {
-        static const ATOMTYPES dt = FLOAT_64;
-    };
-
-    template<>
-    struct mFloat<B128> {
-        static const ATOMTYPES dt = FLOAT_128;
-    };
-
-    template<MAX_BITS bitSize>
-    class Float : public NumberType {
-        static_assert(bitSize%8==0, "Bit Size for class Float must be a multiple of 8");
-        static_assert(bitSize>0, "Bit Size for class Float must be a positive integer");
-
-        static_assert(bitSize==B32 or bitSize==B64, "Only single and double point precision floats allowed right now.");
-
-        // Values as stored in the Little Endian System
-        unsigned char value[bitSize/8];
-
-    public:
-        static constexpr ATOMTYPES dt = mUInt<bitSize>::dt;
-
-        inline Float() {
-            for(unsigned char& b : value)
-                b = 0;
-        }
-
-        inline Float(std::vector<unsigned char>& value) {
-            for(unsigned short int i = 0, bytes = bitSize/8; i < bytes; i++)
-                this->value[i] = value[i];
-        }
-
-        Float<bitSize>(Float<bitSize>& other) {
-            for(unsigned short int byte = 0; byte < bitSize/8; byte++)
-                value[byte] = other.value[byte];
-        }
-
-        ATOMTYPES atomicName() const override {
-            return dt;
-        }
-    };
-
-    typedef Float<B16> f16;
-    typedef Float<B32> f32;
-    typedef Float<B64> f64;
-    typedef Float<B128> f128;
-
-    class Boolean : public AtomicType {
-        unsigned char value;
-
-    public:
-        inline Boolean() : value(0) {}
-
-        inline Boolean(bool v) {
-            if(v)
-                value = 1;
-            else
-                value = 0;
-        }
-
-        inline Boolean(Boolean& other) : value(other.value) {}
-
-        ATOMTYPES atomicName() const override {
-            return BOOL;
-        }
-    };
-
-    class Character : public AtomicType {
-        unsigned char value;
-
-    public:
-        inline Character() : value(0) {}
-
-        inline Character(unsigned char c) : value(c) {}
-
-        inline Character(Character& other) : value(other.value) {}
-
-        ATOMTYPES atomicName() const override {
-            return CHAR_8;
-        }
-    };
-
-    typedef Character c8;
-
-    class Null : public AtomicType {
-    public:
-        ATOMTYPES atomicName() const override {
-            return NULLV;
-        }
     };
 }
 
 namespace utils{
     std::unique_ptr<types::NumberType> stringToNumberUtil(std::string& source);
-    std::unique_ptr<types::Character> stringToCharUtil(std::string& source);
+    std::unique_ptr<types::Character> stringToCharUtil(const std::string& source);
 }
 
 #endif

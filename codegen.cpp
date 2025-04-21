@@ -20,12 +20,8 @@ void CodeGenerator::codifyNext(std::unique_ptr<ast::ASTNode>& node) {
             return codifyLetVar(node);
         case ast::LETCONST_AST:
             return codifyLetConst(node);
-        case ast::VAL_AST:
-            return codifyValue(node);
         case ast::ASSIGN_AST:
             return codifyAssign(node);
-        case ast::LOC_AST:
-            return codifyLocation(node);
         case ast::BOP_AST:
             return codifyBinOp(node);
         case ast::UOP_AST:
@@ -83,17 +79,9 @@ void CodeGenerator::codifyLetConst(std::unique_ptr<ast::ASTNode>& node) {
     auto nnode = dynamic_cast<ast::LetConst*>(node.get());
 }
 
-// void CodeGenerator::codifyValue(std::unique_ptr<ast::ASTNode>& node) {
-//     auto nnode = dynamic_cast<ast::Value*>(node.get());
-// }
-
 void CodeGenerator::codifyAssign(std::unique_ptr<ast::ASTNode>& node) {
     auto nnode = dynamic_cast<ast::Assign*>(node.get());
 }
-
-// void CodeGenerator::codifyLocation(std::unique_ptr<ast::ASTNode>& node) {
-//     auto nnode = dynamic_cast<ast::Location*>(node.get());
-// }
 
 void CodeGenerator::codifyBinOp(std::unique_ptr<ast::ASTNode>& node) {
     auto nnode = dynamic_cast<ast::BinaryOperator*>(node.get());

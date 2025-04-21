@@ -1,9 +1,5 @@
 <Prog> ::= <Decls>
-<<<<<<< HEAD
-<Block> ::= LBRACE <Decls> RBRACE | LBRACE RBRACE
-=======
 <Block> ::= LBRACE RBRACE | LBRACE <Decls> RBRACE
->>>>>>> 567449885d0d2c96faa441b20d211730b560b66f
 <Decls> ::= <Decl> <Decls> | <Decl>
 <Decl> ::= <ConstDecl> | <VarDecl> | <FunDecl> | <Stmt>
 <Stmt> ::= <ExpStmt> | <LogStmt> | <RetStmt> | <Cond> | <Loop>
@@ -15,19 +11,22 @@
 <RetStmt> ::= RETURN <Val> SEMC
 <LogStmt> ::= LOG <Val> SEMC
 <ExpStmt> ::= <Val> SEMC
-<FunDecl> ::= DEFINE <Type> IDEN LPAREN <DeclParams> RPAREN <Block>
+<FunDecl> ::= DEFINE <Type> IDEN LPAREN RPAREN <Block> | DEFINE <Type> IDEN LPAREN <DeclParams> RPAREN <Block>
 <DeclParams> ::= <DeclParam> | <DeclParam> COMMA <DeclParams>
 <DeclParam> ::= <Type> IDEN
 <VarDecl> ::= VAR <DeclType> IDEN ASSIGN <Val> SEMC | VAR <DeclType> IDEN SEMC
 <ConstDecl> ::= CONST <DeclType> IDEN ASSIGN <Val> SEMC
-<CallParams> ::= <Val> | <Val> COMMA <CallParams>
-<Elems> ::= <Val> | <Val> COMMA <Elems>
+<Args> ::= <Val> | <Val> COMMA <Args>
 <Val> ::= <Exp> | <Assn>
 <Assn> ::= <Loc> ASSIGN <Val>
 <Exp> ::= <UOp> | <BinOp> | <UnAmb>
-<BinOp> ::= <Shift> | <Xand> | <Xor> | <And> | <Or> | <Mod> | <Pow> | <Sub> | <Div> | <Add> | <Mul> | <Eq> | <Neq> | <Less> | <Great>
-<Great> ::= <UnAmb> GT <UnAmb> | <UnAmb> GTE <UnAmb> | <UnAmb> GT <Great> | <UnAmb> GTE <Great>
-<Less> ::= <UnAmb> LT <UnAmb> | <UnAmb> LTE <UnAmb> | <UnAmb> LT <Less> | <UnAmb> LTE <Less>
+<BinOp> ::= <Shift> | <Xand> | <Xor> | <And> | <Or> | <Mod> | <Pow> | <Sub> | <Div> | <Add> | <Mul> | <Eq> | <Neq> | <Less> | <Great> | <ArrAcc>
+<Great> ::= <Greater> | <GreaterEqual>
+<Greater> ::= <UnAmb> GT <UnAmb> | <UnAmb> GT <Great>
+<GreaterEqual> ::= <UnAmb> GTE <UnAmb> | <UnAmb> GTE <Great>
+<Less> ::= <Lesser> | <LesserEqual>
+<Lesser> ::= <UnAmb> LT <UnAmb> | <UnAmb> LT <Less>
+<LesserEqual> ::= <UnAmb> LTE <UnAmb> | <UnAmb> LTE <Less>
 <Neq> ::= <Eq> NEQ <UnAmb> | <UnAmb> NEQ <UnAmb>
 <Eq> ::= <UnAmb> EQ <Eq> | <UnAmb> EQ <UnAmb>
 <Div> ::= <Mul> DIV <UnAmb> | <UnAmb> DIV <UnAmb>
@@ -43,10 +42,10 @@
 <Shift> ::= <LShift> | <RShift>
 <RShift> ::= <UnAmb> RSHIFT <UnAmb>
 <LShift> ::= <UnAmb> LSHIFT <UnAmb>
-<UOp> ::= <UnSign> | <UnNot> | <PtrDeref> | <FunCall> | <ArrAcc> | <Ptr>
+<UOp> ::= <UnSign> | <UnNot> | <PtrDeref> | <FunCall> | <Ptr>
 <FunCall> ::= <UnAmb> <Calls>
 <Calls> ::= <Call> <Calls> | <Call>
-<Call> ::= LPAREN <CallParams> RPAREN | LPAREN RPAREN
+<Call> ::= LPAREN <Args> RPAREN | LPAREN RPAREN
 <Loc> ::= <ArrAcc> | IDEN | <PtrDeref>
 <PtrDeref> ::= AT <UnAmb>
 <UnNot> ::= NOT <UnNot> | NOT <UnAmb>
@@ -66,8 +65,8 @@
 <Comp> ::= <Arr> | <Ptr>
 <Ptr> ::= HASH <Loc>
 <ArrAcc> ::= <Arr> <VMats> | IDEN <VMats> | LPAREN <Exp> RPAREN <VMats>
-<Arr> ::= LBRACE <Elems> RBRACE
-<AtomType> ::= NULL | TBOOL | TCHAR | TU8 | TU16 | TU32 | TU64 | TU128 | TI8 | TI16 | TI32 | TI64 | TI128 | TF16 | TF32 | TF64 | TF128
+<Arr> ::= LBRACE <Args> RBRACE
+<AtomType> ::= NULL | TBOOL | TC8 | TU8 | TU16 | TU32 | TU64 | TU128 | TI8 | TI16 | TI32 | TI64 | TI128 | TF16 | TF32 | TF64 | TF128
 <Atom> ::= NULL | <Bool> | <Char> | <Number>
 <Bool> ::= TRUE | FALSE
 <Char> ::= CHAR
