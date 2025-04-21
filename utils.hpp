@@ -124,38 +124,7 @@ namespace types {
             return UNKNOWN;
         };
 
-        bool operator==(const Type& other) const {
-            if(this->name() == other.name()) {
-                switch(other.name()) {
-                    case ATOM: {
-                        auto mptr = dynamic_cast<AtomicType*>(const_cast<Type*>(this));
-                        auto optr = dynamic_cast<AtomicType*>(const_cast<Type*>(&other));
-                        return (*mptr) == (*optr);
-                    }
-                    case PTR: {
-                        auto mptr = dynamic_cast<PointerType*>(const_cast<Type*>(this));
-                        auto optr = dynamic_cast<PointerType*>(const_cast<Type*>(&other));
-                        return (*mptr) == (*optr);
-                    }
-                    case FN: {
-                        auto mptr = dynamic_cast<FunctionType*>(const_cast<Type*>(this));
-                        auto optr = dynamic_cast<FunctionType*>(const_cast<Type*>(&other));
-                        return (*mptr) == (*optr);
-                    }
-                    case ARR: {
-                        auto mptr = dynamic_cast<ArrayType*>(const_cast<Type*>(this));
-                        auto optr = dynamic_cast<ArrayType*>(const_cast<Type*>(&other));
-                        return (*mptr) == (*optr);
-                    }
-                    case ARRD: {
-                        auto mptr = dynamic_cast<ArrayDeclType*>(const_cast<Type*>(this));
-                        auto optr = dynamic_cast<ArrayDeclType*>(const_cast<Type*>(&other));
-                        return (*mptr) == (*optr);
-                    }
-                }
-            }
-            return false;
-        }
+        bool operator==(const Type& other) const;
     };
 
     Type gtc(Type& other); // global type copy
@@ -446,6 +415,10 @@ namespace types {
         }
 
         bool operator==(const PointerDeclType& other) const {
+            if(this->underlyingType->name() == ATOM) {
+
+            }
+            else if(other.name() == ATOM)
             return *(this->underlyingType) == *(other.underlyingType);
         }
     };

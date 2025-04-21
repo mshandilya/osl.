@@ -89,6 +89,47 @@ int numChar(int val) {
     return c;
 }
 
+bool types::Type::operator==(const Type& other) const {
+    if(this->name() == other.name()) {
+        switch(other.name()) {
+            case ATOM: {
+                auto mptr = dynamic_cast<AtomicType*>(const_cast<Type*>(this));
+                auto optr = dynamic_cast<AtomicType*>(const_cast<Type*>(&other));
+                return (*mptr) == (*optr);
+            }
+            case PTR: {
+                auto mptr = dynamic_cast<PointerType*>(const_cast<Type*>(this));
+                auto optr = dynamic_cast<PointerType*>(const_cast<Type*>(&other));
+                return (*mptr) == (*optr);
+            }
+            case FN: {
+                auto mptr = dynamic_cast<FunctionType*>(const_cast<Type*>(this));
+                auto optr = dynamic_cast<FunctionType*>(const_cast<Type*>(&other));
+                return (*mptr) == (*optr);
+            }
+            case ARR: {
+                auto mptr = dynamic_cast<ArrayType*>(const_cast<Type*>(this));
+                auto optr = dynamic_cast<ArrayType*>(const_cast<Type*>(&other));
+                return (*mptr) == (*optr);
+            }
+            case ARRD: {
+                auto mptr = dynamic_cast<ArrayDeclType*>(const_cast<Type*>(this));
+                auto optr = dynamic_cast<ArrayDeclType*>(const_cast<Type*>(&other));
+                return (*mptr) == (*optr);
+            }
+        }
+    }
+    else if(this->name() == ATOM) {
+        auto mptr = dynamic_cast<AtomicType*>(const_cast<Type*>(this));
+        return mptr->atomicName() == ANY;
+    }
+    else if(other.name() == ATOM) {
+        auto optr = dynamic_cast<AtomicType*>(const_cast<Type*>(&other));
+        return optr->atomicName() == ANY;
+    }
+    return false;
+}
+
 types::Type types::gtc(types::Type& other) {
     switch(other.name()) {
         case UNKNOWN:

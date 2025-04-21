@@ -1,6 +1,6 @@
 #include "ast.hpp"
 
-#define LOG(x) //std::cout<<x<<std::endl;
+#define LOG(x) std::cout<<x<<std::endl;
 
 // void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast){
 //     LOG("inside viztree")
@@ -768,6 +768,7 @@ std::unique_ptr<ast::ASTNode> ast::convertBinaryOpHelper(int node, parser::parse
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertChain(int node, parser::parseTree &tree){
+    LOG("about to throw error")
     throw std::logic_error("Chaining isn't implemented yet");
     /*LOG("inside chain")
     std::vector<std::unique_ptr<ASTNode>> terms;
@@ -1066,6 +1067,7 @@ std::unique_ptr<ast::ASTNode> ast::convertCond(int node, parser::parseTree &tree
 }
 
 std::unique_ptr<ast::ASTNode> ast::convertLoop(int node, parser::parseTree &tree){
+    LOG("inside convert loop")
     std::unique_ptr<ASTNode> cond,body;
     for(int nNode: tree.adj[node]){
         if(tree.id[nNode] == "<Val>"){

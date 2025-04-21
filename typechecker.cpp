@@ -116,28 +116,25 @@ std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckReturn(std::unique
     auto child = typecheckNext(std::move(node->val));
     
     // child's type must be that of the function's return type
-    
-    if(lc->resultingType->name() == types::ATOM) {
-        auto lcat = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
-        if(lcat->atomicName() != types::BOOL or lcat->atomicName() != types::ANY) {
-            std::cout << "code.osl: \033[31mTypeError\033[0m: Condition to an if statement must resolve to a `bool` type." << std::endl;
-            exit(0);
-        }
-    }
-    else {
-        std::cout << "code.osl: \033[31mTypeError\033[0m: Condition to an if statement must resolve to a `bool` type." << std::endl;
+    if(expectedReturnType != child->resultingType) {
+        std::cout << "code.osl: \033[31mTypeError\033[0m: Return type of the function was expected to be something else." << std::endl;
         exit(0);
     }
-    auto mc = typecheckNext(std::move(node->thenBody));
-    std::unique_ptr<codetree::CodeTreeNode> rc;
-    if(node->elseBody != nullptr)
-        return std::make_unique<codetree::TernaryCTN>(codetree::COND_CTN, std::move(lc), std::move(mc), typecheckNext(std::move(node->elseBody)));
-    else
-        return std::make_unique<codetree::BinaryCTN>(codetree::PCOND_CTN, std::move(lc), std::move(mc));
+
+    return std::make_unique<codetree::UnaryCTN>(codetree::RET_CTN, std::move(child));
 }
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLog(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
+    auto node = dynamic_cast<ast::Return*>(root.get());
+    auto child = typecheckNext(std::move(node->val));
+    
+    // child's type must be that of the function's return type
+    if(expectedReturnType != child->resultingType) {
+        std::cout << "code.osl: \033[31mTypeError\033[0m: Return type of the function was expected to be something else." << std::endl;
+        exit(0);
+    }
 
+    return std::make_unique<codetree::UnaryCTN>(codetree::RET_CTN, std::move(child));
 }
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetFun(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
