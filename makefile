@@ -6,7 +6,6 @@ CPFLAGS = -std=c++20
 BIN_DIR = bin
 COSL_TARGET = $(BIN_DIR)/cosl
 COSL_SRCS = cosl.cpp lexer.cpp parser.cpp utils.cpp ast.cpp resolver.cpp
-# later add hmap and rtrim srcs too!
 
 ROSL_TARGET = $(BIN_DIR)/rosl
 ROSL_SRCS = rosl.c
@@ -33,12 +32,21 @@ $(COSL_TARGET): $(COSL_SRCS) | $(BIN_DIR)
 $(ROSL_TARGET): $(ROSL_SRCS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $(ROSL_TARGET) $(ROSL_SRCS)
 
-# added timeout of 5s if the test doesn't
+# added timeout of 10s if the test doesn't
 test: $(COSL_TARGET)
 	@echo "Running tests..."
 	@find ./unitTests -type f -name "*.osl" | while read -r testfile; do \
+		echo ""; \
 		echo "Running $$testfile..."; \
-		timeout 5 ./$(COSL_TARGET) "$$testfile" || echo "Test $$testfile timed out."; \
+		timeout 10 ./$(COSL_TARGET) "$$testfile" > actual_output.txt || { \
+			echo "\033[31mTest $$testfile timed out.\033[0m"; \
+			continue; \
+		}; \
+		if diff actual_output.txt expected_output.txt > /dev/null; then \
+			echo "\033[32mTest $$testfile passed.\033[0m"; \
+		else \
+			echo "\033[31mTest $$testfile failed.\033[0m"; \
+		fi; \
 	done
 
 clean:
