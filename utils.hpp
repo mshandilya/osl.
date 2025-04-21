@@ -13,7 +13,7 @@
 #include<stack>
 #include<memory>
 
-#define LOG(x) std::cout<<x<<std::endl;
+#define LOG(x) // std::cout<<x<<std::endl;
 
 class Token {
     private:
@@ -471,8 +471,8 @@ namespace types {
         bool operator==(const FunctionDeclType& other) const {
             if((*returnType) == (*(other.returnType)) and paramTypes.size() == other.paramTypes.size()) {
                 for(size_t i = 0; i < paramTypes.size(); i++) {
-                    if(!((*(paramTypes[i])) == (*(other.paramTypes[i]))))
-                        return false;
+                    if((*(paramTypes[i])) == (*(other.paramTypes[i]))){}
+                    else {return false;}
                 }
                 return true;
             }
@@ -500,10 +500,8 @@ namespace types {
             for(auto& param : other.paramTypes) {
                 LOG("param type to be copied")
                 LOG("# param type: ")
-                if(param != nullptr)
-                    LOG(param->name())
-                else
-                    LOG("lol: nullptr as a type?")
+                if(param != nullptr) {LOG(param->name())}
+                else {LOG("lol: nullptr as a type?")}
                 this->paramTypes.push_back(gtc(*(param)));
                 LOG("param copied")
             }
@@ -516,8 +514,8 @@ namespace types {
         bool operator==(const FunctionType& other) const {
             if((*returnType) == (*(other.returnType)) and paramTypes.size() == other.paramTypes.size()) {
                 for(size_t i = 0; i < paramTypes.size(); i++) {
-                    if(!((*(paramTypes[i])) == (*(other.paramTypes[i]))))
-                        return false;
+                    if((*(paramTypes[i])) == (*(other.paramTypes[i]))) {}
+                    else {return false;}
                 }
                 return true;
             }

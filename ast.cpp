@@ -1,6 +1,6 @@
 #include "ast.hpp"
 
-#define LOG(x) std::cout<<x<<std::endl;
+#define LOG(x) // std::cout<<x<<std::endl;
 
 // void ast::vizTree(const std::unique_ptr<ASTNode>& node, const std::string &prefix, bool isLast){
 //     LOG("inside viztree")

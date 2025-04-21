@@ -4,7 +4,7 @@
 #include "utils.hpp"
 #include "ast.hpp"
 
-#define LOG(x) std::cout<<x<<std::endl;
+#define LOG(x) // std::cout<<x<<std::endl;
 
 class Resolver {
     int currentId, currentScope;
