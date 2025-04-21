@@ -443,21 +443,25 @@ std::unique_ptr<ast::ASTNode> ast::convertFunCall(int node, parser::parseTree &t
     auto ptr = std::make_unique<FunctionCall>(std::move(iden));
     int curNode = cNode;
     while(tree.adj[curNode].size() > 1){
+        if(tree.adj[tree.adj[curNode][0]].size() > 2){
+            int aNode = tree.adj[tree.adj[curNode][0]][1];
+            while(tree.adj[aNode].size() > 1){
+                ptr->addParam(convertVal(tree.adj[aNode][0], tree));
+                aNode = tree.adj[aNode][2];
+            }
+            ptr->addParam(convertVal(tree.adj[aNode][0], tree));   
+        }
+        ptr = std::make_unique<FunctionCall>(std::move(ptr));
+        curNode = tree.adj[curNode][1];
+    }
+    if(tree.adj[tree.adj[curNode][0]].size() > 2){
         int aNode = tree.adj[tree.adj[curNode][0]][1];
         while(tree.adj[aNode].size() > 1){
             ptr->addParam(convertVal(tree.adj[aNode][0], tree));
             aNode = tree.adj[aNode][2];
         }
         ptr->addParam(convertVal(tree.adj[aNode][0], tree));
-        ptr = std::make_unique<FunctionCall>(std::move(ptr));
-        curNode = tree.adj[curNode][1];
     }
-    int aNode = tree.adj[tree.adj[curNode][0]][1];
-    while(tree.adj[aNode].size() > 1){
-        ptr->addParam(convertVal(tree.adj[aNode][0], tree));
-        aNode = tree.adj[aNode][2];
-    }
-    ptr->addParam(convertVal(tree.adj[aNode][0], tree));
     return ptr;
 }
 
