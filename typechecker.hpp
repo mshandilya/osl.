@@ -119,6 +119,11 @@ namespace codetree {
         std::unique_ptr<types::AtomicType> val;
     };
 
+    class IdenCTN : public CodeTreeNode {
+    public:
+        ValueType val_t = IDEN_CTN;
+    };
+
 }
 
 std::unique_ptr<types::Type> defaultRetType = nullptr;

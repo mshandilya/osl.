@@ -125,7 +125,7 @@ std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckReturn(std::unique
 }
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLog(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-    auto node = dynamic_cast<ast::Return*>(root.get());
+    auto node = dynamic_cast<ast::Log*>(root.get());
     auto child = typecheckNext(std::move(node->val));
     
     // child's type must be that of the function's return type
@@ -138,7 +138,16 @@ std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLog(std::unique_pt
 }
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetFun(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-    
+    // make the function object first.
+    // then bind it to the id of the identifier.
+    // function object is essentially just the params (their types, what they bind to, and finally the body)
+    auto node = dynamic_cast<ast::LetFun*>(root.get());
+
+    std::vector<codetree::CodeTreeNode> children;
+    for(auto& param : node->params) {
+        // param.second already has the type associated with it
+    }
+
 }
 
 std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetArr(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
