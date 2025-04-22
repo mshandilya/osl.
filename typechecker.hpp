@@ -1,14 +1,14 @@
 #ifndef TYPEC_H
 #define TYPEC_H
 
-#include "ast.hpp"
 #include "utils.hpp"
+#include "ast.hpp"
 
 namespace codetree {
 
     enum UnaryOperation {
-        RET_CTN,    //
-        LOG_CTN,    //
+        RET_CTN,    //      // Done
+        LOG_CTN,    //      // Done
         GET_CTN,    //
         ANEG_CTN,   //
         BNOT_CTN,   //
@@ -18,43 +18,46 @@ namespace codetree {
     };
 
     enum BinaryOperation {
-        LOOP_CTN,   //
-        PCOND_CTN,  //
+        LOOP_CTN,   //      // Done
+        PCOND_CTN,  //      // Done
         SET_CTN,    //
         BIND_CTN,   //
-        AADD_CTN,   //
-        ASUB_CTN,   //
-        AMUL_CTN,   //
-        ADIV_CTN,   //
-        AMOD_CTN,   //
-        APOW_CTN,   //
-        BOR_CTN,    //
-        BAND_CTN,   //
-        BXOR_CTN,   //
-        BXAND_CTN,  //
-        BLSHFT_CTN, //
-        BRSHFT_CTN, //
-        LOR_CTN,    //
-        LAND_CTN,   //
-        LXOR_CTN,   //
-        LXAND_CTN,  //
-        RNEQ_CTN,   //
-        REQ_CTN,    //
-        RGT_CTN,    //
-        RLT_CTN,    //
-        RGEQ_CTN,   //
-        RLEQ_CTN,   //
-        ARRGET_CTN, //
+        APAD_CTN,   //
+        LPAD_CTN,   //      
+        AADD_CTN,   //      // Kris
+        ASUB_CTN,   //      // Kris
+        AMUL_CTN,   //      // Kris
+        ADIV_CTN,   //      // Kris
+        AMOD_CTN,   //      // Kris
+        APOW_CTN,   //      // Kris
+        BOR_CTN,    //      // Kris
+        BAND_CTN,   //      // Kris
+        BXOR_CTN,   //      // Kris
+        BXAND_CTN,  //      // Kris
+        BLSHFT_CTN, //      // Kris
+        BRSHFT_CTN, //      // Kris
+        LOR_CTN,    //      // Kris
+        LAND_CTN,   //      // Kris
+        LXOR_CTN,   //      // Kris
+        LXAND_CTN,  //      // Kris
+        RNEQ_CTN,   //      // Kris
+        REQ_CTN,    //      // Kris
+        RGT_CTN,    //      // Kris
+        RLT_CTN,    //      // Kris
+        RGEQ_CTN,   //      // Kris
+        RLEQ_CTN,   //      // Kris
+        ARRGET_CTN, //      // Kris
     };
 
     enum TernaryOperation {
-        COND_CTN,   //
+        COND_CTN,   //      // Done
     };
 
     enum NnaryOperation {
-        PROG_CTN,   //
-        BLOCK_CTN,  //
-        MKFUN_CTN,  //
+        PROG_CTN,   //      // Done
+        BLOCK_CTN,  //      // Done
+        MKFUN_CTN,  //      // Done
+        DMKARR_CTN, //
         MKARR_CTN,  //
         CALL_CTN,   //
     };
@@ -122,43 +125,52 @@ namespace codetree {
     class IdenCTN : public CodeTreeNode {
     public:
         ValueType val_t = IDEN_CTN;
+        unsigned int id, scopeId;
+        ast::Access ac;
+
+        IdenCTN(unsigned int id, unsigned int scopeId, ast::Access ac) : id(id), scopeId(scopeId), ac(ac) {}
     };
 
 }
 
-std::unique_ptr<types::Type> defaultRetType = nullptr;
+namespace typecheck {
 
-class TypeChecker {
-public:
-    std::unique_ptr<codetree::CodeTreeNode> root;
+    std::unique_ptr<types::Type> defaultRetType = nullptr;
+    std::unique_ptr<types::Null> nonRetType = std::make_unique<Null>();
 
-    TypeChecker(std::unique_ptr<ast::ASTNode>&& root) {
-        this->root = typecheckNext(std::move(root));
-    }
+    class TypeChecker {
+    public:
+        std::unique_ptr<codetree::CodeTreeNode> root;
 
-    std::unique_ptr<codetree::CodeTreeNode> typecheckNext(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckProg(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckBlock(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckLoop(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckCond(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckReturn(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckLog(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckLetFun(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckLetArr(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckLetVar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckLetConst(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckAssign(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckBinOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckUnOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckFunCall(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckArray(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckNum(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckChar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckBool(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckNull(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckIden(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-    std::unique_ptr<codetree::CodeTreeNode> typecheckDeclType(std::unique_ptr<types::ArrayDeclType>& node); // can never have declarations
-    std::unique_ptr<codetree::CodeTreeNode> typecheckDeclType(std::unique_ptr<types::Type>& node); // can never have declarations
-};
+        TypeChecker(std::unique_ptr<ast::ASTNode>&& root) {
+            this->root = typecheckNext(std::move(root));
+        }
+
+        std::unique_ptr<codetree::CodeTreeNode> typecheckNext(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckProg(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckBlock(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckLoop(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckCond(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckReturn(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckLog(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckLetFun(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::vector<std::unique_ptr<codetree::CodeTreeNode>> typecheckLetArr(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckLetVar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckLetConst(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckAssign(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckBinOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckUnOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckFunCall(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckArray(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckNum(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckChar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckBool(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckNull(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckIden(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType, ast::Access ac);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckDeclType(std::unique_ptr<types::ArrayDeclType>&& node); // can never have declarations
+        std::unique_ptr<codetree::CodeTreeNode> typecheckDeclType(std::unique_ptr<types::Type>&& node); // can never have declarations
+    };
+
+}
 
 #endif
