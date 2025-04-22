@@ -13,7 +13,7 @@ def i32 find_pythagorean_triplet()
             if a < b
             {
                 c := (1000 - a) - b;
-                if (b < c) & ((a * a) + (b * b) = (c * c))
+                if (b < c) & (((a * a) + (b * b)) = (c * c))
                 {
                     return a * b * c;
                 }

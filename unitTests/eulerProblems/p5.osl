@@ -11,7 +11,7 @@ def i32 gcd(i32 a, i32 b)
 }
 def i32 lcm(i32 a, i32 b) 
 {
-    return (a * b) / gcd(a, b);
+    return (a * b) / (gcd(a, b));
 }
 def i32 F(i32 n, i32 i) {
     while i > 1 

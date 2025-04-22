@@ -20,7 +20,7 @@ while i >= 1
     while j >= 1
     {
         prod := i * j;
-        if (prod > maxPal) & isPal(prod)
+        if (prod > maxPal) & (isPal(prod))
         {
             maxPal := prod;
         }
