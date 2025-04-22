@@ -768,9 +768,14 @@ int execute(uint8_t *code, size_t codeSize) {
             }
             case CALL: {
                 callScope++;
-                if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in CALL\n"); exit(1); }
-                int16_t addr = code[pc+1] | (code[pc+2] << 8);
-                Value ret; ret.type = VAL_INT; ret.i = pc + 3;
+                if (pc + 4 >= codeSize) { fprintf(stderr, "Unexpected end in CALL\n"); exit(1); }
+                int32_t addr = 0;
+                for (int j = 0; j < 4; j++) {
+                    addr |= ((int32_t)code[pc+1+j]) << (8*j);
+                }
+                Value ret; ret.type = VAL_INT;
+                ret.v = malloc(sizeof(int64_t));
+                *(int64_t*)ret.v = pc + 5;
                 PUSH(ret);
                 pc = addr;
                 break;
@@ -780,9 +785,9 @@ int execute(uint8_t *code, size_t codeSize) {
                 if (ret.type != VAL_INT) { fprintf(stderr, "Invalid return address type\n"); exit(1); }
                 while(sNodeTail > 0 && sNodeStack[--sNodeTail].scopeId == callScope) {
                     vals.tails[sNodeStack[sNodeTail].id] = vals.tails[sNodeStack[sNodeTail].id]->prev;
-                };
+                }
                 callScope--;
-                pc = ret.i;
+                pc = *(int64_t*)ret.v;
                 break;
             }
 
