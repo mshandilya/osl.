@@ -1,7 +1,9 @@
 #include "resolver.hpp"
 
+int count = 0;
+
 void Resolver::resolveNext(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve next")
+    RLOG("inside resolve next")
     LOG(node->type())
     switch(node->type()) {
         case ast::PROG_AST:
@@ -46,7 +48,7 @@ void Resolver::resolveNext(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std
 }
 
 void Resolver::resolveProg(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve prog")
+    RLOG("inside resolve prog")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: A block or program cannot be a declaration.");
     }
@@ -57,7 +59,7 @@ void Resolver::resolveProg(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std
 }
 
 void Resolver::resolveBlock(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve block")
+    RLOG("inside resolve block")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: A block or program cannot be a declaration.");
     }
@@ -68,6 +70,7 @@ void Resolver::resolveBlock(std::unique_ptr<ast::ASTNode>& node, bool isDecl, st
         resolveNext(child);
     }
     while(!identifiers.empty() and ((identifiers.back()))->scopeId == currentScope) {
+        identifierIds[identifiers.back()->idenName].pop_back();
         identifiers.pop_back();
     }
     // scope retreats
@@ -75,7 +78,7 @@ void Resolver::resolveBlock(std::unique_ptr<ast::ASTNode>& node, bool isDecl, st
 }
 
 void Resolver::resolveLoop(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve if")
+    RLOG("inside resolve if")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside an if statement.");
     }
@@ -86,6 +89,7 @@ void Resolver::resolveLoop(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std
     currentScope++;
     resolveNext(nnode->body);
     while(!identifiers.empty() and ((identifiers.back()))->scopeId == currentScope) {
+        identifierIds[identifiers.back()->idenName].pop_back();
         identifiers.pop_back();
     }
     // scope retreats
@@ -93,7 +97,7 @@ void Resolver::resolveLoop(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std
 }
 
 void Resolver::resolveCond(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve if")
+    RLOG("inside resolve if")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside an if statement.");
     }
@@ -104,12 +108,14 @@ void Resolver::resolveCond(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std
     currentScope++;
     resolveNext(nnode->thenBody);
     while(!identifiers.empty() and ((identifiers.back()))->scopeId == currentScope) {
+        identifierIds[identifiers.back()->idenName].pop_back();
         identifiers.pop_back();
     }
     if(nnode->elseBody) {
         // else body is present
         resolveNext(nnode->elseBody);
         while(!identifiers.empty() and ((identifiers.back()))->scopeId == currentScope) {
+            identifierIds[identifiers.back()->idenName].pop_back();
             identifiers.pop_back();
         }
     }
@@ -118,7 +124,7 @@ void Resolver::resolveCond(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std
 }
 
 void Resolver::resolveReturn(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve return")
+    RLOG("inside resolve return")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside a return statement.");
     }
@@ -127,7 +133,7 @@ void Resolver::resolveReturn(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
 }
 
 void Resolver::resolveLog(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve log")
+    RLOG("inside resolve log")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside a log statement.");
     }
@@ -136,7 +142,7 @@ void Resolver::resolveLog(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std:
 }
 
 void Resolver::resolveLetFun(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve let fun")
+    RLOG("inside resolve let fun")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Function Declaration may not be inside another declaration.");
     }
@@ -157,11 +163,14 @@ void Resolver::resolveLetFun(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
     LOG("about to resolve the body")
     currentScope++;
     for(auto& param : nnode->params) {
+        RLOG("param passed")
         resolveNext(param.second, true, types::gtc(*(param.first)), ast::VAR);
     }
     // no declaration in body
     resolveNext(nnode->body);
     while(!identifiers.empty() and ((identifiers.back()))->scopeId == currentScope) {
+        RLOG("param popped")
+        identifierIds[identifiers.back()->idenName].pop_back();
         identifiers.pop_back();
     }
     // scope retreats
@@ -169,6 +178,7 @@ void Resolver::resolveLetFun(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
 }
 
 void Resolver::resolveLetArr(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
+    RLOG("inside resolve let arr")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Function Declaration may not be inside another declaration.");
     }
@@ -182,7 +192,7 @@ void Resolver::resolveLetArr(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
 }
 
 void Resolver::resolveLetVar(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve let")
+    RLOG("inside resolve let var")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside another declaration.");
     }
@@ -196,6 +206,7 @@ void Resolver::resolveLetVar(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
 }
 
 void Resolver::resolveLetConst(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
+    RLOG("inside resolve let const")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Declaration may not be inside another declaration.");
     }
@@ -209,7 +220,7 @@ void Resolver::resolveLetConst(std::unique_ptr<ast::ASTNode>& node, bool isDecl,
 }
 
 void Resolver::resolveAssign(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve assign")
+    RLOG("inside resolve assign")
     auto nnode = dynamic_cast<ast::Assign*>(node.get());
     if(isDecl) {
         auto dt2 = types::gtc(*dt);
@@ -223,7 +234,7 @@ void Resolver::resolveAssign(std::unique_ptr<ast::ASTNode>& node, bool isDecl, s
 }
 
 void Resolver::resolveBinOp(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve bin op")
+    RLOG("inside resolve bin op")
     auto nnode = dynamic_cast<ast::BinaryOperator*>(node.get());
     if(isDecl) {
         auto dt2 = types::gtc(*dt);
@@ -237,13 +248,13 @@ void Resolver::resolveBinOp(std::unique_ptr<ast::ASTNode>& node, bool isDecl, st
 }
 
 void Resolver::resolveUnOp(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve un op")
+    RLOG("inside resolve un op")
     auto nnode = dynamic_cast<ast::UnaryOperator*>(node.get());
     resolveNext(nnode->child, isDecl, std::move(dt), ac);
 }
 
 void Resolver::resolveFunCall(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve fun call")
+    RLOG("inside resolve fun call")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Function Calls may not be inside a declaration.");
     }
@@ -254,7 +265,7 @@ void Resolver::resolveFunCall(std::unique_ptr<ast::ASTNode>& node, bool isDecl, 
 }
 
 void Resolver::resolveArray(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve array")
+    RLOG("inside resolve array")
     if(isDecl) {
         throw std::logic_error("Illegal Declaration: Array Value cannot be inside a declared.");
     }
@@ -264,11 +275,11 @@ void Resolver::resolveArray(std::unique_ptr<ast::ASTNode>& node, bool isDecl, st
 }
 
 void Resolver::resolveIden(std::unique_ptr<ast::ASTNode>& node, bool isDecl, std::unique_ptr<types::Type>&& dt, ast::Access ac) {
-    LOG("inside resolve iden")
+    RLOG("inside resolve iden")
     auto nnode = dynamic_cast<ast::Identifier*>(node.get());
     auto iden = identifierIds.find(nnode->idenName);
     if(isDecl) {
-        if(iden != identifierIds.end() and ((iden->second.back()))->scopeId == currentScope) {
+        if(iden != identifierIds.end() and !(iden->second.empty()) and ((iden->second.back()))->scopeId == currentScope) {
             // identifier is present
             if(ac == ast::VAR)
                 std::cout << "code.osl: \033[31mResolutionError\033[0m: Variable `" << nnode->idenName << "` has been declared again in the same scope." << std::endl;

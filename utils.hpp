@@ -14,6 +14,7 @@
 #include<memory>
 
 #define LOG(x) //std::cout<<x<<std::endl;
+#define RLOG(x) //std::cout<<x<<std::endl;
 
 class Token {
     private:
