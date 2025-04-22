@@ -59,6 +59,10 @@ typedef enum {
     SWAP        = 0x12,
     OVER        = 0x13,
 
+    // Identifier manipulation
+    GET_FROM    = 0x15,
+    SET_TO      = 0x16,
+
     // Arithmetic operations
     ADD         = 0x20,
     SUB         = 0x21,
@@ -190,47 +194,10 @@ adjList vals;
 sNode sNodeStack[1<<15];
 
 void initialize() {
-
-}
-
-void set(unsigned int id, ValueType t, void* val) {
-    if(vals.tails[id] == NULL) {
-        vals.heads[id] = (llNode*)malloc(sizeof(llNode));
-        vals.tails[id] = vals.heads[id];
-        vals.tails[id]->next = vals.tails[id]->prev = NULL;
-        vals.tails[id]->type = t;
-        vals.tails[id]->location = val;
-        vals.tails[id]->scopeId = callScope;
-        sNodeStack[sNodeTail++] = (sNode){id, callScope};
-    }
-    else if(vals.tails[id]->scopeId == callScope || vals.tails[id]->scopeId == 0) {
-        vals.tails[id]->type = t;
-        vals.tails[id]->location = val;
-    }
-    else {
-        vals.tails[id]->next = (llNode*)malloc(sizeof(llNode));
-        vals.tails[id]->next->prev = vals.tails[id];
-        vals.tails[id] = vals.tails[id]->next;
-        vals.tails[id]->next = NULL;
-        vals.tails[id]->type = t;
-        vals.tails[id]->location = val;
-        vals.tails[id]->scopeId = callScope;
-        sNodeStack[sNodeTail++] = (sNode){id, callScope};
+    for(unsigned int i = 0; i<(1<<15); i++) {
+        vals.heads[i] = vals.tails[i] = NULL;
     }
 }
-
-void get(unsigned int id) {
-    PUSH(vals.tails[id]->location);
-    PUSH(vals.tails[id]->type);
-}
-
-// to be called before the actual call occurs
-void enhanceScope(unsigned int nRetAddress) {
-    PUSH(currentRetAddress);
-    callScope++;
-    currentRetAddress = nRetAddress;
-}
-
 
 #define STACK_SIZE 4096
 
@@ -249,6 +216,7 @@ int execute(uint8_t *code, size_t codeSize) {
     size_t pc = 0;
     Value stack[STACK_SIZE];
     int top = 0;
+    initialize();
 
     while (pc < codeSize) {
         uint8_t op = code[pc];
@@ -349,6 +317,44 @@ int execute(uint8_t *code, size_t codeSize) {
                 if (top < 2) { fprintf(stderr, "Stack underflow on OVER\n"); exit(1); }
                 PUSH(stack[top-2]);
                 pc += 1;
+                break;
+            }
+
+            // Identifier manipulation
+            case GET_FROM: {
+                unsigned int id = POP().i;
+                Value val = (Value){vals.tails[id]->type, vals.tails[id]->location};
+                PUSH(val);
+                break;
+            }
+            case SET_TO: {
+                unsigned int id = POP().i;
+                Value v = POP();
+                ValueType t = v.type;
+                void* val = v.v;
+                if(vals.tails[id] == NULL) {
+                    vals.heads[id] = (llNode*)malloc(sizeof(llNode));
+                    vals.tails[id] = vals.heads[id];
+                    vals.tails[id]->next = vals.tails[id]->prev = NULL;
+                    vals.tails[id]->type = t;
+                    vals.tails[id]->location = val;
+                    vals.tails[id]->scopeId = callScope;
+                    sNodeStack[sNodeTail++] = (sNode){id, callScope};
+                }
+                else if(vals.tails[id]->scopeId == callScope || vals.tails[id]->scopeId == 0) {
+                    vals.tails[id]->type = t;
+                    vals.tails[id]->location = val;
+                }
+                else {
+                    vals.tails[id]->next = (llNode*)malloc(sizeof(llNode));
+                    vals.tails[id]->next->prev = vals.tails[id];
+                    vals.tails[id] = vals.tails[id]->next;
+                    vals.tails[id]->next = NULL;
+                    vals.tails[id]->type = t;
+                    vals.tails[id]->location = val;
+                    vals.tails[id]->scopeId = callScope;
+                    sNodeStack[sNodeTail++] = (sNode){id, callScope};
+                }
                 break;
             }
 
@@ -537,6 +543,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 break;
             }
             case CALL: {
+                callScope++;
                 if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in CALL\n"); exit(1); }
                 int16_t addr = code[pc+1] | (code[pc+2] << 8);
                 Value ret; ret.type = VAL_INT; ret.i = pc + 3;
@@ -547,6 +554,10 @@ int execute(uint8_t *code, size_t codeSize) {
             case RETURN: {
                 Value ret = POP();
                 if (ret.type != VAL_INT) { fprintf(stderr, "Invalid return address type\n"); exit(1); }
+                while(sNodeTail > 0 && sNodeStack[--sNodeTail].scopeId == callScope) {
+                    vals.tails[sNodeStack[sNodeTail].id] = vals.tails[sNodeStack[sNodeTail].id]->prev;
+                };
+                callScope--;
                 pc = ret.i;
                 break;
             }
