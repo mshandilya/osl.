@@ -47,12 +47,13 @@ size_t gc_threshold = 1024 * 10;  // Threshold (10KB)
 
 typedef enum {
     // Data push instructions
-    PUSH_CHAR       = 0x01,
-    PUSH_SHORT      = 0x02,
-    PUSH_INT        = 0x03,
-    PUSH_LONG       = 0x04,
-    PUSH_FLOAT      = 0x05,
-    PUSH_DOUBLE     = 0x06,
+    PUSH_CHAR   = 0x01,
+    PUSH_SHORT  = 0x02,
+    PUSH_INT    = 0x03,
+    PUSH_LONG   = 0x04,
+    PUSH_FLOAT  = 0x05,
+    PUSH_DOUBLE = 0x06,
+    PUSH_NONE   = 0x07,
 
     // Stack manipulation
     POP             = 0x10,
@@ -107,12 +108,15 @@ typedef enum {
     GET_FIELD       = 0x71,
     SET_FIELD       = 0x72,
 
+    LOG             = 0x90,
+
     // Array Operations
     MAKE_ARRAY      = 0x93,
     ARR_ACC         = 0x94,
     STORE           = 0x95,
     LOAD            = 0x96,
     MAKE_DECL_ARRAY = 0x97,
+    
 } Opcode;
 
 GCObject* gc_alloc(uint8_t field_count) {
@@ -181,12 +185,14 @@ void gc_collect(Value* stack, int top) {
 
 unsigned int callScope = 0, sNodeTail = 0, currentRetAddress = 0;
 
-typedef struct {
+typedef struct llNode llNode;
+
+struct llNode {
     ValueType type;
     unsigned int scopeId;
     void* location;
     llNode *prev, *next;
-} llNode;
+};
 
 typedef struct {
     llNode* heads[1<<15];
@@ -236,15 +242,43 @@ int execute(uint8_t *code, size_t codeSize) {
                 pc += 1;
                 break;
 
+            case LOG: {
+                if (top < 1) { fprintf(stderr, "Stack underflow on LOG\n"); exit(1); }
+                Value v = POP();
+                if (v.type == VAL_INT) {
+                    printf("%lld\n", *(int64_t*)v.v);
+                } else if (v.type == VAL_CHAR) {
+                    printf("%c\n", *(char*)v.v);
+                } else if (v.type == VAL_FLOAT) {
+                    printf("%f\n", *(float*)v.v);
+                }else {
+                    fprintf(stderr, "LOG supports only INT, CHAR, and FLOAT values.\n");
+                    exit(1);
+                }
+                pc += 1;
+                break;
+            }
+
+            case PUSH_NONE: {
+                Value v; v.type = VAL_INT;
+                v.v = malloc(sizeof(int64_t));
+                *(int64_t*)v.v = 0;
+                PUSH(v);
+                pc += 1;
+                break;
+            }
+
             // Data Push Instructions
             case PUSH_CHAR: {
                 if (pc + 1 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_CHAR)\n"); exit(1); }
-                Value v; v.type = VAL_CHAR; v.c = code[pc+1];
+                Value v; v.type = VAL_CHAR;
+                v.v = malloc(sizeof(char));
+                memcpy(v.v, &code[pc+1], sizeof(int64_t));
                 PUSH(v);
                 pc += 2;
                 break;
             }
-            case PUSH_SHORT: {
+            /*case PUSH_SHORT: {
                 if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_SHORT)\n"); exit(1); }
                 Value v; v.type = VAL_SHORT;
                 int16_t s = code[pc+1] | (code[pc+2] << 8);
@@ -252,17 +286,22 @@ int execute(uint8_t *code, size_t codeSize) {
                 PUSH(v);
                 pc += 3;
                 break;
-            }
+            }*/
+            
             case PUSH_INT: {
-                if (pc + 4 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_INT)\n"); exit(1); }
+                if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_INT)\n"); exit(1); }
                 Value v; v.type = VAL_INT;
-                int32_t i = code[pc+1] | (code[pc+2] << 8) | (code[pc+3] << 16) | (code[pc+4] << 24);
-                v.i = i;
+                int64_t l = 0;
+                for (int j = 0; j < 8; j++) {
+                    l |= ((int64_t)code[pc+1+j]) << (8*j);
+                }
+                v.v = malloc(sizeof(int64_t));
+                memcpy(v.v, &l, sizeof(int64_t));
                 PUSH(v);
-                pc += 5;
+                pc += 9;
                 break;
             }
-            case PUSH_LONG: {
+            /*case PUSH_LONG: {
                 if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_LONG)\n"); exit(1); }
                 Value v; v.type = VAL_LONG;
                 int64_t l = 0;
@@ -273,7 +312,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 PUSH(v);
                 pc += 9;
                 break;
-            }
+            }*/
             case PUSH_FLOAT: {
                 if (pc + 4 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_FLOAT)\n"); exit(1); }
                 Value v; v.type = VAL_FLOAT;
@@ -281,12 +320,13 @@ int execute(uint8_t *code, size_t codeSize) {
                                (code[pc+3] << 16) | (code[pc+4] << 24);
                 float f;
                 memcpy(&f, &tmp, sizeof(f));
-                v.f = f;
+                v.v = malloc(sizeof(float));
+                memcpy(v.v, &f, sizeof(float));
                 PUSH(v);
                 pc += 5;
                 break;
             }
-            case PUSH_DOUBLE: {
+            /*case PUSH_DOUBLE: {
                 if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_DOUBLE)\n"); exit(1); }
                 Value v; v.type = VAL_DOUBLE;
                 uint64_t tmp = 0;
@@ -299,19 +339,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 PUSH(v);
                 pc += 9;
                 break;
-            }
-            case PUSH_ID: {
-                if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_ID)\n"); exit(1); }
-                Value v; v.type = VAL_ID;
-                int64_t l = 0;
-                for (int j = 0; j < 8; j++) {
-                    l |= ((int64_t)code[pc+1+j]) << (8*j);
-                }
-                v.l = l;
-                PUSH(v);
-                pc += 9;
-                break;
-            }
+            }*/
 
             // Stack Manipulation
             case POP: {
@@ -342,16 +370,50 @@ int execute(uint8_t *code, size_t codeSize) {
 
             // Identifier manipulation
             case GET_FROM: {
-                unsigned long long int id = POP().l;
-                Value val = (Value){vals.tails[id]->type, vals.tails[id]->location};
+                if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (GET_FROM)\n"); exit(1); }
+                Value v; v.type = VAL_ID;
+                int64_t l = 0;
+                for (int j = 0; j < 8; j++) {
+                    l |= ((int64_t)code[pc+1+j]) << (8*j);
+                }
+                v.v = malloc(sizeof(int64_t));
+                memcpy(v.v, &l, sizeof(int64_t));
+                unsigned int id = *(int64_t*)v.v;
+                //printf("get id: %lld\n",id);
+                Value val; val.type = vals.tails[id]->type;
+                val.v = vals.tails[id]->location;
+                /*if(val.type == VAL_INT){
+                    printf("get val: %lld\n",*(int64_t*)val.v);
+                }else if(val.type == VAL_FLOAT){
+                    printf("get val: %f\n",*(float*)val.v);
+                }else if(val.type == VAL_CHAR){
+                    printf("get val: %c\n",*(char*)val.v);
+                }*/
                 PUSH(val);
+                pc += 9;
                 break;
             }
             case SET_TO: {
-                unsigned long long int id = POP().l;
-                Value v = POP();
-                ValueType t = v.type;
-                void* val = v.v;
+                if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (SET_TO)\n"); exit(1); }
+                Value v; v.type = VAL_ID;
+                int64_t l = 0;
+                for (int j = 0; j < 8; j++) {
+                    l |= ((int64_t)code[pc+1+j]) << (8*j);
+                }
+                v.v = malloc(sizeof(int64_t));
+                memcpy(v.v, &l, sizeof(int64_t));
+                unsigned int id = *(int64_t*)v.v;
+                //printf("set id: %lld\n",id);
+                Value vv = POP();
+                ValueType t = vv.type;
+                void* val = vv.v;
+                /*if(vv.type == VAL_INT){
+                    printf("set val: %lld\n",*(int64_t*)val);
+                }else if(vv.type == VAL_FLOAT){
+                    printf("set val: %f\n",*(float*)val);
+                }else if(vv.type == VAL_CHAR){
+                    printf("set val: %c\n",*(char*)val);
+                }*/
                 if(vals.tails[id] == NULL) {
                     vals.heads[id] = (llNode*)malloc(sizeof(llNode));
                     vals.tails[id] = vals.heads[id];
@@ -375,6 +437,7 @@ int execute(uint8_t *code, size_t codeSize) {
                     vals.tails[id]->scopeId = callScope;
                     sNodeStack[sNodeTail++] = (sNode){id, callScope};
                 }
+                pc += 9;
                 break;
             }
 
@@ -383,9 +446,36 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 if (a.type == VAL_INT && b.type == VAL_INT) {
+                    Value result; result.type = VAL_INT;
+                    result.v = malloc(sizeof(int64_t));
+                    *(int64_t*)result.v = *(int64_t*)a.v + *(int64_t*)b.v;
+                    PUSH(result);
+                } else if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+                    Value result; result.type = VAL_FLOAT;
+                    result.v = malloc(sizeof(float));
+                    *(float*)result.v = 0;
+                    if(a.type == VAL_INT){
+                        *(float*)result.v += (float)*(int32_t*)a.v;
+                    }else{
+                        *(float*)result.v += *(float*)a.v;
+                    }
+                    if(b.type == VAL_INT){
+                        *(float*)result.v += (float)*(int32_t*)b.v;
+                    }else{
+                        *(float*)result.v += *(float*)b.v;
+                    }
+                    PUSH(result);
+                }else if (a.type == VAL_CHAR || b.type == VAL_CHAR) {
+                    Value result; result.type = VAL_CHAR;
+                    result.v = malloc(sizeof(char));
+                    *(char*)result.v = *(char*)a.v + *(char*)b.v;
+                    PUSH(result);
+                }else { fprintf(stderr, "ADD supports only INT, FLOAT, DOUBLE, and CHAR values.\n"); exit(1); }
+
+                /*if (a.type == VAL_INT && b.type == VAL_INT) {
                     Value result; result.type = VAL_INT; result.i = a.i + b.i;
                     PUSH(result);
-                } else { fprintf(stderr, "ADD supports only INT values.\n"); exit(1); }
+                } else { fprintf(stderr, "ADD supports only INT values.\n"); exit(1); }*/
                 pc += 1;
                 break;
             }
@@ -393,9 +483,31 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 if (a.type == VAL_INT && b.type == VAL_INT) {
-                    Value result; result.type = VAL_INT; result.i = a.i - b.i;
+                    Value result; result.type = VAL_INT;
+                    result.v = malloc(sizeof(int64_t));
+                    *(int64_t*)result.v = *(int64_t*)a.v - *(int64_t*)b.v;
                     PUSH(result);
-                } else { fprintf(stderr, "SUB supports only INT values.\n"); exit(1); }
+                } else if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+                    Value result; result.type = VAL_FLOAT;
+                    result.v = malloc(sizeof(float));
+                    *(float*)result.v = 0;
+                    if(a.type == VAL_INT){
+                        *(float*)result.v += (float)*(int32_t*)a.v;
+                    }else{
+                        *(float*)result.v += *(float*)a.v;
+                    }
+                    if(b.type == VAL_INT){
+                        *(float*)result.v -= (float)*(int32_t*)b.v;
+                    }else{
+                        *(float*)result.v -= *(float*)b.v;
+                    }
+                    PUSH(result);
+                }else if (a.type == VAL_CHAR || b.type == VAL_CHAR) {
+                    Value result; result.type = VAL_CHAR;
+                    result.v = malloc(sizeof(char));
+                    *(char*)result.v = *(char*)a.v - *(char*)b.v;
+                    PUSH(result);
+                }else { fprintf(stderr, "SUB supports only INT values.\n"); exit(1); }
                 pc += 1;
                 break;
             }
@@ -403,9 +515,31 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 if (a.type == VAL_INT && b.type == VAL_INT) {
-                    Value result; result.type = VAL_INT; result.i = a.i * b.i;
+                    Value result; result.type = VAL_INT;
+                    result.v = malloc(sizeof(int64_t));
+                    *(int64_t*)result.v = *(int64_t*)a.v * *(int64_t*)b.v;
                     PUSH(result);
-                } else { fprintf(stderr, "MUL supports only INT values.\n"); exit(1); }
+                } else if (a.type == VAL_FLOAT || b.type == VAL_FLOAT) {
+                    Value result; result.type = VAL_FLOAT;
+                    result.v = malloc(sizeof(float));
+                    *(float*)result.v = 0;
+                    if(a.type == VAL_INT){
+                        *(float*)result.v += (float)*(int32_t*)a.v;
+                    }else{
+                        *(float*)result.v += *(float*)a.v;
+                    }
+                    if(b.type == VAL_INT){
+                        *(float*)result.v *= (float)*(int32_t*)b.v;
+                    }else{
+                        *(float*)result.v *= *(float*)b.v;
+                    }
+                    PUSH(result);
+                }else if (a.type == VAL_CHAR || b.type == VAL_CHAR) {
+                    Value result; result.type = VAL_CHAR;
+                    result.v = malloc(sizeof(char));
+                    *(char*)result.v = *(char*)a.v * *(char*)b.v;
+                    PUSH(result);
+                }else { fprintf(stderr, "MUL supports only INT values.\n"); exit(1); }
                 pc += 1;
                 break;
             }
@@ -413,10 +547,32 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 if (a.type == VAL_INT && b.type == VAL_INT) {
-                    if (b.i == 0) { fprintf(stderr, "Division by zero\n"); exit(1); }
-                    Value result; result.type = VAL_INT; result.i = a.i / b.i;
+                    Value result; result.type = VAL_INT;
+                    result.v = malloc(sizeof(int64_t));
+                    *(int64_t*)result.v = *(int64_t*)a.v / *(int64_t*)b.v;
                     PUSH(result);
-                } else { fprintf(stderr, "DIV supports only INT values.\n"); exit(1); }
+                } else if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
+                    Value result; result.type = VAL_FLOAT;
+                    result.v = malloc(sizeof(float));
+                    *(float*)result.v = *(float*)a.v / *(float*)b.v;
+                    PUSH(result);
+                }else if(a.type == VAL_FLOAT || b.type == VAL_FLOAT){
+                    Value result; result.type = VAL_INT;
+                    result.v = malloc(sizeof(int64_t));
+                    *(int64_t*)result.v = 0;
+                    if(a.type == VAL_INT){
+                        *(int64_t*)result.v = *(int64_t*)a.v;
+                    }else{
+                        *(int64_t*)result.v = (int64_t)*(float*)a.v;
+                    }
+                    if(b.type == VAL_INT){
+                        *(int64_t*)result.v /= *(int64_t*)b.v;
+                    }else{
+                        *(int64_t*)result.v /= (int64_t)*(float*)b.v;
+                    }
+                    PUSH(result);
+                }
+                else { fprintf(stderr, "DIV supports only INT values.\n"); exit(1); }
                 pc += 1;
                 break;
             }
@@ -424,17 +580,28 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 if (a.type == VAL_INT && b.type == VAL_INT) {
-                    if (b.i == 0) { fprintf(stderr, "Modulo by zero\n"); exit(1); }
-                    Value result; result.type = VAL_INT; result.i = a.i % b.i;
+                    if(*(int64_t*)b.v == 0) { fprintf(stderr, "Modulo by zero\n"); exit(1); }
+                    Value result; result.type = VAL_INT;
+                    result.v = malloc(sizeof(int64_t));
+                    *(int64_t*)result.v = *(int64_t*)a.v % *(int64_t*)b.v;
                     PUSH(result);
-                } else { fprintf(stderr, "MOD supports only INT values.\n"); exit(1); }
+                }else { fprintf(stderr, "MOD supports only INT values.\n"); exit(1); }
                 pc += 1;
                 break;
             }
             case NEG: {
                 Value a = POP();
-                if (a.type == VAL_INT) { a.i = -a.i; PUSH(a); }
-                else { fprintf(stderr, "NEG supports only INT values.\n"); exit(1); }
+                if(a.type == VAL_INT){
+                    Value result; result.type = VAL_INT;
+                    result.v = malloc(sizeof(int64_t));
+                    *(int64_t*)result.v = -*(int64_t*)a.v;
+                    PUSH(result);
+                }else if(a.type == VAL_FLOAT){
+                    Value result; result.type = VAL_FLOAT;
+                    result.v = malloc(sizeof(float));
+                    *(float*)result.v = -*(float*)a.v;
+                    PUSH(result);
+                }else { fprintf(stderr, "NEG supports only INT and FLOAT values.\n"); exit(1); }
                 pc += 1;
                 break;
             }
@@ -483,7 +650,15 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 Value result; result.type = VAL_INT;
-                result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i == b.i) ? 1 : 0;
+                result.v = malloc(sizeof(int64_t));
+                if (a.type == VAL_INT && b.type == VAL_INT) {
+                    *(int64_t*)result.v = (*(int64_t*)a.v == *(int64_t*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
+                    *(int64_t*)result.v = (*(float*)a.v == *(float*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_CHAR && b.type == VAL_CHAR) {
+                    *(int64_t*)result.v = (*(char*)a.v == *(char*)b.v) ? 1 : 0;
+                } else { fprintf(stderr, "EQ supports only INT, FLOAT, and CHAR values.\n"); exit(1); }
+                //result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i == b.i) ? 1 : 0;
                 PUSH(result);
                 pc += 1;
                 break;
@@ -492,7 +667,15 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 Value result; result.type = VAL_INT;
-                result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i != b.i) ? 1 : 0;
+                result.v = malloc(sizeof(int64_t));
+                if (a.type == VAL_INT && b.type == VAL_INT) {
+                    *(int64_t*)result.v = (*(int64_t*)a.v != *(int64_t*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
+                    *(int64_t*)result.v = (*(float*)a.v != *(float*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_CHAR && b.type == VAL_CHAR) {
+                    *(int64_t*)result.v = (*(char*)a.v != *(char*)b.v) ? 1 : 0;
+                } else { fprintf(stderr, "NEQ supports only INT, FLOAT, and CHAR values.\n"); exit(1); }
+                //result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i != b.i) ? 1 : 0;
                 PUSH(result);
                 pc += 1;
                 break;
@@ -501,7 +684,13 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 Value result; result.type = VAL_INT;
-                result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i < b.i) ? 1 : 0;
+                result.v = malloc(sizeof(int64_t));
+                if (a.type == VAL_INT && b.type == VAL_INT) {
+                    *(int64_t*)result.v = (*(int64_t*)a.v < *(int64_t*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
+                    *(int64_t*)result.v = (*(float*)a.v < *(float*)b.v) ? 1 : 0;
+                } else { fprintf(stderr, "LT supports only INT and FLOAT values.\n"); exit(1); }
+                //result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i < b.i) ? 1 : 0;
                 PUSH(result);
                 pc += 1;
                 break;
@@ -510,7 +699,13 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 Value result; result.type = VAL_INT;
-                result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i > b.i) ? 1 : 0;
+                result.v = malloc(sizeof(int64_t));
+                if (a.type == VAL_INT && b.type == VAL_INT) {
+                    *(int64_t*)result.v = (*(int64_t*)a.v > *(int64_t*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
+                    *(int64_t*)result.v = (*(float*)a.v > *(float*)b.v) ? 1 : 0;
+                } else { fprintf(stderr, "GT supports only INT and FLOAT values.\n"); exit(1); }
+                //result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i > b.i) ? 1 : 0;
                 PUSH(result);
                 pc += 1;
                 break;
@@ -519,7 +714,13 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 Value result; result.type = VAL_INT;
-                result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i <= b.i) ? 1 : 0;
+                result.v = malloc(sizeof(int64_t));
+                if (a.type == VAL_INT && b.type == VAL_INT) {
+                    *(int64_t*)result.v = (*(int64_t*)a.v <= *(int64_t*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
+                    *(int64_t*)result.v = (*(float*)a.v <= *(float*)b.v) ? 1 : 0;
+                } else { fprintf(stderr, "LE supports only INT and FLOAT values.\n"); exit(1); }
+                //result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i <= b.i) ? 1 : 0;
                 PUSH(result);
                 pc += 1;
                 break;
@@ -528,7 +729,13 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value b = POP();
                 Value a = POP();
                 Value result; result.type = VAL_INT;
-                result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i >= b.i) ? 1 : 0;
+                result.v = malloc(sizeof(int64_t));
+                if (a.type == VAL_INT && b.type == VAL_INT) {
+                    *(int64_t*)result.v = (*(int64_t*)a.v >= *(int64_t*)b.v) ? 1 : 0;
+                } else if (a.type == VAL_FLOAT && b.type == VAL_FLOAT) {
+                    *(int64_t*)result.v = (*(float*)a.v >= *(float*)b.v) ? 1 : 0;
+                } else { fprintf(stderr, "GE supports only INT and FLOAT values.\n"); exit(1); }
+                //result.i = (a.type == VAL_INT && b.type == VAL_INT && a.i >= b.i) ? 1 : 0;
                 PUSH(result);
                 pc += 1;
                 break;
@@ -536,18 +743,24 @@ int execute(uint8_t *code, size_t codeSize) {
 
             // Control Flow
             case JUMP: {
-                if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in JUMP\n"); exit(1); }
-                int16_t offset = code[pc+1] | (code[pc+2] << 8);
-                pc += 3;
+                if (pc + 4 >= codeSize) { fprintf(stderr, "Unexpected end in JUMP\n"); exit(1); }
+                int32_t offset = 0;
+                for (int j = 0; j < 4; j++) {
+                    offset |= ((int32_t)code[pc+1+j]) << (8*j);
+                }
+                pc += 5;
                 pc += offset;
                 break;
             }
             case JUMP_IF_ZERO: {
-                if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in JUMP_IF_ZERO\n"); exit(1); }
-                int16_t offset = code[pc+1] | (code[pc+2] << 8);
+                if (pc + 4 >= codeSize) { fprintf(stderr, "Unexpected end in JUMP_IF_ZERO\n"); exit(1); }
+                int32_t offset = 0;
+                for (int j = 0; j < 4; j++) {
+                    offset |= ((int32_t)code[pc+1+j]) << (8*j);
+                }
                 Value cond = POP();
-                pc += 3;
-                if (cond.type == VAL_INT && cond.i == 0) {
+                pc += 5;
+                if (cond.type == VAL_INT && *(int64_t*)cond.v == 0) {
                     pc += offset;
                 }
                 break;
@@ -557,16 +770,21 @@ int execute(uint8_t *code, size_t codeSize) {
                 int16_t offset = code[pc+1] | (code[pc+2] << 8);
                 Value cond = POP();
                 pc += 3;
-                if (cond.type == VAL_INT && cond.i != 0) {
+                if (cond.type == VAL_INT && *(int64_t*)cond.v != 0) {
                     pc += offset;
                 }
                 break;
             }
             case CALL: {
                 callScope++;
-                if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in CALL\n"); exit(1); }
-                int16_t addr = code[pc+1] | (code[pc+2] << 8);
-                Value ret; ret.type = VAL_INT; ret.i = pc + 3;
+                if (pc + 4 >= codeSize) { fprintf(stderr, "Unexpected end in CALL\n"); exit(1); }
+                int32_t addr = 0;
+                for (int j = 0; j < 4; j++) {
+                    addr |= ((int32_t)code[pc+1+j]) << (8*j);
+                }
+                Value ret; ret.type = VAL_INT;
+                ret.v = malloc(sizeof(int64_t));
+                *(int64_t*)ret.v = pc + 5;
                 PUSH(ret);
                 pc = addr;
                 break;
@@ -576,9 +794,9 @@ int execute(uint8_t *code, size_t codeSize) {
                 if (ret.type != VAL_INT) { fprintf(stderr, "Invalid return address type\n"); exit(1); }
                 while(sNodeTail > 0 && sNodeStack[--sNodeTail].scopeId == callScope) {
                     vals.tails[sNodeStack[sNodeTail].id] = vals.tails[sNodeStack[sNodeTail].id]->prev;
-                };
+                }
                 callScope--;
-                pc = ret.i;
+                pc = *(int64_t*)ret.v;
                 break;
             }
 
@@ -599,7 +817,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 pc += 1;
                 break;
             }
-            case I2D: {
+            /*case I2D: {
                 Value a = POP();
                 if (a.type != VAL_INT) { fprintf(stderr, "I2D supports only INT values\n"); exit(1); }
                 Value result; result.type = VAL_DOUBLE; result.d = (double)a.i;
@@ -630,7 +848,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 PUSH(result);
                 pc += 1;
                 break;
-            }
+            }*/
 
             // Heap Object Operations
             case NEW_OBJECT: {
@@ -759,10 +977,10 @@ int execute(uint8_t *code, size_t codeSize) {
         switch (result.type) {
             case VAL_INT:    printf("Result: %d\n", result.i); break;
             case VAL_CHAR:   printf("Result: %c\n", result.c); break;
-            case VAL_SHORT:  printf("Result: %d\n", result.s); break;
-            case VAL_LONG:   printf("Result: %lld\n", (long long)result.l); break;
+            //case VAL_SHORT:  printf("Result: %d\n", result.s); break;
+            //case VAL_LONG:   printf("Result: %lld\n", (long long)result.l); break;
             case VAL_FLOAT:  printf("Result: %f\n", result.f); break;
-            case VAL_DOUBLE: printf("Result: %lf\n", result.d); break;
+            //case VAL_DOUBLE: printf("Result: %lf\n", result.d); break;
             case VAL_OBJ:    printf("Result: [object at %p]\n", (void*)result.obj); break;
             default:         printf("Unknown result type\n"); break;
         }
@@ -770,11 +988,11 @@ int execute(uint8_t *code, size_t codeSize) {
     return 0;
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
     /* This program computes: -( (5 + 3) * 2 / 4 ) to show arithmetic,
        then it allocates a new object with 2 fields, sets field 0 to the arithmetic
        result, and then retrieves field 0. */
-    uint8_t program[] = {
+    /*uint8_t program[] = {
         NEW_OBJECT, 2,            // Allocate new object with 2 fields
         DUP,                      // Duplicate the object pointer.
         // Arithmetic: (5 + 3) * 2 / 4, then NEG -> -4
@@ -792,7 +1010,36 @@ int main(void) {
         GET_FIELD, 0,             // Get field 0 from the object.
         HALT                      // Terminate
     };
-    size_t progSize = sizeof(program) / sizeof(program[0]);
+    size_t progSize = sizeof(program) / sizeof(program[0]);*/
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <program.bin>\n", argv[0]);
+        exit(1);
+    }
+    FILE *file = fopen(argv[1], "rb");
+    if (!file) {
+        fprintf(stderr, "Error: Could not open file %s\n", argv[1]);
+        exit(1);
+    }
+
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    if (fileSize > STACK_SIZE) {
+        fprintf(stderr, "Error: File size exceeds maximum allowed size (%d bytes)\n", STACK_SIZE);
+        fclose(file);
+        exit(1);
+    }
+
+    uint8_t program[fileSize];
+    if (fread(program, 1, fileSize, file) != fileSize) {
+        fprintf(stderr, "Error: Could not read file %s\n", argv[1]);
+        fclose(file);
+        exit(1);
+    }
+    fclose(file);
+
+    size_t progSize = fileSize;
     execute(program, progSize);
     return 0;
 }
