@@ -8,6 +8,7 @@ typedef enum {
     VAL_BOOL,
     VAL_INT,
     VAL_FLOAT,
+    VAL_ARR,
     VAL_ID,
     VAL_OBJ
 } ValueType;
@@ -46,44 +47,44 @@ size_t gc_threshold = 1024 * 10;  // Threshold (10KB)
 
 typedef enum {
     // Data push instructions
-    PUSH_CHAR   = 0x01,
-    PUSH_SHORT  = 0x02,
-    PUSH_INT    = 0x03,
-    PUSH_LONG   = 0x04,
-    PUSH_FLOAT  = 0x05,
-    PUSH_DOUBLE = 0x06,
+    PUSH_CHAR       = 0x01,
+    PUSH_SHORT      = 0x02,
+    PUSH_INT        = 0x03,
+    PUSH_LONG       = 0x04,
+    PUSH_FLOAT      = 0x05,
+    PUSH_DOUBLE     = 0x06,
 
     // Stack manipulation
-    POP         = 0x10,
-    DUP         = 0x11,
-    SWAP        = 0x12,
-    OVER        = 0x13,
+    POP             = 0x10,
+    DUP             = 0x11,
+    SWAP            = 0x12,
+    OVER            = 0x13,
 
     // Identifier manipulation
-    GET_FROM    = 0x15,
-    SET_TO      = 0x16,
+    GET_FROM        = 0x15,
+    SET_TO          = 0x16,
 
     // Arithmetic operations
-    ADD         = 0x20,
-    SUB         = 0x21,
-    MUL         = 0x22,
-    DIV         = 0x23,
-    MOD         = 0x24,
-    NEG         = 0x25,
+    ADD             = 0x20,
+    SUB             = 0x21,
+    MUL             = 0x22,
+    DIV             = 0x23,
+    MOD             = 0x24,
+    NEG             = 0x25,
 
     // Bitwise / Logical operations
-    BITWISE_NOT = 0x30,
-    BITWISE_AND = 0x31,
-    BITWISE_OR  = 0x32,
-    BITWISE_XOR = 0x33,
+    BITWISE_NOT     = 0x30,
+    BITWISE_AND     = 0x31,
+    BITWISE_OR      = 0x32,
+    BITWISE_XOR     = 0x33,
 
     // Comparisons
-    EQ          = 0x40,
-    NEQ         = 0x41,
-    LT          = 0x42,
-    GT          = 0x43,
-    LE          = 0x44,
-    GE          = 0x45,
+    EQ              = 0x40,
+    NEQ             = 0x41,
+    LT              = 0x42,
+    GT              = 0x43,
+    LE              = 0x44,
+    GE              = 0x45,
 
     // Control flow
     JUMP            = 0x50,
@@ -94,17 +95,24 @@ typedef enum {
     HALT            = 0x55,
 
     // Type conversions
-    I2F         = 0x60,
-    F2I         = 0x61,
-    I2D         = 0x62,
-    D2I         = 0x63,
-    F2D         = 0x64,
-    D2F         = 0x65,
+    I2F             = 0x60,
+    F2I             = 0x61,
+    I2D             = 0x62,
+    D2I             = 0x63,
+    F2D             = 0x64,
+    D2F             = 0x65,
 
     // Heap Object Operations
-    NEW_OBJECT  = 0x70,
-    GET_FIELD   = 0x71,
-    SET_FIELD   = 0x72
+    NEW_OBJECT      = 0x70,
+    GET_FIELD       = 0x71,
+    SET_FIELD       = 0x72,
+
+    // Array Operations
+    MAKE_ARRAY      = 0x93,
+    ARR_ACC         = 0x94,
+    STORE           = 0x95,
+    LOAD            = 0x96,
+    MAKE_DECL_ARRAY = 0x97,
 } Opcode;
 
 GCObject* gc_alloc(uint8_t field_count) {
@@ -292,6 +300,18 @@ int execute(uint8_t *code, size_t codeSize) {
                 pc += 9;
                 break;
             }
+            case PUSH_ID: {
+                if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_ID)\n"); exit(1); }
+                Value v; v.type = VAL_ID;
+                int64_t l = 0;
+                for (int j = 0; j < 8; j++) {
+                    l |= ((int64_t)code[pc+1+j]) << (8*j);
+                }
+                v.l = l;
+                PUSH(v);
+                pc += 9;
+                break;
+            }
 
             // Stack Manipulation
             case POP: {
@@ -322,13 +342,13 @@ int execute(uint8_t *code, size_t codeSize) {
 
             // Identifier manipulation
             case GET_FROM: {
-                unsigned int id = POP().i;
+                unsigned long long int id = POP().l;
                 Value val = (Value){vals.tails[id]->type, vals.tails[id]->location};
                 PUSH(val);
                 break;
             }
             case SET_TO: {
-                unsigned int id = POP().i;
+                unsigned long long int id = POP().l;
                 Value v = POP();
                 ValueType t = v.type;
                 void* val = v.v;
@@ -657,6 +677,74 @@ int execute(uint8_t *code, size_t codeSize) {
                 }
                 objVal.obj->fields[field_index] = valueToSet;
                 pc += 2;
+                break;
+            }
+
+            // Array Operations
+            case MAKE_ARRAY: {
+                if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in MAKE_ARRAY\n"); exit(1);}
+                uint16_t nElems = code[pc+1] | (code[pc+2]<<8);
+                Value v;
+                v.type = VAL_ARR;
+                v.v = malloc(nElems*sizeof(void*));
+                for(int i = 0; i < nElems; i++) {
+                    ((Value*)v.v)[i] = POP();
+                }
+                PUSH(v);
+                pc += 3;
+                break;
+            }
+            case ARR_ACC: {
+                Value arr = POP(), ind = POP();
+                if(ind.type != VAL_ARR) { fprintf(stderr, "Unexpected type for array"); exit(1);}
+                if(ind.type != VAL_INT) { fprintf(stderr, "Unexpected type for index"); exit(1);}
+                uint64_t idx = *((uint64_t*)ind.v);
+                PUSH(((Value*)(arr.v))[idx]);
+                pc += 1;
+                break;
+            }
+            case MAKE_DECL_ARRAY: {
+                if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in MAKE_DECL_ARRAY\n"); exit(1);}
+                uint16_t nDims = code[pc+1] | (code[pc+2]<<8);
+                Value v;
+                v.type = VAL_ARR;
+                for(int i = 0; i < nDims; i++) {
+                    Value nd = POP();
+                    if(nd.type != VAL_INT) { fprintf(stderr, "Unexpected type for index"); exit(1);}
+                    v.v = malloc((*(int64_t*)(nd.v))*sizeof(v));
+                    for(int j = 0; j<(*(int64_t*)(nd.v)); j++) {
+                        ((Value*)v.v)[j].type = VAL_ARR;
+                    }
+                }
+                PUSH(v);
+                pc += 3;
+                break;
+            }
+            case LOAD: {
+                Value loc = POP();
+                PUSH(*(Value*)loc.v);
+                break;
+            }
+            case STORE: {
+                Value loc = POP(), val = POP();
+                switch(val.type) {
+                    case VAL_INT:
+                        *(int64_t*)(loc.v) = *(int64_t*)(val.v);
+                        break;
+                    case VAL_FLOAT:
+                        *(float*)(loc.v) = *(float*)(val.v);
+                        break;
+                    case VAL_CHAR:
+                        *(char*)(loc.v) = *(char*)(val.v);
+                        break;
+                    case VAL_BOOL:
+                        *(int64_t*)(loc.v) = *(int64_t*)(val.v);
+                        break;
+                    case VAL_ARR:
+                        *(Value*)(loc.v) = *(Value*)(val.v);
+                        break;
+                }
+                pc += 1;
                 break;
             }
 
