@@ -191,7 +191,7 @@ namespace typecheck {
         auto child = typecheckNext(std::move(node->val));
         
         // child's type must be that of the function's return type
-        if(!(expectedReturnType == child->resultingType)) {
+        if(!(*expectedReturnType == *(child->resultingType))) {
             std::cout << "code.osl: \033[31mTypeError\033[0m: Return type of the function was expected to be something else." << std::endl;
             exit(0);
         }
@@ -434,7 +434,7 @@ namespace typecheck {
                 // only locs may be pointed to
                 if(child->resultingType->name() == types::PTR) {
                     auto ut = types::gtc(*((dynamic_cast<types::PointerType*>(child->resultingType.get()))->underlyingType));
-                    if(ut->name() == types::ATOM and (*dynamic_cast<types::Null*>(ut.get())).atomicName() == types::NULLV)
+                    if(ut->name() == types::ATOM and (*dynamic_cast<types::AtomicType*>(ut.get())).atomicName() == types::NULLV)
                         ut = std::make_unique<types::Type>(types::AnyType());
                     auto ret = std::make_unique<codetree::UnaryCTN>(codetree::PTRAT_CTN, std::move(child));
                     ret->setResultingType(std::move(ut));
@@ -546,6 +546,7 @@ namespace typecheck {
         auto node = dynamic_cast<ast::Identifier*>(root.get());
         auto ret = std::make_unique<codetree::IdenCTN>(node->id, node->scopeId, node->access);
         ret->setResultingType(std::move(node->boundDataType));
+        ret->isLocation = true;
         return ret;
     }
 

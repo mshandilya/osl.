@@ -82,9 +82,9 @@ namespace codetree {
         std::unique_ptr<types::Type> resultingType;
         bool isLocation;
 
-        CodeTreeNode() : resultingType(nullptr) {}
+        CodeTreeNode() : resultingType(nullptr), isLocation(false) {}
 
-        CodeTreeNode(std::unique_ptr<types::Type>&& rt) : resultingType(std::move(rt)) {}
+        CodeTreeNode(std::unique_ptr<types::Type>&& rt) : resultingType(std::move(rt)), isLocation(false) {}
 
         void setResultingType(std::unique_ptr<types::Type>&& rt) {
             resultingType = std::move(rt);
