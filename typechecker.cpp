@@ -342,12 +342,12 @@ namespace typecheck {
                         case types::INT_32:
                         case types::INT_64:
                         case types::INT_128:
-                        case types::UINT:
-                        case types::UINT_8:
-                        case types::UINT_16:
-                        case types::UINT_32:
-                        case types::UINT_64:
-                        case types::UINT_128:
+                        // case types::UINT:
+                        // case types::UINT_8:
+                        // case types::UINT_16:
+                        // case types::UINT_32:
+                        // case types::UINT_64:
+                        // case types::UINT_128:
                         case types::FLOAT:
                         case types::FLOAT_16:
                         case types::FLOAT_32:
@@ -356,6 +356,7 @@ namespace typecheck {
                             auto retType = types::gtc(*(child->resultingType));
                             auto ret = std::make_unique<codetree::UnaryCTN>(codetree::ANEG_CTN, std::move(child));
                             ret->setResultingType(std::move(retType));
+                            return ret;
                             break;
                         }
                         default:
@@ -395,12 +396,14 @@ namespace typecheck {
                             auto retType = types::gtc(*(child->resultingType));
                             auto ret = std::make_unique<codetree::UnaryCTN>(codetree::BNOT_CTN, std::move(child));
                             ret->setResultingType(std::move(retType));
+                            return ret;
                             break;
                         }
                         case types::BOOL: {
                             auto retType = types::gtc(*(child->resultingType));
                             auto ret = std::make_unique<codetree::UnaryCTN>(codetree::LNOT_CTN, std::move(child));
                             ret->setResultingType(std::move(retType));
+                            return ret;
                             break;
                         }
                         default:
