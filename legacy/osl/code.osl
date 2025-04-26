@@ -1,0 +1,483 @@
+// var z := 5;
+// def fact(n){
+//     // var x:= n;
+//     // return x;
+//     // def h(u){
+//     //     var o:= u;
+//     // }
+//     if(n = 0){
+//         return 1;
+//     }
+//     return n*fact(n-1);
+// }
+// log fact(5);
+
+
+// def g(m){
+//     var y:= m;
+//     return y;
+// }
+// log g(4);
+
+// print(fact(10));
+
+// def f(a){
+//     return a+2;
+// }
+// f(2);
+
+
+
+// var x := 10;
+// def f(a)
+// {
+//     log x;
+//     x := a;
+//     var y := x;
+//     def g(y)
+//     {
+//         x := y;
+//         return x;
+//     }
+//     log g(12);
+//     log x;
+//     return x;
+// }
+// log f(5);
+// x;
+
+
+// var x := 5;
+// def f(y)
+// {
+//     return x;
+// }
+
+// def g(z)
+// {
+//     var x := 6;
+//     return f(z);
+// }
+// log(g(10));
+// x := 7;
+// g(10);
+
+// To do: (Fix the error in the following code)
+
+
+// def f1()
+// {
+//     var x := 10;
+//     // return x;
+//     def f2(t)
+//     {
+//         return x*t;
+//     }
+//     return f2;
+// }
+// var msg := f1;
+// msg := msg();
+// log msg(5);
+
+
+// var msg1 := msg;
+// log msg1;
+// log f1();
+
+
+// var msg := f1();
+// log msg();
+
+
+// var x := 5;
+// var y := x;
+// log x;
+// log y;
+
+
+
+// var x := 5;
+// var y := x;
+// var z := y;
+// log x;
+// log y;
+// log z;
+
+
+
+
+// var x := 5;
+
+// def foo(y)
+// {
+//     // x := y;
+//     def bar(z)
+//     {
+//         log x;
+//         // x := z;
+//         // def foobar()
+//         // {
+//         //     x := 20;
+//         //     return x;
+//         // }
+//         // log x;
+//         return x;
+//         // return foobar;
+//     }
+//     log x;
+//     return bar;
+// }
+
+// var f := foo(46);
+// var g := f(12);
+// log g;
+// x := 20;
+// foo(46)(12);
+
+// var arr := [1,2+5,3,4,5];
+// arr[0] := 10;
+// log arr[2+2];
+// log arr[1];
+
+// var b := 1;
+// var arr2 := [[1,2],[3,4],3,4,5];
+// arr2[1][0] := 10;
+// log arr2[1][0];
+
+// var arr6[2][3][4];
+
+
+// var arr7[13];
+
+
+// var arr5 := [3,4,5];
+// arr5[2] := 12;
+// log arr5[2];
+// arr2[b] := 2;
+// log arr2[0][0 + arr[0]];
+
+// var b := 10;
+// var arr3 := [b, b+1, b+2, b+3, b+4];
+
+// var i := 0;
+// while (i < 5)
+// {
+//     log arr3[i];
+//     i := i + 1;
+// }
+
+// var arr7[11][10];
+
+// var i := 0;
+// while (i < 11)
+// {
+//     var j := 0;
+//     while (j < 10)
+//     {
+//         arr7[i][j] := 10*i+j;
+//         j := j + 1;
+//     }
+//     i := i + 1;
+// }
+
+// i := 0;
+// while (i < 11)
+// {
+//     var j := 0;
+//     while (j < 10)
+//     {
+//         log arr7[i][j];
+//         j := j + 1;
+//     }
+//     i := i + 1;
+// }
+
+// log arr7;
+
+// Unique paths leetcode problem
+// var m := 3;
+// var n := 7;
+// var dp[m][n];
+// var i:=0 ;
+// while(i < m)
+// {
+//     var j:=0;
+//     while(j < n)
+//     {
+//         if(i = 0 || j = 0)
+//         {
+//             dp[i][j] := 1;
+//         }
+//         else
+//         {
+//             dp[i][j] := dp[i-1][j] + dp[i][j-1];
+//         }
+//         j := j + 1;
+//     }
+//     i := i + 1;
+// }
+// log dp;
+// dp[m-1][n-1];
+
+// // LONGEST INCREASING SUBSEQUENCE
+// def max(a, b)
+// {
+//     if (a > b)
+//     {
+//         return a;
+//     }
+//     return b;
+// }
+
+// var arr := [10, 9, 2, 5, 3, 7, 101, 18];
+// var n := 8;
+// var dp := [1, 1, 1, 1, 1, 1, 1, 1];
+// var maxL := 1;
+// var i := 0;
+// var j := 0;
+// while (i < n)
+// {
+//     j := 0;
+//     while (j < i)
+//     {
+//         if (arr[i] > arr[j])
+//         {
+//             dp[i] := max(dp[i], dp[j] + 1);
+//         }
+//         j := j + 1;
+//     }
+//     maxL := max(maxL, dp[i]);
+//     i := i + 1;
+// }
+
+// i := 0;
+// while (i < n)
+// {
+//     log dp[i];
+//     i := i + 1;
+// }
+// maxL;
+
+// var s := "Guntas";
+// s[0] := 'g';
+// var i := 0;
+// while (i < 6)
+// {
+//     log s[i];
+//     i := i + 1;
+// }
+
+// def isPal(n, rev, org) {
+//     if (n = 0) return rev = org;
+//     return isPal(n/10, rev*10 + n%10, org);
+// }
+
+// def F(i, j, maxPal) {
+//     if (i < 100) return maxPal;
+//     if (j < 100) return F(i - 1, i - 1, maxPal);
+//     var prod := i * j;
+//     if ((prod > maxPal) && (isPal(prod, 0, prod)))
+//         maxPal := prod;
+//     return F(i, j - 1, maxPal);
+// }
+// F(999, 999, 0);
+
+// def find_nth_prime()
+// {
+//     var limit := 2000000;
+//     var is_prime[limit];
+    
+//     var i := 0;
+//     var j;
+    
+//     while (i < limit) 
+//     {
+//         is_prime[i] := 1;
+//         i := i + 1;
+//     }
+    
+//     is_prime[0] := 0;
+//     is_prime[1] := 0;
+    
+//     i := 2;
+//     while (i * i < limit)
+//     {
+//         if (is_prime[i])
+//         {
+//             j := i * i;
+//             while (j < limit)
+//             {
+//                 is_prime[j] := 0;
+//                 j := j + i;
+//             }       
+//         }
+//         i := i + 1;
+//     }
+    
+//     var sum := 0;
+//     var num := 2;
+//     while (num < limit)
+//     {
+//         if (is_prime[num]) sum := sum + num;
+//         num := num + 1;
+//     }
+//     return sum;   
+// }
+
+// find_nth_prime();
+
+
+// var arr := [1, [2, 3, [4, 5]], 6, 7];
+// var x := arr[1][0] + arr[1][2][1];
+// arr[1][2][x - 7] := 10;
+// log arr[1][2][0];
+
+// var M := 1;
+// var N := 2;
+// var a[M][M + N];
+// var i := 0;
+// var j := 0;
+// while (i < M)
+// {
+//     j := 0;
+//     while (j < M + N)
+//     {
+//         a[i][j] := i + j;
+//         log a[i][j];
+//         j := j + 1;
+//     }
+//     i := i + 1;
+// }
+// log x;
+// log a[M - 1][N - 1];
+
+// var x := 5;
+// var y := x + 10;
+// var z := y + x;
+// var t := 'G';
+// log z;
+// log x < z;
+// log x - y;
+// log 1.5 + 2;
+// log 'a';
+// log 'a' + 1;
+
+// log x;
+// var x := 5;
+// var y := x - 1.5;   // y = 3.5
+// var z := x + 'g';   // z = 'l'
+// var t := 2;         
+// x := x / t;         // x = 2
+// t := y / t;         // t = 1
+
+// log x % t;          // log 0
+// log x;              // log 2
+// log y;              // log 3.5        
+// log z;              // log 'l'
+
+// var x := 1;
+// var y := 1;
+// while x < 10
+// {
+//     if y = 5
+//     {
+//         log y;
+//     }
+//     else
+//     {
+//         log x + 50;
+//     }
+//     y := y + 1;
+//     log x;
+//     x := x + 1;
+// }
+
+// def F(a, b)
+// {
+//     log a - b;
+//     return a % b;
+// }
+// var x := 10;
+// log F(x, x - 7);
+
+// def fact(n)
+// {
+//     if(n = 0)
+//     {
+//         return 1;
+//     }
+//     return n*fact(n-1);
+// }
+// log fact(15);
+
+// def fib(n)
+// {
+//     if (n <= 1)
+//     {
+//         return n;
+//     }
+//     return fib(n - 1) + fib(n - 2);
+// }
+
+// log fib(35);
+
+// var x := 5;
+// def F(a)
+// {
+//     return a;
+// }
+// F(5);
+
+// var x := 5;
+// def f(a)
+// {
+//     if (a > x)
+//     {
+//         return 5;
+//     }
+//     else
+//     {
+//         return 7;
+//     }
+// }
+// log f(10);
+
+// def F()
+// {
+//     return 5;
+// }
+// F();
+
+// var x := 5;
+// def f(a)
+// {
+//     var c := 0;
+//     def g(b)        // g closes over a(id=3), c(id=4)
+//     {
+//         def h(d)    // h closes over b(id=6), g(id=5), c(id=4), a(id=3)
+//         {
+//             return a + b + d + x;
+//         }
+//         return h;
+//     }
+//     return g;
+// }
+// var t := f(10)(5)(3);
+// log t;
+
+def counter()
+{
+    var count := 0;
+    def inc()
+    {
+        count := count + 1;
+        return count;
+    }
+    return inc;
+}
+
+var c1 := counter();
+var c2 := counter();
+log c1();
+log c2();
+log c2();
