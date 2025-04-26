@@ -141,20 +141,22 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
                 closure[-1].append(i)
              
             
-            # print(closure)
+            print(closure)
             do_codegen(body, True, closure)
-            closure.pop()
+            print(closure)
             
             body_pos = len(full_code)
             full_code[entry_point - 4: entry_point] = int(body_pos - entry_point).to_bytes(4, 'little')
             
+            body_needs = closure.pop()
             ctr = 0
             if make_closure:
                 # traverse the closure and PUSH_INT <ID> for each
                 for cl in closure[::-1]:
-                    for i in cl:
+                    for it in cl:
+                        # if i in body_needs:
                         full_code.append(PUSH_INT)
-                        full_code.extend(int(i).to_bytes(8, 'little'))
+                        full_code.extend(int(it).to_bytes(8, 'little'))
                         ctr += 1
                         
             full_code.append(PUSH_INT)
@@ -219,7 +221,8 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             full_code.extend(int(F.fn.id).to_bytes(8, 'little')) # call with ID
             for _ in range(ctr):
                 full_code.append(CALL)
-            
+            if make_closure:
+                closure[-1].append(F.fn.id)
             # full_code[i_pos - 8 : i_pos] = int(len(full_code)).to_bytes(8, 'little')
             return
         

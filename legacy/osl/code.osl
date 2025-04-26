@@ -448,36 +448,63 @@
 // }
 // F();
 
-// var x := 5;
-// def f(a)
-// {
-//     var c := 0;
-//     def g(b)        // g closes over a(id=3), c(id=4)
-//     {
-//         def h(d)    // h closes over b(id=6), g(id=5), c(id=4), a(id=3)
-//         {
-//             return a + b + d + x;
-//         }
-//         return h;
-//     }
-//     return g;
-// }
+var x := 5;
+def f(a) //
+{
+    var c := 0;
+    def g(b)        // g closes over a(id=3), c(id=4)
+    {
+        var y := 10;
+        def hh(z){
+            return z+1;
+        }
+        def h(d)    // h closes over b(id=6), g(id=5), a(id=3)
+        {
+            var tmp := 8;
+            b := tmp;
+            var z := b*2;
+            //def tmp(){
+
+            //}
+            return z+a;
+            b := b + g(d);
+            return a + b + d + hh(x);
+        }
+        // def hh(a){
+            
+        // }
+            
+        
+        return h;
+    }
+    return g;
+}
 // var t := f(10)(5)(3);
 // log t;
 
-def counter()
-{
-    var count := 0;
-    def inc()
-    {
-        count := count + 1;
-        return count;
-    }
-    return inc;
-}
+// def fact(n)
+// {
+//     if (n <= 1){
+//         return n;
+//     }
+//     return n * fact(n - 1);
+// }
 
-var c1 := counter();
-var c2 := counter();
-log c1();
-log c2();
-log c2();
+// log fact(5);
+
+// def counter()
+// {
+//     var count := 0;
+//     def inc()
+//     {
+//         count := count + 1;
+//         return count;
+//     }
+//     return inc;
+// }
+
+// var c1 := counter();
+// var c2 := counter();
+// log c1();
+// log c2();
+// log c2();
