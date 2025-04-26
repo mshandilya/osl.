@@ -14,12 +14,19 @@ namespace codetree {
         BNOT_CTN,   //
         LNOT_CTN,   //
         PTRREF_CTN, //
-        PTRAT_CTN   //
+        PTRAT_CTN,   //
+        UTS_CTN,    //
+        STU_CTN,    //
+        ITF_CTN,    //
+        FTI_CTN,    //
+        UTF_CTN,    //
+        FTU_CTN,    //
     };
 
     enum BinaryOperation {
         LOOP_CTN,   //      // Done
         PCOND_CTN,  //      // Done
+        DMKARR_CTN, //
         SET_CTN,    //
         SETASS_CTN, //      // Done
         BIND_CTN,   //
@@ -58,7 +65,6 @@ namespace codetree {
         PROG_CTN,   //      // Done
         BLOCK_CTN,  //      // Done
         MKFUN_CTN,  //      // Done
-        DMKARR_CTN, //
         MKARR_CTN,  //
         CALL_CTN,   //
     };
@@ -121,6 +127,8 @@ namespace codetree {
     public:
         ValueType val_t;
         std::unique_ptr<types::AtomicType> val;
+
+        AtomCTN(ValueType val_t, std::unique_ptr<types::AtomicType>&& value) : val_t(val_t), val(std::move(value)) {}
     };
 
     class IdenCTN : public CodeTreeNode {
@@ -167,7 +175,7 @@ namespace typecheck {
         std::unique_ptr<codetree::CodeTreeNode> typecheckChar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
         std::unique_ptr<codetree::CodeTreeNode> typecheckBool(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
         std::unique_ptr<codetree::CodeTreeNode> typecheckNull(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
-        std::unique_ptr<codetree::CodeTreeNode> typecheckIden(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType, ast::Access ac);
+        std::unique_ptr<codetree::CodeTreeNode> typecheckIden(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType = defaultRetType);
         std::unique_ptr<codetree::CodeTreeNode> typecheckDeclType(std::unique_ptr<types::ArrayDeclType>&& node); // can never have declarations
         std::unique_ptr<codetree::CodeTreeNode> typecheckDeclType(std::unique_ptr<types::Type>&& node); // can never have declarations
     };

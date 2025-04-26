@@ -239,7 +239,7 @@ namespace typecheck {
         }
         auto fn = std::make_unique<codetree::NnaryCTN>(codetree::MKFUN_CTN, std::move(children));
         if(node->name->type() == ast::IDEN_AST) {
-            auto iden = typecheckIden(std::move(node->name), expectedReturnType, ast::CONST);
+            auto iden = typecheckIden(std::move(node->name), expectedReturnType);
             return std::make_unique<codetree::BinaryCTN>(codetree::BIND_CTN, std::move(fn), std::move(iden));
         }
         else {
@@ -257,8 +257,8 @@ namespace typecheck {
         std::vector<std::unique_ptr<codetree::CodeTreeNode>> ret;
         auto declArrObj = typecheckDeclType(std::move(node->myType)); // DMK_ARR
         if(node->name->type() == ast::IDEN_AST) {
-            auto iden2 = typecheckIden(std::make_unique<ast::Identifier>(*(dynamic_cast<ast::Identifier*>(node->name.get()))), expectedReturnType, node->access);
-            auto iden = typecheckIden(std::move(node->name), expectedReturnType, node->access);
+            auto iden2 = typecheckIden(std::make_unique<ast::Identifier>(*(dynamic_cast<ast::Identifier*>(node->name.get()))), expectedReturnType);
+            auto iden = typecheckIden(std::move(node->name), expectedReturnType);
             ret.push_back(std::make_unique<codetree::BinaryCTN>(codetree::BIND_CTN, std::move(declArrObj), std::move(iden)));
             if(node->val->type() != ast::NULL_AST) {
                 auto val = typecheckNext(std::move(node->val));
@@ -434,7 +434,7 @@ namespace typecheck {
                     auto ut = types::gtc(*((dynamic_cast<types::PointerType*>(child->resultingType.get()))->underlyingType));
                     if(ut->name() == types::ATOM and (*dynamic_cast<types::Null*>(ut.get())).atomicName() == types::NULLV)
                         ut = std::make_unique<types::Type>(types::AnyType());
-                    auto ret = std::make_unique<codetree::UnaryCTN>(codetree::PTRREF_CTN, std::move(child));
+                    auto ret = std::make_unique<codetree::UnaryCTN>(codetree::PTRAT_CTN, std::move(child));
                     ret->setResultingType(std::move(ut));
                     ret->isLocation = true;
                     return ret;
@@ -449,39 +449,182 @@ namespace typecheck {
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckFunCall(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-        
+        auto node = dynamic_cast<ast::FunctionCall*>(root.get());
+        std::vector<std::unique_ptr<codetree::CodeTreeNode>> children;
+        auto calling = typecheckNext(std::move(node->name), expectedReturnType);
+        if(calling->resultingType->name() == types::FN) {
+            auto calltype = dynamic_cast<types::FunctionType*>(calling->resultingType.get());
+            children.push_back(std::move(calling));
+            for(uint32_t ind = 0; ind < (uint32_t)(node->params.size()); ind++) {
+                auto arg = typecheckNext(std::move(node->params[ind]), expectedReturnType);
+                if(*(arg->resultingType) == *(calltype->paramTypes[ind])) {
+                    children.push_back(std::move(arg));
+                }
+                else {
+                    // check casting here
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Type mismatch for the parameter at position "<<ind<<" passed to the function call." << std::endl;
+                    exit(0);
+                }
+            }
+            auto ret = std::make_unique<codetree::NnaryCTN>(codetree::CALL_CTN, std::move(children));
+            ret->setResultingType(types::gtc(*(calltype->returnType)));
+            return ret;
+        }
+        else {
+            std::cout << "code.osl: \033[31mTypeError\033[0m: Function Calls may only be applied to a function." << std::endl;
+            exit(0);
+        }
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckArray(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        auto node = dynamic_cast<ast::ArrValue*>(root.get());
+        // to-do
+        // check that types of each element is same
+        // find resulting type based on elem
+        // make array and send
+        if(node->elems.empty()) {
+            // array of null values
+            auto ret = std::make_unique<codetree::NnaryCTN>(codetree::MKARR_CTN, std::vector<std::unique_ptr<codetree::CodeTreeNode>>());
+            ret->setResultingType(std::make_unique<types::ArrayType>(std::make_unique<types::Null>()));
+            return ret;
+        } 
+        else {
+            // array of some defined type
+            std::vector<std::unique_ptr<codetree::CodeTreeNode>> children;
+            auto fe = typecheckNext(std::move(node->elems[0]), expectedReturnType);
+            auto underlyingType = types::gtc(*(fe->resultingType));
+            children.push_back(std::move(fe));
+            for(uint32_t ind = 1; ind < children.size(); ind++) {
+                auto el = typecheckNext(std::move(node->elems[ind]), expectedReturnType);
+                if(*underlyingType == types::Null()) {
+                    underlyingType = types::gtc(*(el->resultingType));
+                }
+                if(*(el->resultingType) == types::Null() or *(el->resultingType) == *underlyingType) {
+                    children.push_back(std::move(el));
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Types of elements inside the array are not coherent." << std::endl;
+                    exit(0);
+                }
+            }
+            auto ret = std::make_unique<codetree::NnaryCTN>(codetree::MKARR_CTN, std::move(children));
+            ret->setResultingType(std::make_unique<types::ArrayType>(std::move(underlyingType)));
+        }
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckNum(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        auto node = dynamic_cast<ast::NumValue*>(root.get());
+        auto ret = std::make_unique<codetree::AtomCTN>(codetree::NUM_CTN, std::move(node->val));
+        ret->setResultingType(types::gtc(*(ret->val)));
+        return ret;
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckChar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        auto node = dynamic_cast<ast::CharValue*>(root.get());
+        auto ret = std::make_unique<codetree::AtomCTN>(codetree::CHAR_CTN, std::move(node->val));
+        ret->setResultingType(types::gtc(*(ret->val)));
+        return ret;
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckBool(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        auto node = dynamic_cast<ast::BoolValue*>(root.get());
+        auto ret = std::make_unique<codetree::AtomCTN>(codetree::BOOL_CTN, std::move(node->val));
+        ret->setResultingType(types::gtc(*(ret->val)));
+        return ret;
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckNull(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        auto node = dynamic_cast<ast::NullValue*>(root.get());
+        auto ret = std::make_unique<codetree::AtomCTN>(codetree::NULL_CTN, types::Null());
+        ret->setResultingType(types::gtc(*(ret->val)));
+        return ret;
     }
 
-    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckIden(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType, ast::Access ac) {
-
+    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckIden(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
+        auto node = dynamic_cast<ast::Identifier*>(root.get());
+        auto ret = std::make_unique<codetree::IdenCTN>(node->id, node->scopeId, node->access);
+        ret->setResultingType(std::move(node->boundDataType));
+        return ret;
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckDeclType(std::unique_ptr<types::ArrayDeclType>&& node) {
-        // apply DMK_ARR here
+        // I wish to deduce the size of which I need to make an array
+        std::unique_ptr<codetree::CodeTreeNode> lc, rc;
+        auto resType = types::gtc(*node);
+        if(node->underlyingType->name() == types::ARRD) {
+            lc = typecheckDeclType(std::move(node->underlyingType));
+        }
+        else {
+            lc = std::make_unique<codetree::AtomCTN>(codetree::NULL_CTN, std::make_unique<types::Null>());
+        }
+        auto rc = typecheckNext(std::move(node->size));
+        if(rc->resultingType->name() == types::ATOM) {
+            auto temptype = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+            switch(temptype->atomicName()) {
+                case types::INT:
+                case types::INT_8:
+                case types::INT_16:
+                case types::INT_32:
+                case types::INT_64:
+                case types::INT_128:
+                case types::UINT:
+                case types::UINT_8:
+                case types::UINT_16:
+                case types::UINT_32:
+                case types::UINT_64:
+                case types::UINT_128:
+                    break;
+                default:
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: The size of an array must evaluate to a signed or unsigned integer." << std::endl;
+                    exit(0);
+                    break;
+            }
+        }
+        else {
+            std::cout << "code.osl: \033[31mTypeError\033[0m: The size of an array must evaluate to a signed or unsigned integer." << std::endl;
+            exit(0);
+        }
+        return std::make_unique<codetree::BinaryCTN>(codetree::DMKARR_CTN, std::move(lc), std::move(rc));
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckDeclType(std::unique_ptr<types::Type>&& node) {
-
+        std::unique_ptr<codetree::CodeTreeNode> lc, rc;
+        auto resType = types::gtc(*node);
+        auto nnode = dynamic_cast<types::ArrayDeclType*>(node.get());
+        if(nnode->underlyingType->name() == types::ARRD) {
+            lc = typecheckDeclType(std::move(nnode->underlyingType));
+        }
+        else {
+            lc = std::make_unique<codetree::AtomCTN>(codetree::NULL_CTN, std::make_unique<types::Null>());
+        }
+        auto rc = typecheckNext(std::move(nnode->size));
+        if(rc->resultingType->name() == types::ATOM) {
+            auto temptype = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+            switch(temptype->atomicName()) {
+                case types::INT:
+                case types::INT_8:
+                case types::INT_16:
+                case types::INT_32:
+                case types::INT_64:
+                case types::INT_128:
+                case types::UINT:
+                case types::UINT_8:
+                case types::UINT_16:
+                case types::UINT_32:
+                case types::UINT_64:
+                case types::UINT_128:
+                    break;
+                default:
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: The size of an array must evaluate to a signed or unsigned integer." << std::endl;
+                    exit(0);
+                    break;
+            }
+        }
+        else {
+            std::cout << "code.osl: \033[31mTypeError\033[0m: The size of an array must evaluate to a signed or unsigned integer." << std::endl;
+            exit(0);
+        }
+        return std::make_unique<codetree::BinaryCTN>(codetree::DMKARR_CTN, std::move(lc), std::move(rc));
     }
 
 }
