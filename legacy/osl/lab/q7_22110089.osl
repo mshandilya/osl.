@@ -1,0 +1,125 @@
+// Your input is one string per line. Output the number of vowels in each string, one per line.
+
+var s := ["zizluqkcgbmtholebaycpemiafnddgnelxmklufq"
+,"gdnqaslmsmbfoheohoaifqjdyundqnvpkinahwlu"
+,"njkabyywtxsgbwpaasyzdvvbrkdgecqcqqjquaaz"
+,"feyuhmafpqoshahbokazbauxhxjshzcrdmguscip"
+,"mmjccwdukhreqeycaixzfysoudrmlekosaohihyx"
+,"kaeubjasogezipkbuybakyhrjzizrvdyznydbrzf"
+,"lkedqyyrsxlqncrfvsfakdvkmskeltjryuplpgwj"
+,"uadumtqkoeinyfyzevmjvqyngtnifydenyjtdwst"
+,"puqefqstzyjcfybmfwjahinleeqgnxlefvmgrbnh"
+,"bulinklbvrwbqrevvpgdrptmlykhchepajiiauos"
+,"gwjblpivxgdbovlfvcuajnmrncbupmrrjbwerbbu"
+,"xomjtrtkdiwzryfpnchwwdurevugdwawealpxsbg"
+,"jngkulsyitsxsiudkgjpvhpdbmyplgfneiontshg"
+,"marxlepmvsegvotnvbwogwvwzczoctayytbrnyju"
+,"mzoyrzzrtqhibbepilrtpjkrewadbiyttwlkvtcb"
+,"vrownfmbvrinbiggvswohpauglojqblrgemijacc"
+,"jdogirutftubvuxyloqpahdebqggivoljhgrwspf"
+,"gmicqyodfyodklthwgacfpngmsawfdfhucioczec"
+,"debggparrxtbvmoletisfmqysnkhchorbtondjlx"
+,"gvaorhklaoerqbybqtyrzdyseqbjkpikeerhnxdw"
+,"cadenupttdngbnsatomkjkknpkubfenabozhlcay"
+,"epoleexcvkodhhivycvevxngiicvcafqykpoziqp"
+,"ewtblfxcflcopfrlpgjlmrbbekwtihiowuflysgu"
+,"rbgjtbkymgjsqjyxddbwcxapcxifpmbayrnvhlca"
+,"qitvkkatkxhezbxpbgjzsjbxdrpfikfbqwizrytz"
+,"lfbcbpeyiglcybvwckzdmmafmeulbvgyejpkgshy"
+,"mihdvrwhcafncuvdpjgllqugphynxaepabekevjn"
+,"olexyucpxssopzenprdewwtcpflokfwdvyrapaiy"
+,"dnlgkboqhrhgvldryhqpyrkmivnchqpxucyyjboi"
+,"jucdzgeawbfxzbgmnhqwprzoqskgvfcpfxmnyhej"
+,"pdpzdwxpizcbnobwwabglltkeppzhyxqrxiczfcd"
+,"ujzsghvkjtrawsmkwhnekybnfxtfpzvjapsmexyb"
+,"tumypdltetzkuunkvwzrvktttldgrmpdxmbfigco"
+,"slkuftzztqiaayitvdxibfjbnjhntobohvjxtdfs"
+,"ocoulckaxnjvwzdvkgzsrpdrhrrpxofiesvdrtqo"
+,"iwzhdofuqpftpusrkgumwcjvcfzhuritdaouuycs"
+,"mzvxanhohapuphowgoscajsmuoilzwrzoqjvpjgo"
+,"jpxtojvuqzgcgzsmopcisdjvpdarwwqipfticvvj"
+,"gnpymyickcehtoosvcvezlyhbhogplkaqfeuvnxb"
+,"tjpyaphlrsusvopayvmayzojujzdfbsecxjasezr"
+,"blnckdvjdsijsmrblrnohcnyavxgkwljwvikqobq"
+,"txwwtfmyxzrfjszurkruomoixmooynlclhiwwomk"
+,"ndfyqjmnqjapfenetxcotpqvmsuskrakgkqnkcvy"
+,"zulwdlliyakffkijpnrbiagpgbmwdaderlbtemeb"
+,"gbkrjccynjgjihtxiqzuuhfzczonpwtwxndaqlse"
+,"bzllxgejiwuetnfkbphwikirhudugynxabenbhmq"
+,"kijqqeagnobrwestnqduilkwougshdnjrmvlwkbz"
+,"jpjplvgorymlwuhcmvgtyxieciziwhwybhhnlagn"
+,"ipmuadaqfsxtmgcslqhxxcelcxpmpaecpokfawoq"
+,"txpyucjhrgwuvklailcwsbdrquhdnrnmsruqodza"
+,"caysxxlqfmyddvnybjtvicfuhibxucqrijzkxkhf"
+,"ycruarzacumfumxijmpemoynpqulltvwmjgvojrf"
+,"kufkdutcnvyhsopblezfcdatgoifkuwktlbhyyoa"
+,"yeygrjitlvodqchetcdclmuzuwtmvowdrdxwzcnx"
+,"tfvoxvdnuszfbywtkrylsosnlfhwkqanzinktyeq"
+,"udhljgizcrxppupydredkbdpuhvjakewodqtzefh"
+,"dyjhhnwgksgmufcukfnsssnlvnuyzjhiarhnstyw"
+,"igzcaxapnnxrrbxdwxdxdebkctfrovyrfialaifs"
+,"dgtfbnfdirwtxxoteamfsuqusigubymvxbxgpenr"
+,"xfoawfilbvugcsysqrlmafocrxmxmsmpziypnamr"
+,"vdaqwpwewurvccckwgbodyktjizepoqppqmrmzdo"
+,"cymsygmufiattgpvpbntevxnolmybgfzomjevkib"
+,"slvggszydqhggjsytvjlfsymmlogfjpkkwofqzju"
+,"fhezkknaltxkdzkvatzosdkoluewbailwneqzcni"
+,"lulbtbxdkkzexucjhjtgrjnuuaszpkwumgiowwxw"
+,"zvcqguexbsfzdlkqztqinmddniyqtgoegjffythg"
+,"luqxceqdqavytnfvlhgdiqsrketseewcwwuvvjch"
+,"cexumqfxbcjwojlqdqhiorkyroqdnsfqwzcncnbe"
+,"qfqoohfbiewwhpmegouidelsvwqrhcylkrwfewpq"
+,"gieathtivpumgxoupaqygcpumjihyhglexbtjupd"
+,"ekdukmbqhclbxujfjdyvkoipfstiwizbdmrhgfix"
+,"quatffcvkjpkansyskhiffuosfotphysnggafauv"
+,"pcitweamorouluvepzdzzwmfvaeexnrlbxuykhdp"
+,"qpcvmsebmvxuptgljyfdopptjxwpmwqygxuivbcn"
+,"gqhvdcgykgxwspjhcqbtkyxnryyrnvnbqxfixldj"
+,"oshorapowzrmeembhfqqexhxzawqszxrxdkkecyp"
+,"ysdukchzmhiikekyheahqqrjayzvzoawtdqsuxxu"
+,"nvnqqevwjeqqhbfsvnbupeqqqhxwgzobettucrhe"
+,"auuwseiirffloiwtxaldguajrpbympbbixsxwrhx"
+,"xzvnziszpixhizzrnknekxqkbqllyldubuovjrgk"
+,"mqlhglkhxqeehcgycayabfphnffcvwuoibvtqoqo"
+,"qamyvryzfpqzvefgiiwajhvcndtzgbmjsvlkxhwp"
+,"jfbnfswmmuwsiaayhntusjksykqkrsxiuadxurcw"
+,"wsopkpwpjezfrlksoeakkpfrhuujbrzinjcupuen"
+,"thrpqrnqyxotngcqsgvxztundbjwbnukxrbyhsxm"
+,"snwqdplyknsqbdiqtchdffurszyfnudaaupvzpng"
+,"fcqkxjvoydacagrpxqcfozoclmtvisevouzusnqy"
+,"vutaxeiqlzrzfowojxhploidmvpptraibqrnwawy"
+,"jvrarpvswbadahwbvmutgfdtqlwobwtbkdsigyyh"
+,"dattqqsoyjarldfnhjipgjojipdezweuogcjwugj"
+,"dnahzlnnyccjoaigvayrauemlutsdhxgyrxbixuv"
+,"vdzeabfssadxpvnwrxhswzwqabppfzvgvibpeiso"
+,"smyaidpopzpbnxxnthcefyqaxzdohqtlgallkxzs"
+,"rajrtcoofukemsoawpktvjepchcadvlpzspzzyhn"
+,"ypsojhuocpuncljmbghovtmbltouvvfskrqvasap"
+,"ktqtvmdwyksxmnummrapznwhixdqvlfcefcmgjhc"
+,"vqhnqrwywvasektiusaisyqoigdgjijmiuydovvg"
+,"sekskxvftxnkthuyfashnjlxomummbcuuwyvuabl"
+,"xftxfbpweugdldvgmmjevebcgvaajlfrxvlyipbj"
+,"hepwpqeokklwxyfilsgnnlprfsfinxnswdcbrjll"];
+
+
+
+var i := 0;
+var count;
+var count1 := 0;
+while i < 100
+{
+    count := 0;
+    var j := 0;
+    while j < 40
+    {
+        if (s[i][j] = 'a' || s[i][j] = 'e' || s[i][j] = 'i' || s[i][j] = 'o' || s[i][j] = 'u')
+        {
+            count := count + 1;
+        }
+        count1 := count1 + count;
+        j := j + 1;
+    }
+    log count;
+    i := i + 1;
+}
+log count1;

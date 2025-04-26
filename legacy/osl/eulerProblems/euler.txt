@@ -1,0 +1,295 @@
+
+Problem 1 osl Code:
+
+def F(x, s) {
+    while (x < 1000) {
+        if (x % 3 = 0 || x % 5 = 0) {
+            s := s + x;
+        }
+        x := x + 1;
+    }
+    return s;
+}
+F(0, 0);
+
+Expected: 233168
+Result: 233168
+osl execution Time: [36m0.026920 seconds[0m
+Python Result: 233168
+Python Time: [36m0.000077 seconds[0m
+osl is 350x slower than Python
+
+Problem 2 osl Code:
+
+def fib(a, b, s) {
+    while (a < 4000000) {
+        if (a % 2 = 0) {
+            s := s + a;
+        }
+        var temp := a;
+        a := b;
+        b := temp + b;
+    }
+    return s;
+}
+fib(0, 1, 0);
+
+Expected: 4613732
+Result: 4613732
+osl execution Time: [36m0.000900 seconds[0m
+Python Result: 4613732
+Python Time: [36m0.000003 seconds[0m
+osl is 290x slower than Python
+
+Problem 3 osl Code:
+
+def prime(n, i) {
+    while (i * i <= n) {
+        if (n % i = 0) {
+            n := n / i;
+        } else {
+            i := i + 1;
+        }
+    }
+    return n;
+}
+var n := 600851475143;
+prime(n, 2);
+
+Expected: 6857
+Result: 6857
+osl execution Time: [36m0.025689 seconds[0m
+Python Result: 6857
+Python Time: [36m0.000095 seconds[0m
+osl is 270x slower than Python
+
+Problem 4 osl Code:
+
+def isPal(n) {
+    var rev := 0;
+    var nn := n;
+    while (n > 0)
+    {
+        rev := rev * 10 + n % 10;
+        n := n / 10;
+    }
+    return rev=nn;
+}
+
+var maxPal := 0;
+var i := 999;
+var j;
+var prod;
+while (i >= 1) {
+    j := i;
+    while (j >= 1) {
+        prod := i * j;
+        if ((prod > maxPal) && (isPal(prod))) {
+            maxPal := prod;
+        }
+        j := j - 1;
+    }
+    i := i - 1;
+}
+maxPal;
+
+Expected: 906609
+Result: 906609
+osl execution Time: [36m9.802726 seconds[0m
+Python Result: 906609
+Python Time: [36m0.020026 seconds[0m
+osl is 489x slower than Python
+
+Problem 5 osl Code:
+
+def gcd(a, b) {
+    while (b != 0) {
+        var temp := b;
+        b := a % b;
+        a := temp;
+    }
+    return a;
+}
+def lcm(a, b) {
+    return a * b / gcd(a, b);
+}
+def F(n, i) {
+    while (i > 1) {
+        n := lcm(n, i - 1);
+        i := i - 1;
+    }
+    return n;
+}
+F(1, 20);
+
+Expected: 232792560
+Result: 232792560
+osl execution Time: [36m0.001360 seconds[0m
+Python Result: 232792560
+Python Time: [36m0.000006 seconds[0m
+osl is 228x slower than Python
+
+Problem 6 osl Code:
+
+def F(n, sum, sumSq) {
+    while (n > 0) {
+        sum := sum + n;
+        sumSq := sumSq + n * n;
+        n := n - 1;
+    }
+    return sum * sum - sumSq;
+}
+F(100, 0, 0);
+
+Expected: 25164150
+Result: 25164150
+osl execution Time: [36m0.001657 seconds[0m
+Python Result: 25164150
+Python Time: [36m0.000008 seconds[0m
+osl is 210x slower than Python
+
+Problem 7 osl Code:
+
+def find_nth_prime(n)
+{
+    var limit := 150000;
+    var is_prime[limit + 1];
+    
+    var i := 0;
+    var j;
+    
+    while (i < limit + 1) 
+    {
+        is_prime[i] := 1;
+        i := i + 1;
+    }
+    
+    is_prime[0] := 0;
+    is_prime[1] := 0;
+    
+    i := 2;
+    while (i * i <= limit)
+    {
+        if (is_prime[i])
+        {
+            j := i * i;
+            while (j <= limit)
+            {
+                is_prime[j] := 0;
+                j := j + i;
+            }       
+        }
+        i := i + 1;
+    }
+    
+    var count := 0;
+    var num := 2;
+    while (num <= limit)
+    {
+        if (is_prime[num])
+        {
+            count := count + 1;
+            if (count = n) return num;
+        }
+        num := num + 1;
+    }
+    return -1;   
+}
+
+var n := 10001;
+find_nth_prime(n);
+
+Expected: 104743
+Result: 104743
+osl execution Time: [36m5.311343 seconds[0m
+Python Result: 104743
+Python Time: [36m0.014931 seconds[0m
+osl is 355x slower than Python
+
+Problem 9 osl Code:
+
+def find_pythagorean_triplet()
+{
+    var a := 1;
+    var denom;
+    var b;
+    var c;
+    while (a < 333)
+    {
+        denom := 1000 - a;
+        if ((500000 % denom) = 0)
+        {
+            b := 1000 - (500000/denom);
+            if (a < b)
+            {
+                c := 1000 - a - b;
+                if ((b < c) && ((a * a) + (b * b) = (c * c)))
+                    return a * b * c;
+            }
+                
+        }
+        a := a + 1;
+    }
+    return -1;
+}
+find_pythagorean_triplet();
+
+Expected: 31875000
+Result: 31875000
+osl execution Time: [36m0.003880 seconds[0m
+Python Result: 31875000
+Python Time: [36m0.000015 seconds[0m
+osl is 262x slower than Python
+
+Problem 10 osl Code:
+
+def find_nth_prime()
+{
+    var limit := 2000000;
+    var is_prime[limit];
+    
+    var i := 0;
+    var j;
+    
+    while (i < limit) 
+    {
+        is_prime[i] := 1;
+        i := i + 1;
+    }
+    
+    is_prime[0] := 0;
+    is_prime[1] := 0;
+    
+    i := 2;
+    while (i * i < limit)
+    {
+        if (is_prime[i])
+        {
+            j := i * i;
+            while (j < limit)
+            {
+                is_prime[j] := 0;
+                j := j + i;
+            }       
+        }
+        i := i + 1;
+    }
+    
+    var sum := 0;
+    var num := 2;
+    while (num < limit)
+    {
+        if (is_prime[num]) sum := sum + num;
+        num := num + 1;
+    }
+    return sum;   
+}
+
+find_nth_prime();
+
+Expected: 142913828922
+Result: 142913828922
+osl execution Time: [36m75.734659 seconds[0m
+Python Result: 142913828922
+Python Time: [36m0.249449 seconds[0m
+osl is 303x slower than Python
