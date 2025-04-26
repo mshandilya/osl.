@@ -57,6 +57,14 @@ namespace ast{
 
         Identifier(std::string idenName): idenName(idenName) {};
         
+        Identifier(const Identifier& other) {
+            idenName = other.idenName;
+            boundDataType = types::gtc(*(other.boundDataType));
+            access = other.access;
+            id = other.id;
+            scopeId = other.scopeId;
+        }
+
         void bind(std::unique_ptr<types::Type>&& boundDataType, Access access, int id, int scopeId) {
             this->boundDataType = std::move(boundDataType);
             this->access = access;

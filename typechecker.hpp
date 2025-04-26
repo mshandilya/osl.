@@ -21,6 +21,7 @@ namespace codetree {
         LOOP_CTN,   //      // Done
         PCOND_CTN,  //      // Done
         SET_CTN,    //
+        SETASS_CTN, //      // Done
         BIND_CTN,   //
         APAD_CTN,   //
         LPAD_CTN,   //      

@@ -257,25 +257,67 @@ namespace typecheck {
         std::vector<std::unique_ptr<codetree::CodeTreeNode>> ret;
         auto declArrObj = typecheckDeclType(std::move(node->myType)); // DMK_ARR
         if(node->name->type() == ast::IDEN_AST) {
+            auto iden2 = typecheckIden(std::make_unique<ast::Identifier>(*(dynamic_cast<ast::Identifier*>(node->name.get()))), expectedReturnType, node->access);
             auto iden = typecheckIden(std::move(node->name), expectedReturnType, node->access);
             ret.push_back(std::make_unique<codetree::BinaryCTN>(codetree::BIND_CTN, std::move(declArrObj), std::move(iden)));
+            if(node->val->type() != ast::NULL_AST) {
+                auto val = typecheckNext(std::move(node->val));
+                if(*(val->resultingType) == types::Null() and *(val->resultingType) == *(iden2->resultingType))
+                    ret.push_back(std::make_unique<codetree::BinaryCTN>(codetree::SET_CTN, std::move(iden2), std::move(val)));
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: The value assigned to an identifier must be of the same/compatible type as the identifier." << std::endl;
+                    exit(0);
+                }
+            }
         }
         else {
-            std::cout << "code.osl: \033[31mTypeError\033[0m: A function declaration must must bind to a valid identifier." << std::endl;
+            std::cout << "code.osl: \033[31mTypeError\033[0m: An array must must bind to a valid identifier." << std::endl;
+            exit(0);
+        }
+        return ret;
+    }
+
+    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetVar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
+        auto node = dynamic_cast<ast::LetVar*>(root.get());
+        auto val = typecheckNext(std::move(node->val), expectedReturnType);
+        auto var = typecheckNext(std::move(node->var), expectedReturnType);
+        if(*(val->resultingType) == types::Null() or *(val->resultingType) == *(var->resultingType)) {
+            return std::make_unique<codetree::BinaryCTN>(codetree::BIND_CTN, std::move(val), std::move(var));
+        }
+        else {
+            std::cout << "code.osl: \033[31mTypeError\033[0m: The value assigned to an identifier must be of the same/compatible type as the identifier." << std::endl;
             exit(0);
         }
     }
 
-    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetVar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
-    }
-
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckLetConst(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        auto node = dynamic_cast<ast::LetConst*>(root.get());
+        auto val = typecheckNext(std::move(node->val), expectedReturnType);
+        auto var = typecheckNext(std::move(node->var), expectedReturnType);
+        if(*(val->resultingType) == types::Null() or *(val->resultingType) == *(var->resultingType)) {
+            return std::make_unique<codetree::BinaryCTN>(codetree::BIND_CTN, std::move(val), std::move(var));
+        }
+        else {
+            std::cout << "code.osl: \033[31mTypeError\033[0m: The value assigned to an identifier must be of the same/compatible type as the identifier." << std::endl;
+            exit(0);
+        }
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckAssign(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        auto node = dynamic_cast<ast::Assign*>(root.get());
+        auto val = typecheckNext(std::move(node->val), expectedReturnType);
+        auto var = typecheckNext(std::move(node->var), expectedReturnType);
+        if(var->isLocation) {
+            if(*(val->resultingType) == types::Null() or *(var->resultingType) == *(val->resultingType)) {
+                auto t = types::gtc(*(var->resultingType));
+                auto nnode = std::make_unique<codetree::BinaryCTN>(codetree::SETASS_CTN, std::move(val), std::move(var));
+                nnode->setResultingType(std::move(t));
+            }
+        }
+        else {
+            std::cout << "code.osl: \033[31mTypeError\033[0m: The left hand operator to the := operator must be an assignable value." << std::endl;
+            exit(0);
+        }
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckBinOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
@@ -283,11 +325,131 @@ namespace typecheck {
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckUnOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        // apply a unary op here
+        auto node = dynamic_cast<ast::UnaryOperator*>(root.get());
+        switch(node->op) {
+            case ast::UNEG_OP: {
+                auto child = typecheckNext(std::move(node->child), expectedReturnType);
+                if(child->resultingType->name() == types::ATOM) {
+                    auto at = dynamic_cast<types::AtomicType*>(child->resultingType.get());
+                    switch(at->atomicName()) {
+                        case types::NUM:
+                        case types::INT:
+                        case types::INT_8:
+                        case types::INT_16:
+                        case types::INT_32:
+                        case types::INT_64:
+                        case types::INT_128:
+                        case types::UINT:
+                        case types::UINT_8:
+                        case types::UINT_16:
+                        case types::UINT_32:
+                        case types::UINT_64:
+                        case types::UINT_128:
+                        case types::FLOAT:
+                        case types::FLOAT_16:
+                        case types::FLOAT_32:
+                        case types::FLOAT_64:
+                        case types::FLOAT_128: {
+                            auto retType = types::gtc(*(child->resultingType));
+                            auto ret = std::make_unique<codetree::UnaryCTN>(codetree::ANEG_CTN, std::move(child));
+                            ret->setResultingType(std::move(retType));
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Unary negation may only be applied to a numerical value." << std::endl;
+                            exit(0);
+                    }
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Unary negation may only be applied to a numerical value." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::UNOT_OP: {
+                auto child = typecheckNext(std::move(node->child), expectedReturnType);
+                if(child->resultingType->name() == types::ATOM) {
+                    auto at = dynamic_cast<types::AtomicType*>(child->resultingType.get());
+                    switch(at->atomicName()) {
+                        case types::NUM:
+                        case types::INT:
+                        case types::INT_8:
+                        case types::INT_16:
+                        case types::INT_32:
+                        case types::INT_64:
+                        case types::INT_128:
+                        case types::UINT:
+                        case types::UINT_8:
+                        case types::UINT_16:
+                        case types::UINT_32:
+                        case types::UINT_64:
+                        case types::UINT_128:
+                        case types::FLOAT:
+                        case types::FLOAT_16:
+                        case types::FLOAT_32:
+                        case types::FLOAT_64:
+                        case types::FLOAT_128: {
+                            auto retType = types::gtc(*(child->resultingType));
+                            auto ret = std::make_unique<codetree::UnaryCTN>(codetree::BNOT_CTN, std::move(child));
+                            ret->setResultingType(std::move(retType));
+                            break;
+                        }
+                        case types::BOOL: {
+                            auto retType = types::gtc(*(child->resultingType));
+                            auto ret = std::make_unique<codetree::UnaryCTN>(codetree::LNOT_CTN, std::move(child));
+                            ret->setResultingType(std::move(retType));
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Unary not may only be applied to a numerical value or a boolean value." << std::endl;
+                            exit(0);
+                    }
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Unary not may only be applied to a numerical value or a boolean value." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::PTRREF_OP: {
+                auto child = typecheckNext(std::move(node->child), expectedReturnType);
+                // only locs may be pointed to
+                if(child->isLocation) {
+                    auto type = std::make_unique<types::PointerType>(types::gtc(*(child->resultingType)));
+                    auto ret = std::make_unique<codetree::UnaryCTN>(codetree::PTRREF_CTN, std::move(child));
+                    ret->setResultingType(std::move(type));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Pointer references may only be created to objects in the memory." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::PTRDEREF_OP: {
+                auto child = typecheckNext(std::move(node->child), expectedReturnType);
+                // only locs may be pointed to
+                if(child->resultingType->name() == types::PTR) {
+                    auto ut = types::gtc(*((dynamic_cast<types::PointerType*>(child->resultingType.get()))->underlyingType));
+                    if(ut->name() == types::ATOM and (*dynamic_cast<types::Null*>(ut.get())).atomicName() == types::NULLV)
+                        ut = std::make_unique<types::Type>(types::AnyType());
+                    auto ret = std::make_unique<codetree::UnaryCTN>(codetree::PTRREF_CTN, std::move(child));
+                    ret->setResultingType(std::move(ut));
+                    ret->isLocation = true;
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Only Pointer Types can be dereferenced." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+        }
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckFunCall(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckArray(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
@@ -314,7 +476,12 @@ namespace typecheck {
 
     }
 
-    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckDeclType(std::unique_ptr<types::ArrayDeclType>&& node); // can never have declarations
-    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckDeclType(std::unique_ptr<types::Type>&& node); // can never have declarations
+    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckDeclType(std::unique_ptr<types::ArrayDeclType>&& node) {
+        // apply DMK_ARR here
+    }
+
+    std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckDeclType(std::unique_ptr<types::Type>&& node) {
+
+    }
 
 }
