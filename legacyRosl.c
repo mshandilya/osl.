@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define DLOG(x...) printf(x);
+#define DLOG(x...) // printf(x);
 
 typedef enum {
     VAL_CHAR,
@@ -75,11 +75,16 @@ typedef enum {
     MOD             = 0x24,
     NEG             = 0x25,
 
-    // Bitwise / Logical operations
+    // Bitwise operations
     BITWISE_NOT     = 0x30,
     BITWISE_AND     = 0x31,
     BITWISE_OR      = 0x32,
     BITWISE_XOR     = 0x33,
+
+    // Logical operations
+    AND             = 0x34,
+    OR              = 0x35,
+    NOT             = 0x36,
 
     // Comparisons
     EQ              = 0x40,
@@ -382,20 +387,25 @@ int execute(uint8_t *code, size_t codeSize) {
                 v.v = malloc(sizeof(int64_t));
                 memcpy(v.v, &l, sizeof(int64_t));
                 unsigned int id = *(int64_t*)v.v;
-                //printf("get id: %lld\n",id);
+
+                // printf("get id: %lld\n",id);
+                
                 Value val; val.type = vals.tails[id]->type;
                 val.v = vals.tails[id]->location;
-                /*if(val.type == VAL_INT){
-                    printf("get val: %lld\n",*(int64_t*)val.v);
-                }else if(val.type == VAL_FLOAT){
-                    printf("get val: %f\n",*(float*)val.v);
-                }else if(val.type == VAL_CHAR){
-                    printf("get val: %c\n",*(char*)val.v);
-                }*/
+
+                // if(val.type == VAL_INT){
+                //     printf("get val: %lld\n",*(int64_t*)val.v);
+                // }else if(val.type == VAL_FLOAT){
+                //     printf("get val: %f\n",*(float*)val.v);
+                // }else if(val.type == VAL_CHAR){
+                //     printf("get val: %c\n",*(char*)val.v);
+                // }
+                
                 PUSH(val);
                 pc += 9;
                 break;
             }
+            
             case SET_TO: {
                 if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (SET_TO)\n"); exit(1); }
                 Value v; v.type = VAL_ID;
@@ -408,15 +418,19 @@ int execute(uint8_t *code, size_t codeSize) {
                 unsigned int id = *(int64_t*)v.v;
                 //printf("set id: %lld\n",id);
                 Value vv = POP();
+                DLOG("set id: %u\n",id)
+
                 ValueType t = vv.type;
                 void* val = vv.v;
-                /*if(vv.type == VAL_INT){
-                    printf("set val: %lld\n",*(int64_t*)val);
-                }else if(vv.type == VAL_FLOAT){
-                    printf("set val: %f\n",*(float*)val);
-                }else if(vv.type == VAL_CHAR){
-                    printf("set val: %c\n",*(char*)val);
-                }*/
+                // if (vv.type == VAL_ARR) {printf("get array\n");}
+                // if(vv.type == VAL_INT){
+                //     printf("set val: %lld\n",*(int64_t*)val);
+                // }else if(vv.type == VAL_FLOAT){
+                //     printf("set val: %f\n",*(float*)val);
+                // }else if(vv.type == VAL_CHAR){
+                //     printf("set val: %c\n",*(char*)val);
+                // }
+
                 if(vals.tails[id] == NULL) {
                     vals.heads[id] = (llNode*)malloc(sizeof(llNode));
                     vals.tails[id] = vals.heads[id];
@@ -647,6 +661,37 @@ int execute(uint8_t *code, size_t codeSize) {
                 pc += 1;
                 break;
             }
+            
+            // Logical Operations
+            case AND: {
+                Value b = POP();
+                Value a = POP();
+                Value result; result.type = VAL_INT;
+                result.v = malloc(sizeof(int64_t));
+                *(int64_t*)result.v = (*(int64_t*)a.v && *(int64_t*)b.v) ? 1 : 0;
+                PUSH(result);
+                pc += 1;
+                break;
+            }
+            case OR: {
+                Value b = POP();
+                Value a = POP();
+                Value result; result.type = VAL_INT;
+                result.v = malloc(sizeof(int64_t));
+                *(int64_t*)result.v = (*(int64_t*)a.v || *(int64_t*)b.v) ? 1 : 0;
+                PUSH(result);
+                pc += 1;
+                break;
+            }
+            case NOT: {
+                Value a = POP();
+                Value result; result.type = VAL_INT;
+                result.v = malloc(sizeof(int64_t));
+                *(int64_t*)result.v = (*(int64_t*)a.v == 0) ? 1 : 0;
+                PUSH(result);
+                pc += 1;
+                break;
+            }
 
             // Comparison Operations
             case EQ: {
@@ -753,6 +798,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 }
                 pc += 5;
                 pc += offset;
+                DLOG("jump to %zu\n", pc)
                 break;
             }
             case JUMP_IF_ZERO: {
@@ -785,21 +831,40 @@ int execute(uint8_t *code, size_t codeSize) {
                 for (int j = 0; j < 4; j++) {
                     addr |= ((int32_t)code[pc+1+j]) << (8*j);
                 }
-                Value ret; ret.type = VAL_INT;
-                ret.v = malloc(sizeof(int64_t));
-                *(int64_t*)ret.v = pc + 5;
-                PUSH(ret);
+                // Value ret; ret.type = VAL_INT;
+                // ret.v = malloc(sizeof(int64_t));
+                // *(int64_t*)ret.v = pc + 5;
+                // PUSH(ret);
                 pc = addr;
+                DLOG("call to %d\n", addr)
                 break;
             }
             case RETURN: {
-                Value ret = POP();
-                if (ret.type != VAL_INT) { fprintf(stderr, "Invalid return address type\n"); exit(1); }
-                while(sNodeTail > 0 && sNodeStack[--sNodeTail].scopeId == callScope) {
-                    vals.tails[sNodeStack[sNodeTail].id] = vals.tails[sNodeStack[sNodeTail].id]->prev;
+                if (top < 2) { fprintf(stderr, "Stack underflow on RETURN\n"); exit(1); }
+                Value returnValue = POP();
+                Value globalReturnAddress = POP();
+                // void* returnAddress = globalReturnAddress.v;
+                // printf("return address: %lld\n",*(int64_t*)returnAddress);
+
+                if (globalReturnAddress.type != VAL_INT) { 
+                    fprintf(stderr, "Invalid global return address type\n"); 
+                    exit(1); 
+                }
+                // FIXED!
+                while (sNodeTail > 0 && sNodeStack[sNodeTail - 1].scopeId == callScope) {
+                    unsigned int id = sNodeStack[--sNodeTail].id;
+                    if (vals.tails[id] != NULL) {
+                        vals.tails[id] = vals.tails[id]->prev;
+                    }
                 }
                 callScope--;
-                pc = *(int64_t*)ret.v;
+                // void* val = returnValue.v;
+                // printf("return val: %lld\n",*(int64_t*)val);
+
+                PUSH(returnValue);
+
+                pc = *(int64_t*)globalReturnAddress.v;
+                DLOG("return to %zu\n", pc)
                 break;
             }
 
@@ -909,22 +974,22 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value v;
                 DLOG("%d\n", nElems)
                 v.type = VAL_ARR;
-                v.v = malloc(nElems*sizeof(Value*));
+                v.v = malloc(nElems * sizeof(Value)); // fixed! sizeof(Value) not sizeof(Value*)
                 DLOG("atleast here\n")
-                for(int i = 0; i < nElems; i++) {
+                for (int i = 0; i < nElems; i++) {
                     ((Value*)(v.v))[i] = POP();
                     DLOG("pushed an element to array\n")
                 }
                 DLOG("pushed everything to array object\n")
                 PUSH(v);
-                DLOG("pushed the array object to stack\n")
+                if (v.type == VAL_ARR) { DLOG("pushed the array object to stack\n")}
                 pc += 3;
                 break;
             }
             case ARR_ACC: {
                 DLOG("reached at array access\n")
                 Value arr = POP(), ind = POP();
-                if(ind.type != VAL_ARR) { fprintf(stderr, "Unexpected type for array"); exit(1);}
+                if(arr.type != VAL_ARR) { fprintf(stderr, "Unexpected type for array"); exit(1);}
                 if(ind.type != VAL_INT) { fprintf(stderr, "Unexpected type for index"); exit(1);}
                 uint64_t idx = *((uint64_t*)ind.v);
                 PUSH(((Value*)(arr.v))[idx]);
@@ -937,15 +1002,48 @@ int execute(uint8_t *code, size_t codeSize) {
                 uint16_t nDims = code[pc+1] | (code[pc+2]<<8);
                 Value v;
                 v.type = VAL_ARR;
-                for(int i = 0; i < nDims; i++) {
-                    Value nd = POP();
-                    if(nd.type != VAL_INT) { fprintf(stderr, "Unexpected type for index"); exit(1);}
-                    v.v = malloc((*(int64_t*)(nd.v))*sizeof(v));
-                    for(int j = 0; j<(*(int64_t*)(nd.v)); j++) {
-                        ((Value*)v.v)[j].type = VAL_ARR;
+                
+                // for(int i = 0; i < nDims; i++) {
+                //     Value nd = POP();
+                //     if(nd.type != VAL_INT) { fprintf(stderr, "Unexpected type for index"); exit(1);}
+                //     v.v = malloc((*(int64_t*)(nd.v)) *sizeof(Value));
+                //     for(int j = 0; j<(*(int64_t*)(nd.v)); j++) {
+                //         ((Value*)v.v)[j].type = VAL_ARR;
+                //     }
+                // }
+                
+                int64_t sizes[nDims];
+                for (int d = 0; d < nDims; d++) {
+                    Value dim = POP();
+                    if (dim.type != VAL_INT) {
+                        fprintf(stderr, "Unexpected type for dimension size\n");
+                        exit(1);
                     }
+                    sizes[d] = *(int64_t*)(dim.v);
                 }
-                PUSH(v);
+
+                Value vv; // innermost array
+                vv.type = VAL_ARR;
+                vv.v = malloc(sizes[0] * sizeof(Value));
+                for (int i = 0; i < sizes[0]; i++){
+                    ((Value*)vv.v)[i].type = VAL_INT;
+                    ((Value*)vv.v)[i].v = malloc(sizeof(int64_t));
+                    *(int64_t*)((Value*)vv.v)[i].v = 0;
+                }
+
+                for (int d = 1; d < nDims; d++) {
+                    Value vvv;
+                    vvv.type = VAL_ARR;
+                    vvv.v = malloc(sizes[d] * sizeof(Value));
+                    for (int i = 0; i < sizes[d]; i++) {
+                        ((Value*)vvv.v)[i].type = VAL_ARR;
+                        ((Value*)vvv.v)[i].v = malloc(sizes[d - 1] * sizeof(Value));
+                        memcpy(((Value*)vvv.v)[i].v, vv.v, sizes[d - 1] * sizeof(Value));
+                    }
+                    vv = vvv;
+                }
+                // innermost array now becomes the outermost array
+                PUSH(vv);
                 pc += 3;
                 break;
             }
@@ -957,7 +1055,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 break;
             }
             case STORE: {
-                DLOG("reached at store")
+                DLOG("reached at store\n")
                 Value loc = POP(), val = POP();
                 switch(val.type) {
                     case VAL_INT:
@@ -989,14 +1087,34 @@ int execute(uint8_t *code, size_t codeSize) {
     if (top > 0) {
         Value result = POP();
         switch (result.type) {
-            case VAL_INT:    printf("Result: %d\n", result.i); break;
-            case VAL_CHAR:   printf("Result: %c\n", result.c); break;
-            //case VAL_SHORT:  printf("Result: %d\n", result.s); break;
-            //case VAL_LONG:   printf("Result: %lld\n", (long long)result.l); break;
-            case VAL_FLOAT:  printf("Result: %f\n", result.f); break;
-            //case VAL_DOUBLE: printf("Result: %lf\n", result.d); break;
-            case VAL_OBJ:    printf("Result: [object at %p]\n", (void*)result.obj); break;
-            default:         printf("Unknown result type\n"); break;
+            // case VAL_INT:    printf("Result: %d\n", result.i); break;
+            // case VAL_CHAR:   printf("Result: %c\n", result.c); break;
+            // //case VAL_SHORT:  printf("Result: %d\n", result.s); break;
+            // //case VAL_LONG:   printf("Result: %lld\n", (long long)result.l); break;
+            // case VAL_FLOAT:  printf("Result: %f\n", result.f); break;
+            // //case VAL_DOUBLE: printf("Result: %lf\n", result.d); break;
+            // case VAL_OBJ:    printf("Result: [object at %p]\n", (void*)result.obj); break;
+            // default:         printf("Unknown result type\n"); break;
+            case VAL_INT: {
+                printf("Result: %lld\n", *(int64_t*)result.v);
+                free(result.v);
+                break;
+            }
+            case VAL_FLOAT: {
+                printf("Result: %f\n", *(float*)result.v);
+                free(result.v);
+                break;
+            }
+            case VAL_CHAR: {
+                printf("Result: %c\n", *(char*)result.v);
+                free(result.v);
+                break;
+            }
+            case VAL_OBJ: {
+                printf("Result: [object at %p]\n", (void*)result.obj);
+                free(result.v);
+                break;
+            }
         }
     }
     return 0;
