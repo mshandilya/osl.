@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#define DLOG(x...) printf(x);
+
 typedef enum {
     VAL_CHAR,
     VAL_BOOL,
@@ -289,6 +291,7 @@ int execute(uint8_t *code, size_t codeSize) {
             }*/
             
             case PUSH_INT: {
+                DLOG("pushing an int\n")
                 if (pc + 8 >= codeSize) { fprintf(stderr, "Unexpected end (PUSH_INT)\n"); exit(1); }
                 Value v; v.type = VAL_INT;
                 int64_t l = 0;
@@ -900,19 +903,26 @@ int execute(uint8_t *code, size_t codeSize) {
 
             // Array Operations
             case MAKE_ARRAY: {
+                DLOG("reached at make array\n")
                 if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in MAKE_ARRAY\n"); exit(1);}
                 uint16_t nElems = code[pc+1] | (code[pc+2]<<8);
                 Value v;
+                DLOG("%d\n", nElems)
                 v.type = VAL_ARR;
-                v.v = malloc(nElems*sizeof(void*));
+                v.v = malloc(nElems*sizeof(Value*));
+                DLOG("atleast here\n")
                 for(int i = 0; i < nElems; i++) {
-                    ((Value*)v.v)[i] = POP();
+                    ((Value*)(v.v))[i] = POP();
+                    DLOG("pushed an element to array\n")
                 }
+                DLOG("pushed everything to array object\n")
                 PUSH(v);
+                DLOG("pushed the array object to stack\n")
                 pc += 3;
                 break;
             }
             case ARR_ACC: {
+                DLOG("reached at array access\n")
                 Value arr = POP(), ind = POP();
                 if(ind.type != VAL_ARR) { fprintf(stderr, "Unexpected type for array"); exit(1);}
                 if(ind.type != VAL_INT) { fprintf(stderr, "Unexpected type for index"); exit(1);}
@@ -922,6 +932,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 break;
             }
             case MAKE_DECL_ARRAY: {
+                DLOG("reached at make decl array\n")
                 if (pc + 2 >= codeSize) { fprintf(stderr, "Unexpected end in MAKE_DECL_ARRAY\n"); exit(1);}
                 uint16_t nDims = code[pc+1] | (code[pc+2]<<8);
                 Value v;
@@ -939,11 +950,14 @@ int execute(uint8_t *code, size_t codeSize) {
                 break;
             }
             case LOAD: {
+                DLOG("reached at load\n")
                 Value loc = POP();
                 PUSH(*(Value*)loc.v);
+                pc++;
                 break;
             }
             case STORE: {
+                DLOG("reached at store")
                 Value loc = POP(), val = POP();
                 switch(val.type) {
                     case VAL_INT:
