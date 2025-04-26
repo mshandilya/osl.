@@ -2,6 +2,8 @@
 
 namespace typecheck {
 
+    std::unique_ptr<types::Type> defaultRetType = nullptr;
+
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckNext(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
         switch(root->type()) {
             case ast::PROG_AST:
@@ -233,7 +235,7 @@ namespace typecheck {
         }
         children.push_back(typecheckNext(std::move(node->body), node->retType));
 
-        if(expectedReturnType != nullptr and !(*expectedReturnType == *nonRetType) and (children.back()->resultingType == nullptr or !(*(children.back()->resultingType) == *expectedReturnType))) {
+        if(expectedReturnType != nullptr and !(*expectedReturnType == types::Null()) and (children.back()->resultingType == nullptr or !(*(children.back()->resultingType) == *expectedReturnType))) {
             std::cout << "code.osl: \033[31mTypeError\033[0m: The body of a function returning a non-nav value must contain a return statement." << std::endl;
             exit(0);
         }
@@ -535,7 +537,7 @@ namespace typecheck {
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckNull(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
         auto node = dynamic_cast<ast::NullValue*>(root.get());
-        auto ret = std::make_unique<codetree::AtomCTN>(codetree::NULL_CTN, types::Null());
+        auto ret = std::make_unique<codetree::AtomCTN>(codetree::NULL_CTN, std::make_unique<types::Null>());
         ret->setResultingType(types::gtc(*(ret->val)));
         return ret;
     }
@@ -557,7 +559,7 @@ namespace typecheck {
         else {
             lc = std::make_unique<codetree::AtomCTN>(codetree::NULL_CTN, std::make_unique<types::Null>());
         }
-        auto rc = typecheckNext(std::move(node->size));
+        rc = typecheckNext(std::move(node->size));
         if(rc->resultingType->name() == types::ATOM) {
             auto temptype = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
             switch(temptype->atomicName()) {
@@ -597,7 +599,7 @@ namespace typecheck {
         else {
             lc = std::make_unique<codetree::AtomCTN>(codetree::NULL_CTN, std::make_unique<types::Null>());
         }
-        auto rc = typecheckNext(std::move(nnode->size));
+        rc = typecheckNext(std::move(nnode->size));
         if(rc->resultingType->name() == types::ATOM) {
             auto temptype = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
             switch(temptype->atomicName()) {

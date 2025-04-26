@@ -2,6 +2,7 @@
 #include "parser.hpp"
 #include "ast.hpp"
 #include "resolver.hpp"
+#include "typechecker.hpp"
 
 int main(int argc, char* argv[]){
     LOG("starting")
@@ -44,5 +45,7 @@ int main(int argc, char* argv[]){
     std::cout << "Resolution Performed Successfully" << std::endl;
     //ast::vizTree(root, "", true, true);
     LOG("resolution done successfully")
+    typecheck::TypeChecker tc(std::move(root));
+    std::cout << "Typechecking Performed Successfully" << std::endl;
     return 0;
 }

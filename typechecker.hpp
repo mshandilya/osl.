@@ -144,8 +144,7 @@ namespace codetree {
 
 namespace typecheck {
 
-    std::unique_ptr<types::Type> defaultRetType = nullptr;
-    std::unique_ptr<types::Null> nonRetType = std::make_unique<Null>();
+    extern std::unique_ptr<types::Type> defaultRetType;
 
     class TypeChecker {
     public:
