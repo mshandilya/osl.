@@ -154,7 +154,16 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             # print(used_vars)
             # print(closure)
             
+            # Make function bytecode instructions
+            full_code.append(PUSH_INT)
+            full_code.extend(int(entry_point).to_bytes(8, 'little')) # entry point
+            full_code.append(PUSH_INT)
+            full_code.extend(int(body_pos).to_bytes(8, 'little')) # exit point
+            full_code.append(MAKE_FUNC)
+            full_code.append(SET)
+            full_code.extend(int(i).to_bytes(8, 'little'))
 
+            # Make closure bytecode instructions
             ctr = 0
             if make_closure:
                 # traverse the closure and PUSH_INT <ID> for each
@@ -170,14 +179,7 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             full_code.append(PUSH_INT)
             full_code.extend(int(ctr).to_bytes(8, 'little'))
             full_code.append(MAKE_CLOSURE)
-                
-            full_code.append(PUSH_INT)
-            full_code.extend(int(entry_point).to_bytes(8, 'little')) # entry point
-            full_code.append(PUSH_INT)
-            full_code.extend(int(body_pos).to_bytes(8, 'little')) # exit point
-            full_code.append(MAKE_FUNC)
-            full_code.append(SET)
-            full_code.extend(int(i).to_bytes(8, 'little'))
+            
             return
 
         case Arr(arr, size):
