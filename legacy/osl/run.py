@@ -34,6 +34,7 @@ def main():
         start_time = time.time()
         parsed = parse(code)
         rcode = resolve(parsed)
+        pprint(rcode)
         bb = bytearray(codegen(rcode))
         end_time = time.time()
         with open("bytecode.bin", "wb") as bytecode_file:

@@ -456,6 +456,7 @@ def f(a) //
     {
         var y := 10;
         def hh(z){
+            hh(1);
             return z+1;
         }
         def h(d)    // h closes over b(id=6), g(id=5), a(id=3)
@@ -463,18 +464,10 @@ def f(a) //
             var tmp := 8;
             b := tmp;
             var z := b*2;
-            //def tmp(){
-
-            //}
-            return z+a;
+            // return z+a;
             b := b + g(d);
             return a + b + d + hh(x);
         }
-        // def hh(a){
-            
-        // }
-            
-        
         return h;
     }
     return g;

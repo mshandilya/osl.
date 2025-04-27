@@ -71,7 +71,7 @@ LOAD  = 0x96
 MAKE_ARRAY_DECL = 0x97
 
 
-
+used_vars = set()
 full_code = bytearray()
 def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # returns bytearray
     global full_code
@@ -132,33 +132,41 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             full_code.append(JUMP)
             full_code.extend(int(0).to_bytes(4, 'little'))
             entry_point = len(full_code)
+            if make_closure:
+                closure[-1].append(i)
             closure.append([])
             for param in params:
                 full_code.append(SET)
                 full_code.extend(int(param.id).to_bytes(8, 'little'))
                 closure[-1].append(param.id)
-            if make_closure:
-                closure[-1].append(i)
              
             
-            print(closure)
+            # print(closure)
             do_codegen(body, True, closure)
-            print(closure)
+            # print(closure)
             
             body_pos = len(full_code)
             full_code[entry_point - 4: entry_point] = int(body_pos - entry_point).to_bytes(4, 'little')
             
             body_needs = closure.pop()
+            for bn in body_needs:
+                used_vars.add(bn)
+            # print(used_vars)
+            # print(closure)
+            
+
             ctr = 0
             if make_closure:
                 # traverse the closure and PUSH_INT <ID> for each
                 for cl in closure[::-1]:
                     for it in cl:
-                        # if i in body_needs:
-                        full_code.append(PUSH_INT)
-                        full_code.extend(int(it).to_bytes(8, 'little'))
-                        ctr += 1
+                        if it in used_vars:
+                            # print(it, end=" ")
+                            full_code.append(PUSH_INT)
+                            full_code.extend(int(it).to_bytes(8, 'little'))
+                            ctr += 1
                         
+            # print()
             full_code.append(PUSH_INT)
             full_code.extend(int(ctr).to_bytes(8, 'little'))
             full_code.append(MAKE_CLOSURE)
@@ -206,9 +214,6 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             return
         
         case CallFun(_) as F:
-            # full_code.append(PUSH_INT)
-            # full_code.extend(int(0).to_bytes(8, 'little'))  # Return address
-            # i_pos = len(full_code)
             ctr = 1
             while isinstance(F.fn, CallFun):
                 ctr += 1    
