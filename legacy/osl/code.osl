@@ -452,14 +452,14 @@ var x := 5;
 def f(a) //
 {
     var c := 0;
-    def g(b)        // g closes over a(id=3), c(id=4)
+    def g(b)        // g closes over a(id=3), g(id=5)
     {
         var y := 10;
-        def hh(z){
+        def hh(z){      // hh closes over hh(id=8)
             hh(1);
             return z+1;
         }
-        def h(d)    // h closes over b(id=6), g(id=5), a(id=3)
+        def h(d)    // h closes over b(id=6), g(id=5), a(id=3), hh(id=8)
         {
             var tmp := 8;
             b := tmp;
