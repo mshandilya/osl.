@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define DLOG(x...) // printf(x);
+#define DLOG(x...) //printf(x);
 
 typedef enum {
     VAL_CHAR,
@@ -202,18 +202,18 @@ unsigned int callScope = 0, sNodeTail = 0, currentRetAddress = 0;
 typedef struct llNode llNode;
 
 typedef struct closedObject {
-    uint32_t id;
+    int64_t id;
     ValueType type;
     void* location;
 } closedObject;
 
 typedef struct closureObject {
-    uint32_t size;
+    int64_t size;
     closedObject* objs;
 } closureObject;
 
 typedef struct functionObj {
-    uint32_t entry, exit;
+    int64_t entry, exit;
     closureObject* co;
 } functionObj;
 
@@ -262,7 +262,7 @@ void initialize() {
     }
 }
 
-#define STACK_SIZE 4096
+#define STACK_SIZE 1<<16
 
 #define PUSH(v) do { \
     if (top < STACK_SIZE) { \
@@ -452,9 +452,9 @@ int execute(uint8_t *code, size_t codeSize) {
                 for (int j = 0; j < 8; j++) {
                     id |= ((int64_t)code[pc+1+j]) << (8*j);
                 }
-                //printf("set id: %lld\n",id);
+                // printf("bind id: %lld\n",id);
                 Value vv = POP();
-                DLOG("set id: %u\n",id)
+                DLOG("bind id: %u\n",id)
 
                 ValueType t = vv.type;
                 v->v = vv.v;
@@ -470,7 +470,7 @@ int execute(uint8_t *code, size_t codeSize) {
                     sNodeStack[sNodeTail++] = (sNode){id, callScope};
                 }
                 else if(vals.tails[id]->scopeId == callScope) {
-                    fprintf(stderr, "BIND may only be called once on each ID at each call scope\n"); 
+                    fprintf(stderr, "BIND may only be called once on each ID at each call scope at PC = %lld\n", pc); 
                     exit(1); 
                 }
                 else {
@@ -518,8 +518,8 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value entryAddr = POP();
                 functionObj* f = (functionObj*)malloc(sizeof(functionObj));
                 if(entryAddr.type == VAL_INT && exitAddr.type == VAL_INT) {
-                    f->entry = *(uint64_t*)(entryAddr.v);
-                    f->exit = *(uint64_t*)(exitAddr.v);
+                    f->entry = *(int64_t*)(entryAddr.v);
+                    f->exit = *(int64_t*)(exitAddr.v);
                 }
                 else {
                     fprintf(stderr, "Entry and Exit points must be integers\n"); exit(1);
@@ -533,10 +533,12 @@ int execute(uint8_t *code, size_t codeSize) {
             }
 
             case MAKE_CLOSURE: {
+                DLOG("make closure entered\n")
                 Value numIds = POP();
                 closureObject* co = (closureObject*)malloc(sizeof(closureObject));
                 if(numIds.type == VAL_INT) {
-                    co->size = numIds.i;
+                    co->size = *(int64_t*)numIds.v; // fixed this
+                    DLOG("make closure size: %lld\n",co->size)
                     co->objs = (closedObject*)malloc(co->size * sizeof(closedObject));
                     for(int j = 0; j<co->size; j++) {
                         Value id = POP();
@@ -555,6 +557,7 @@ int execute(uint8_t *code, size_t codeSize) {
                     fprintf(stderr, "Closure object count must be integer\n"); exit(1);
                 }
                 Value f = POP();
+                DLOG("Popping function object\n")
                 if(f.type == VAL_FUN) {
                     ((functionObj*)(f.v))->co = co;
                 }
@@ -562,6 +565,9 @@ int execute(uint8_t *code, size_t codeSize) {
                     fprintf(stderr, "Closure object must be tied to a function object on the stack\n"); exit(1);
                 }
                 pc += 1;
+                DLOG("make closure exited\n")
+                break;
+
             }
 
             // Arithmetic Operations
@@ -914,6 +920,8 @@ int execute(uint8_t *code, size_t codeSize) {
                     offset |= ((int32_t)code[pc+1+j]) << (8*j);
                 }
                 Value cond = POP();
+                void* cv = cond.v;
+                DLOG("condition popped: %lld\n", *(int64_t*)cv)
                 pc += 5;
                 if (cond.type == VAL_INT && *(int64_t*)cond.v == 0) {
                     pc += offset;
@@ -931,13 +939,16 @@ int execute(uint8_t *code, size_t codeSize) {
                 break;
             }
             case CALL: {
+                DLOG("call entered\n")
                 Value f = POP();
+
                 if(f.type == VAL_FUN) {
                     int64_t addr = ((functionObj*)(f.v))->entry;
-                    Value ret; ret.type = VAL_INT;
-                    ret.v = malloc(sizeof(int64_t));
-                    *(int64_t*)ret.v = pc + 1;
-                    PUSH(ret);
+                    // Value ret; ret.type = VAL_INT;
+                    // ret.v = malloc(sizeof(int64_t));
+                    // *(int64_t*)ret.v = pc + 1;
+                    // DLOG("return address: %zu\n", *(int64_t*)ret.v)
+                    // PUSH(ret);
                     callScope++;
                     closureObject* co = ((functionObj*)(f.v))->co;
                     for(int j = 0; j < co->size; j++) {
@@ -965,11 +976,13 @@ int execute(uint8_t *code, size_t codeSize) {
                         // else no need to push the id (already there)
                     }
                     callScope++;
+                    pc = addr;
+                    // printf("Called Successfully\n");
                 }
                 else {
                     fprintf(stderr, "Only function objects can be called\n"); exit(1);
                 }
-                pc += 1;
+                DLOG("call exited\n")
                 break;
             }
             case RETURN: {
@@ -980,7 +993,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 // printf("return address: %lld\n",*(int64_t*)returnAddress);
 
                 if (returnAddress.type != VAL_INT) { 
-                    fprintf(stderr, "Invalid global return address type\n"); 
+                    fprintf(stderr, "Invalid return address type\n"); 
                     exit(1); 
                 }
                 // FIXED!
@@ -1028,7 +1041,7 @@ int execute(uint8_t *code, size_t codeSize) {
                     }
                 }
                 callScope--;
-                // void* val = returnValue.v;
+                void* val = returnValue.v;
                 // printf("return val: %lld\n",*(int64_t*)val);
 
                 PUSH(returnValue);
@@ -1161,7 +1174,7 @@ int execute(uint8_t *code, size_t codeSize) {
                 Value arr = POP(), ind = POP();
                 if(arr.type != VAL_ARR) { fprintf(stderr, "Unexpected type for array"); exit(1);}
                 if(ind.type != VAL_INT) { fprintf(stderr, "Unexpected type for index"); exit(1);}
-                uint64_t idx = *((uint64_t*)ind.v);
+                int64_t idx = *((int64_t*)ind.v);
                 PUSH(((Value*)(arr.v))[idx]);
                 pc += 1;
                 break;

@@ -222,17 +222,26 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
         
         case CallFun(_) as F:
             ctr = 1
+            i_pos = []
             while isinstance(F.fn, CallFun):
+                full_code.append(PUSH_INT)
+                full_code.extend(int(0).to_bytes(8, 'little'))
+                i_pos.append(len(full_code))
                 ctr += 1    
                 for arg in F.args[::-1]:
                     e_(arg)
                 F = F.fn
+            full_code.append(PUSH_INT)
+            full_code.extend(int(0).to_bytes(8, 'little'))
+            i_pos.append(len(full_code))
             for arg in F.args[::-1]:
                 e_(arg)
             full_code.append(GET)
             full_code.extend(int(F.fn.id).to_bytes(8, 'little')) # call with ID
-            for _ in range(ctr):
+            i_pos = i_pos[::-1]
+            for i in range(ctr):
                 full_code.append(CALL)
+                full_code[i_pos[i] - 8 : i_pos[i]] = int(len(full_code)).to_bytes(8, 'little')
             if make_closure:
                 closure[-1].append(F.fn.id)
             # full_code[i_pos - 8 : i_pos] = int(len(full_code)).to_bytes(8, 'little')
