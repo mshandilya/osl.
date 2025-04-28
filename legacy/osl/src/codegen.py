@@ -163,6 +163,8 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             full_code.append(MAKE_FUNC)
             full_code.append(SET)
             full_code.extend(int(i).to_bytes(8, 'little'))
+            full_code.append(GET)
+            full_code.extend(int(i).to_bytes(8, 'little'))
 
             # Make closure bytecode instructions
             ctr = 0
