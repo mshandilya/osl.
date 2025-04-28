@@ -179,6 +179,9 @@ namespace typecheck {
         std::unique_ptr<codetree::CodeTreeNode> typecheckDeclType(std::unique_ptr<types::Type>&& node); // can never have declarations
     };
 
+    // The following is a casting utility that allows implicit casting of atomic types
+    types::AtomicType castCopy(types::AtomicType& from, const types::AtomicType& to);
+
 }
 
 #endif
