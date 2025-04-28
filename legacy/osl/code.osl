@@ -485,6 +485,8 @@ def f(a) //
 
 // log fact(5);
 
+
+
 // def counter()
 // {
 //     var count := 0;
@@ -501,3 +503,67 @@ def f(a) //
 // log c1();
 // log c2();
 // log c2();
+
+
+
+
+// def c42(){ // empty closure
+//     return 42;
+// }
+
+// // log c42();
+
+// var c1 := 42;
+
+// def f(g){ // empty closure
+//     var x := 5;
+//     def h(){    // empty closure
+//         return 42;
+//     }
+//     def s(){    // Closure has ids: 4 6 7
+//         return s + g() + c42() + h() + c1;
+//     }
+//     return s;
+// }
+
+// var s1 := f(c42);
+// log s1();
+
+
+
+
+
+// def makeClosure(value) { // Empty closure
+//     def closure() { // Closure has id 2 (value)
+//         log value;
+//     }
+//     return closure;
+// }
+// var doughnut := makeClosure(2);
+// var bagel := makeClosure(3);
+// doughnut();
+// bagel();
+
+
+// var a := 5;
+// {
+//     var a := a;
+//     log a;
+// }
+// log a;
+
+
+
+// This does not work in osl but works in python
+// def f(){
+//     def even(a){
+//         odd(a-1);
+//     }
+//     def odd(a){
+//         return a;
+//     }
+//     return even;
+// }
+
+// var f1 := f;
+// log f1(5);
