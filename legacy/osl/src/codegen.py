@@ -138,7 +138,7 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
                 closure[-1].append(i)
             closure.append([])
             for param in params:
-                full_code.append(SET)
+                full_code.append(BIND)
                 full_code.extend(int(param.id).to_bytes(8, 'little'))
                 closure[-1].append(param.id)
 
@@ -163,7 +163,7 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             full_code.append(PUSH_INT)
             full_code.extend(int(body_pos).to_bytes(8, 'little')) # exit point
             full_code.append(MAKE_FUNC)
-            full_code.append(SET)
+            full_code.append(BIND)
             full_code.extend(int(i).to_bytes(8, 'little'))
             full_code.append(GET)
             full_code.extend(int(i).to_bytes(8, 'little'))
