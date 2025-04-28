@@ -73,7 +73,7 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
             # funObj.env = env
             funObj = FunObj(params, body, None)
             env.add(f"{varName}:{i}", funObj)
-            funObj.env = env
+            funObj.env = env.copy()
             return None
         
         case CallFun(fn, args):
@@ -88,6 +88,7 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
                     call_env.add(f"{param.varName}:{param.id}", arg)
                 
                 rbody = e(fun.body, call_env)
+                fun.env = call_env.copy()
                 return rbody
             else:
                 if isinstance(fn, CallFun):
@@ -101,6 +102,7 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
                         call_env.add(f"{param.varName}:{param.id}", arg)
                     
                     rbody = e(fun.body, call_env)
+                    fun.env = call_env.copy()
                     return rbody
 
         case Arr(arr, size):
