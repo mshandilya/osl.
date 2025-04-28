@@ -70,6 +70,8 @@ LOAD  = 0x96
 
 MAKE_ARRAY_DECL = 0x97
 
+BIND = 0x98
+
 
 used_vars = set()
 full_code = bytearray()
@@ -114,7 +116,7 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
                 e_(e1)
             else:
                 full_code.append(PUSH_NONE)
-            full_code.append(SET)
+            full_code.append(BIND)
             full_code.extend(int(i).to_bytes(8, 'little'))
             if make_closure:
                 closure[-1].append(i)
@@ -214,7 +216,7 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
                 e_(i)
             full_code.append(MAKE_ARRAY_DECL)
             full_code.extend(int(len(indices)).to_bytes(2, 'little'))
-            full_code.append(SET)
+            full_code.append(BIND)
             full_code.extend(int(arr.id).to_bytes(8, 'little'))
             return
         
