@@ -68,9 +68,6 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
 
         case LetFun(Variable(varName, i), params, body):
             # Closure -> Copy of Environment taken along with the declaration!
-            # funObj = FunObj(params, body, None)
-            # env.add(f"{varName}:{i}", funObj)
-            # funObj.env = env
             funObj = FunObj(params, body, None)
             env.add(f"{varName}:{i}", funObj)
             funObj.env = env.copy()
@@ -82,7 +79,7 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
                 rargs = [e_(arg) for arg in args]
                 
                 # use the environment that was copied when the function was defined
-                call_env = fun.env.copy()
+                call_env = fun.env.copy() # some doubt
                 call_env.enter_scope()
                 for param, arg in zip(fun.params, rargs):
                     call_env.add(f"{param.varName}:{param.id}", arg)
@@ -96,7 +93,7 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
                     rargs = [e_(arg) for arg in args]
                     
                     # use the environment that was copied when the function was defined
-                    call_env = fun.env.copy()
+                    call_env = fun.env.copy() # some doubt
                     call_env.enter_scope()
                     for param, arg in zip(fun.params, rargs):
                         call_env.add(f"{param.varName}:{param.id}", arg)
