@@ -80,12 +80,23 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
                 
                 # use the environment that was copied when the function was defined
                 call_env = fun.env.copy() # some doubt
+
+                for envv in env.envs:
+                    for elem in envv:
+                        call_env.soft_update(elem, envv[elem])
+
                 call_env.enter_scope()
                 for param, arg in zip(fun.params, rargs):
                     call_env.add(f"{param.varName}:{param.id}", arg)
                 
                 rbody = e(fun.body, call_env)
+                call_env.exit_scope()
                 fun.env = call_env.copy()
+
+                for envv in call_env.envs:
+                    for elem in envv:
+                        env.soft_update(elem, envv[elem])
+
                 return rbody
             else:
                 if isinstance(fn, CallFun):
@@ -94,12 +105,23 @@ def e(tree: AST, env: Environment = None) -> int | float | bool:
                     
                     # use the environment that was copied when the function was defined
                     call_env = fun.env.copy() # some doubt
+
+                    for envv in env.envs:
+                        for elem in envv:
+                            call_env.soft_update(elem, envv[elem])
+                    
                     call_env.enter_scope()
                     for param, arg in zip(fun.params, rargs):
                         call_env.add(f"{param.varName}:{param.id}", arg)
                     
                     rbody = e(fun.body, call_env)
+                    call_env.exit_scope()
                     fun.env = call_env.copy()
+
+                    for envv in call_env.envs:
+                        for elem in envv:
+                            env.soft_update(elem, envv[elem])
+                            
                     return rbody
 
         case Arr(arr, size):

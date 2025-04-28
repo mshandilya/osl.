@@ -570,42 +570,68 @@
 
 
 
-def make_constant(i) // empty closure
-{
-    def c() // closure has id 2
-    {
-        return i;
-    }
+// def make_constant(i) // empty closure
+// {
+//     def c() // closure has id 2
+//     {
+//         return i;
+//     }
         
-    return c;
-}
+//     return c;
+// }
     
 
-def a(in_k, x1, x2, x3, x4, x5) // empty closure
-{   
-    var k := [in_k];
+// def a(in_k, x1, x2, x3, x4, x5) // empty closure
+// {   
+//     var k := [in_k];
 
-    def b() // closure has ids: 6 7 8 9 11 12
-    {
-        k[0] := k[0] - 1;
-        return a(k[0], b, x1, x2, x3, x4);
-    }
+//     def b() // closure has ids: 6 7 8 9 11 12
+//     {
+//         k[0] := k[0] - 1;
+//         return a(k[0], b, x1, x2, x3, x4);
+//     }
 
-    if k[0] <= 0
-    {
-        return x4() + x5();
-    } 
-    else
-    {
-        b();
-    } 
+//     if k[0] <= 0
+//     {
+//         return x4() + x5();
+//     } 
+//     else
+//     {
+//         b();
+//     } 
     
+// }
+
+// var x1 := make_constant(1);
+// var x2 := make_constant(-1);
+// var x3 := make_constant(-1);
+// var x4 := make_constant(1);
+// var x5 := make_constant(0);
+
+// log a(10, x1, x2, x3, x4, x5);
+
+
+
+var a:= 5;
+def f(){
+    log a;
 }
 
-var x1 := make_constant(1);
-var x2 := make_constant(-1);
-var x3 := make_constant(-1);
-var x4 := make_constant(1);
-var x5 := make_constant(0);
+a := 10;
+f();
+a := 20;
+f();
+a := 30;
+log a;
 
-log a(10, x1, x2, x3, x4, x5);
+
+
+
+// var a:= 5;
+// def f(){
+//     a := 10;
+//     log a;
+// }
+
+// f();
+// log a;

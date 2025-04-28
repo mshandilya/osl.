@@ -63,6 +63,13 @@ class Environment:
                 return
         raise ValueError(f"Variable {var} not defined")
     
+    def soft_update(self, var, val):
+        for env in reversed(self.envs):
+            if var in env:
+                env[var] = val
+                return
+        # env.add(var, val)
+    
     def copy(self):
         new_env = Environment()
         new_env.envs = [dict(scope) for scope in self.envs]
