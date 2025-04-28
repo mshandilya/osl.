@@ -139,10 +139,11 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
                 full_code.append(SET)
                 full_code.extend(int(param.id).to_bytes(8, 'little'))
                 closure[-1].append(param.id)
-             
-            
+
             # print(closure)
             do_codegen(body, True, closure)
+            # print("##################") 
+            # print(i)
             # print(closure)
             
             body_pos = len(full_code)
