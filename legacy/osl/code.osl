@@ -448,30 +448,30 @@
 // }
 // F();
 
-var x := 5;
-def f(a) //
-{
-    var c := 0;
-    def g(b)        // g closes over a(id=3), g(id=5)
-    {
-        var y := 10;
-        def hh(z){      // hh closes over hh(id=8)
-            hh(1);
-            return z+1;
-        }
-        def h(d)    // h closes over b(id=6), g(id=5), a(id=3), hh(id=8)
-        {
-            var tmp := 8;
-            b := tmp;
-            var z := b*2;
-            // return z+a;
-            b := b + g(d);
-            return a + b + d + hh(x);
-        }
-        return h;
-    }
-    return g;
-}
+// var x := 5;
+// def f(a) //
+// {
+//     var c := 0;
+//     def g(b)        // g closes over a(id=3), g(id=5)
+//     {
+//         var y := 10;
+//         def hh(z){      // hh closes over hh(id=8)
+//             hh(1);
+//             return z+1;
+//         }
+//         def h(d)    // h closes over b(id=6), g(id=5), a(id=3), hh(id=8)
+//         {
+//             var tmp := 8;
+//             b := tmp;
+//             var z := b*2;
+//             // return z+a;
+//             b := b + g(d);
+//             return a + b + d + hh(x);
+//         }
+//         return h;
+//     }
+//     return g;
+// }
 // var t := f(10)(5)(3);
 // log t;
 
@@ -567,3 +567,45 @@ def f(a) //
 
 // var f1 := f;
 // log f1(5);
+
+
+
+def make_constant(i) // empty closure
+{
+    def c() // closure has id 2
+    {
+        return i;
+    }
+        
+    return c;
+}
+    
+
+def a(in_k, x1, x2, x3, x4, x5) // empty closure
+{   
+    var k := [in_k];
+
+    def b() // closure has ids: 6 7 8 9 11 12
+    {
+        k[0] := k[0] - 1;
+        return a(k[0], b, x1, x2, x3, x4);
+    }
+
+    if k[0] <= 0
+    {
+        return x4() + x5();
+    } 
+    else
+    {
+        b();
+    } 
+    
+}
+
+var x1 := make_constant(1);
+var x2 := make_constant(-1);
+var x3 := make_constant(-1);
+var x4 := make_constant(1);
+var x5 := make_constant(0);
+
+log a(10, x1, x2, x3, x4, x5);
