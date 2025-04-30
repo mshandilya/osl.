@@ -18,3 +18,12 @@ To execute the bytocode using C VM:
 ```bash
 ./rosl <path_to_bytecode_file>
 ```
+
+
+# Coverage report
+To generate the coverage report, run:
+```bash
+~/Desktop/osl./legacy/osl$ coverage run --include="src/codegen.py,src/visualizer.py,src/osl_lexer.py,src/osl_parser.py" run.py -c
+
+coverage html
+```
