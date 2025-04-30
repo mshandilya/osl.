@@ -147,7 +147,7 @@ def do_codegen(tree: AST, make_closure: bool = False, closure: List = None):  # 
             # print("##################") 
             # print(i)
             # print(closure)
-            
+            full_code.append(RETURN)
             body_pos = len(full_code)
             full_code[entry_point - 4: entry_point] = int(body_pos - entry_point).to_bytes(4, 'little')
             

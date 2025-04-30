@@ -986,65 +986,68 @@ int execute(uint8_t *code, size_t codeSize) {
                 break;
             }
             case RETURN: {
-                if (top < 2) { fprintf(stderr, "Stack underflow on RETURN\n"); exit(1); }
-                Value returnValue = POP();
-                Value returnAddress = POP();
-                // void* returnAddress = globalReturnAddress.v;
-                // printf("return address: %lld\n",*(int64_t*)returnAddress);
+                if (top < 1) { 
+                    fprintf(stderr, "Stack underflow on RETURN\n"); 
+                    exit(1); 
+                }
+
+                Value returnAddress;
+                Value returnValue;
+
+                if (top == 1) {
+                    returnAddress = POP();
+                } else {
+                    returnValue = POP();
+                    returnAddress = POP();
+                    PUSH(returnValue);
+                }
 
                 if (returnAddress.type != VAL_INT) { 
                     fprintf(stderr, "Invalid return address type\n"); 
                     exit(1); 
                 }
-                // FIXED!
-                while (sNodeTail > 0 && sNodeStack[sNodeTail - 1].scopeId == callScope) {
-                    unsigned int id = sNodeStack[--sNodeTail].id;
-                    if (vals.tails[id] != NULL) {
-                        llNode* temp = vals.tails[id];
-                        vals.tails[id] = vals.tails[id]->prev;
-                        if(vals.tails[id]==NULL) {
-                            // reached head
-                            vals.heads[id] = NULL;
-                        }
-                        else {
-                            vals.tails[id]->next = NULL;
-                        }
-                        if(temp->isClosed) {
-                            free(temp);
-                        }
-                        else {
-                            free(temp->location);
-                            free(temp);
-                        }
-                    }
-                }
-                callScope--;
-                while (sNodeTail > 0 && sNodeStack[sNodeTail - 1].scopeId == callScope) {
-                    unsigned int id = sNodeStack[--sNodeTail].id;
-                    if (vals.tails[id] != NULL) {
-                        llNode* temp = vals.tails[id];
-                        vals.tails[id] = vals.tails[id]->prev;
-                        if(vals.tails[id]==NULL) {
-                            // reached head
-                            vals.heads[id] = NULL;
-                        }
-                        else {
-                            vals.tails[id]->next = NULL;
-                        }
-                        if(temp->isClosed) {
-                            free(temp);
-                        }
-                        else {
-                            free(temp->location);
-                            free(temp);
-                        }
-                    }
-                }
-                callScope--;
-                void* val = returnValue.v;
-                // printf("return val: %lld\n",*(int64_t*)val);
 
-                PUSH(returnValue);
+                while (sNodeTail > 0 && sNodeStack[sNodeTail - 1].scopeId == callScope) {
+                    unsigned int id = sNodeStack[--sNodeTail].id;
+                    if (vals.tails[id] != NULL) {
+                        llNode* temp = vals.tails[id];
+                        vals.tails[id] = vals.tails[id]->prev;
+                        if (vals.tails[id] == NULL) {
+                            vals.heads[id] = NULL;
+                        } else {
+                            vals.tails[id]->next = NULL;
+                        }
+                        if (temp->isClosed) {
+                            free(temp);
+                        } else {
+                            free(temp->location);
+                            free(temp);
+                        }
+                    }
+                }
+
+                callScope--;
+
+                while (sNodeTail > 0 && sNodeStack[sNodeTail - 1].scopeId == callScope) {
+                    unsigned int id = sNodeStack[--sNodeTail].id;
+                    if (vals.tails[id] != NULL) {
+                        llNode* temp = vals.tails[id];
+                        vals.tails[id] = vals.tails[id]->prev;
+                        if (vals.tails[id] == NULL) {
+                            vals.heads[id] = NULL;
+                        } else {
+                            vals.tails[id]->next = NULL;
+                        }
+                        if (temp->isClosed) {
+                            free(temp);
+                        } else {
+                            free(temp->location);
+                            free(temp);
+                        }
+                    }
+                }
+
+                callScope--;
 
                 pc = *(int64_t*)returnAddress.v;
                 DLOG("return to %zu\n", pc)
