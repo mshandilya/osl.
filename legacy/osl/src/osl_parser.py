@@ -203,9 +203,9 @@ def parse(s: str) -> AST:
         ast = parse_unary()
         while True:
             match peek():
-                case OperatorToken('^'):
-                    consume()
-                    ast = BinOp("^", ast, parse_exponentiation())
+                # case OperatorToken('^'):
+                #     consume()
+                #     ast = BinOp("^", ast, parse_exponentiation())
                 case _:
                     return ast
 
