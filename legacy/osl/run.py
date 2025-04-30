@@ -25,10 +25,19 @@ def main():
         action="store_true", 
         help="Display time taken for compilation or evaluation"
     )
+    parser.add_argument(
+        "filename", 
+        type=str, 
+        help="Path to the input OSL code file"
+    )
     args = parser.parse_args()
 
-    with open("code.osl") as f:
-        code = f.read()
+    try:
+        with open(args.filename) as f:
+            code = f.read()
+    except FileNotFoundError:
+        print(f"Error: File '{args.filename}' not found.")
+        sys.exit(1)
 
     if args.compile:
         start_time = time.time()
