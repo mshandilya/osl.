@@ -1,0 +1,19 @@
+def gcd(a, b) {
+    while (b != 0) {
+        var temp := b;
+        b := a % b;
+        a := temp;
+    }
+    return a;
+}
+def lcm(a, b) {
+    return a * b / gcd(a, b);
+}
+def F(n, i) {
+    while (i > 1) {
+        n := lcm(n, i - 1);
+        i := i - 1;
+    }
+    return n;
+}
+log F(1, 20);

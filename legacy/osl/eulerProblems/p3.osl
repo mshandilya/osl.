@@ -1,0 +1,12 @@
+def prime(n, i) {
+    while (i * i <= n) {
+        if (n % i = 0) {
+            n := n / i;
+        } else {
+            i := i + 1;
+        }
+    }
+    return n;
+}
+var n := 600851475143;
+log prime(n, 2);

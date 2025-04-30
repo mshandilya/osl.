@@ -1,5 +1,6 @@
-var i32 x := 40;
-var #i32 ptr := #x;
-var #i32 y := #x;
-var ##i32 ptrr := #y;
-var i32 copy := @(@ptrr);
+var u32 x := 47680678;
+var #u32 ptr := #x;
+const c8 k := 'a';
+var #u32 y := #x;
+var ##u32 ptrr := #y;
+var u32 copy := @(@ptrr);

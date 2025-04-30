@@ -1,0 +1,27 @@
+def isPal(n) {
+    var rev := 0;
+    var nn := n;
+    while (n > 0)
+    {
+        rev := rev * 10 + n % 10;
+        n := n / 10;
+    }
+    return rev=nn;
+}
+
+var maxPal := 0;
+var i := 999;
+var j;
+var prod;
+while (i >= 1) {
+    j := i;
+    while (j >= 1) {
+        prod := i * j;
+        if ((prod > maxPal) && (isPal(prod))) {
+            maxPal := prod;
+        }
+        j := j - 1;
+    }
+    i := i - 1;
+}
+log maxPal;

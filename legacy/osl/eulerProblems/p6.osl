@@ -1,0 +1,9 @@
+def F(n, sum, sumSq) {
+    while (n > 0) {
+        sum := sum + n;
+        sumSq := sumSq + n * n;
+        n := n - 1;
+    }
+    return sum * sum - sumSq;
+}
+log F(100, 0, 0);

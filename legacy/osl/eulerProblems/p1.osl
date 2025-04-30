@@ -1,0 +1,10 @@
+def F(x, s) {
+    while (x < 1000) {
+        if (x % 3 = 0 || x % 5 = 0) {
+            s := s + x;
+        }
+        x := x + 1;
+    }
+    return s;
+}
+log F(0, 0);
