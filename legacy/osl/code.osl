@@ -620,30 +620,41 @@
 // log x5();
 // // log a(10, x1, x2, x3, x4, x5);
 
-def isPal(n) {
-    var rev := 0;
-    var nn := n;
-    while (n > 0)
-    {
-        rev := rev * 10 + n % 10;
-        n := n / 10;
-    }
-    return rev=nn;
-}
+// def isPal(n) {
+//     var rev := 0;
+//     var nn := n;
+//     while (n > 0)
+//     {
+//         rev := rev * 10 + n % 10;
+//         n := n / 10;
+//     }
+//     return rev=nn;
+// }
 
-var maxPal := 0;
-var i := 999;
-var j;
-var prod;
-while (i >= 1) {
-    j := i;
-    while (j >= 1) {
-        prod := i * j;
-        if ((prod > maxPal) && (isPal(prod))) {
-            maxPal := prod;
-        }
-        j := j - 1;
+// var maxPal := 0;
+// var i := 999;
+// var j;
+// var prod;
+// while (i >= 1) {
+//     j := i;
+//     while (j >= 1) {
+//         prod := i * j;
+//         if ((prod > maxPal) && (isPal(prod))) {
+//             maxPal := prod;
+//         }
+//         j := j - 1;
+//     }
+//     i := i - 1;
+// }
+// log maxPal;
+
+def foo(y)
+{
+    var x := 3;
+    def bar(z)
+    {
+        return x + y + z;
     }
-    i := i - 1;
+    return bar;
 }
-log maxPal;
+log foo(1)(5);
