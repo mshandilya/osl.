@@ -15,7 +15,7 @@ def parse_bytecode(bytecode: bytearray):
         0x70: ("NEW_OBJECT", 1), 0x71: ("GET_FIELD", 1), 0x72: ("SET_FIELD", 1),
         0x16: ("SET", 8), 0x15: ("GET", 8),
         0x90: ("LOG", 0), 0x91: ("MAKE_FUNC", 0), 0x92: ("MAKE_CLOSURE", 0), 0x93: ("MAKE_ARRAY", 2), 0x94: ("ARRACC", 0),
-        0x95: ("STORE", 0), 0x96: ("LOAD", 0), 0x97: ("MAKE_ARRAY_DECL", 2)
+        0x95: ("STORE", 0), 0x96: ("LOAD", 0), 0x97: ("MAKE_ARRAY_DECL", 2), 0x98: ("BIND", 8)
     }
     
     index = 0

@@ -280,7 +280,7 @@
 //         maxPal := prod;
 //     return F(i, j - 1, maxPal);
 // }
-// F(999, 999, 0);
+// log F(999, 999, 0);
 
 // def find_nth_prime()
 // {
@@ -419,7 +419,7 @@
 //     return fib(n - 1) + fib(n - 2);
 // }
 
-// log fib(35);
+// log fib(10);
 
 // var x := 5;
 // def F(a)
@@ -501,6 +501,8 @@
 // var c1 := counter();
 // var c2 := counter();
 // log c1();
+// log c1();
+// log c1();
 // log c2();
 // log c2();
 
@@ -521,7 +523,7 @@
 //         return 42;
 //     }
 //     def s(){    // Closure has ids: 4 6 7
-//         return s + g() + c42() + h() + c1;
+//         return x + g() + c42() + h() + c1;
 //     }
 //     return s;
 // }
@@ -556,56 +558,103 @@
 
 // This does not work in osl but works in python
 // def f(){
-//     def even(a){
-//         odd(a-1);
-//     }
 //     def odd(a){
 //         return a;
+//     }
+//     def even(a){
+//         return odd(a-1);
 //     }
 //     return even;
 // }
 
-// var f1 := f;
+// var f1 := f();
 // log f1(5);
 
 
 
-def make_constant(i) // empty closure
-{
-    def c() // closure has id 2
-    {
-        return i;
-    }
+// def make_constant(i) // empty closure
+// {
+//     def c() // closure has id 2
+//     {
+//         return i;
+//     }
         
-    return c;
-}
+//     return c;
+// }
     
 
-def a(in_k, x1, x2, x3, x4, x5) // empty closure
-{   
-    var k := [in_k];
+// def a(in_k, x1, x2, x3, x4, x5) // empty closure
+// {   
+//     var k := [in_k];
 
-    def b() // closure has ids: 6 7 8 9 11 12
+//     def b() // closure has ids: 6 7 8 9 11 12
+//     {
+//         k[0] := k[0] - 1;
+//         return a(k[0], b, x1, x2, x3, x4);
+//     }
+//     log k[0];
+
+//     if k[0] <= 0
+//     {
+//         return x4() + x5();
+//     } 
+//     else
+//     {
+//         b();
+//     } 
+    
+// }
+
+// var x1 := make_constant(1);
+// var x2 := make_constant(-1);
+// var x3 := make_constant(-1);
+// var x4 := make_constant(1);
+// var x5 := make_constant(0);
+
+// log x1();
+// log x2();
+// log x1();
+// log x3();
+// log x4();
+// log x2();
+// log x5();
+// // log a(10, x1, x2, x3, x4, x5);
+
+// def isPal(n) {
+//     var rev := 0;
+//     var nn := n;
+//     while (n > 0)
+//     {
+//         rev := rev * 10 + n % 10;
+//         n := n / 10;
+//     }
+//     return rev=nn;
+// }
+
+// var maxPal := 0;
+// var i := 999;
+// var j;
+// var prod;
+// while (i >= 1) {
+//     j := i;
+//     while (j >= 1) {
+//         prod := i * j;
+//         if ((prod > maxPal) && (isPal(prod))) {
+//             maxPal := prod;
+//         }
+//         j := j - 1;
+//     }
+//     i := i - 1;
+// }
+// log maxPal;
+
+def foo(y)
+{
+    var x := 3;
+    def bar(z)
     {
-        k[0] := k[0] - 1;
-        return a(k[0], b, x1, x2, x3, x4);
+        return x + y + z;
     }
-
-    if k[0] <= 0
-    {
-        return x4() + x5();
-    } 
-    else
-    {
-        b();
-    } 
-    
+    return bar;
 }
-
-var x1 := make_constant(1);
-var x2 := make_constant(-1);
-var x3 := make_constant(-1);
-var x4 := make_constant(1);
-var x5 := make_constant(0);
-
-log a(10, x1, x2, x3, x4, x5);
+log foo(1)(5);

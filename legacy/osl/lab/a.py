@@ -1,22 +1,22 @@
-import dis
+def is_palindrome(n):
+    rev = 0
+    nn = n
+    while n > 0:
+        rev = rev * 10 + n % 10
+        n //= 10
+    return rev == nn
 
-# def counter():
-#     c = 0
-#     def inner():
-#         nonlocal c
-#         c += 1
-#         return c
-#     return inner
+def F():
+    max_pal = 0
+    i = 999
+    while i >= 100:
+        j = i
+        while j >= 100:
+            prod = i * j
+            if prod > max_pal and is_palindrome(prod):
+                max_pal = prod
+            j -= 1
+        i -= 1
+    return max_pal
 
-# print(dis.dis(counter))
-# print(dis.dis(counter()))
-# print(counter.__closure__)
-
-def f(a):
-    def g(b):
-        def h(c):
-            return a + b + c
-        return h
-    return g
-
-print(dis.dis(f))
+F()

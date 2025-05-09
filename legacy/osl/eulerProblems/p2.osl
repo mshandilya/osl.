@@ -1,0 +1,12 @@
+def fib(a, b, s) {
+    while (a < 4000000) {
+        if (a % 2 = 0) {
+            s := s + a;
+        }
+        var temp := a;
+        a := b;
+        b := temp + b;
+    }
+    return s;
+}
+log fib(0, 1, 0);

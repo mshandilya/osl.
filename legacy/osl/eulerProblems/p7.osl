@@ -1,0 +1,48 @@
+def find_nth_prime(n)
+{
+    var limit := 150000;
+    var is_prime[limit + 1];
+    
+    var i := 0;
+    var j;
+    
+    while (i < limit + 1) 
+    {
+        is_prime[i] := 1;
+        i := i + 1;
+    }
+    
+    is_prime[0] := 0;
+    is_prime[1] := 0;
+    
+    i := 2;
+    while (i * i <= limit)
+    {
+        if (is_prime[i])
+        {
+            j := i * i;
+            while (j <= limit)
+            {
+                is_prime[j] := 0;
+                j := j + i;
+            }       
+        }
+        i := i + 1;
+    }
+    
+    var count := 0;
+    var num := 2;
+    while (num <= limit)
+    {
+        if (is_prime[num])
+        {
+            count := count + 1;
+            if (count = n) return num;
+        }
+        num := num + 1;
+    }
+    return -1;   
+}
+
+var n := 10001;
+log find_nth_prime(n);

@@ -184,28 +184,18 @@ def parse(s: str) -> AST:
                     return ast
  
     def parse_mul():
-        ast = parse_exponentiation()
+        ast = parse_unary()
         while True:
             match peek():
                 case OperatorToken('*'):
                     consume()
-                    ast = BinOp("*", ast, parse_exponentiation())
+                    ast = BinOp("*", ast, parse_unary())
                 case OperatorToken('/'):
                     consume()
-                    ast = BinOp("/", ast, parse_exponentiation())
+                    ast = BinOp("/", ast, parse_unary())
                 case OperatorToken("%"):
                     consume()
-                    ast = BinOp("%", ast, parse_exponentiation())
-                case _:
-                    return ast
-
-    def parse_exponentiation():
-        ast = parse_unary()
-        while True:
-            match peek():
-                case OperatorToken('^'):
-                    consume()
-                    ast = BinOp("^", ast, parse_exponentiation())
+                    ast = BinOp("%", ast, parse_unary())
                 case _:
                     return ast
 

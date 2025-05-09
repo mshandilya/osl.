@@ -155,7 +155,12 @@ maxPal;
 t1 = run_test(exp4, 906609, "Problem 4")
 
 def is_palindrome(n):
-    return str(n) == str(n)[::-1]
+    rev = 0
+    nn = n
+    while n > 0:
+        rev = rev * 10 + n % 10
+        n //= 10
+    return rev == nn
 
 def F():
     max_pal = 0
