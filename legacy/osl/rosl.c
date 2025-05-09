@@ -562,6 +562,7 @@ int execute(uint8_t *code, size_t codeSize) {
                     fprintf(stderr, "Closure object must be tied to a function object on the stack\n"); exit(1);
                 }
                 pc += 1;
+                break;
             }
 
             // Arithmetic Operations
@@ -965,11 +966,11 @@ int execute(uint8_t *code, size_t codeSize) {
                         // else no need to push the id (already there)
                     }
                     callScope++;
+                    pc = addr;
                 }
                 else {
                     fprintf(stderr, "Only function objects can be called\n"); exit(1);
                 }
-                pc += 1;
                 break;
             }
             case RETURN: {
