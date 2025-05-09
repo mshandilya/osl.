@@ -1,7 +1,10 @@
-var i32 x := 40;
-var #i32 ptr := #x;
+var u32 x := 47680678 + 47680678; 
+// var #u32 ptr := #x;
 const c8 k := 'a';
-var #i32 y := #x;
-var i32[2][4] p := {{3, 4, 5, 6}, {3, 1, 5, 2}};
-var ##i32 ptrr := #y;
-var i32 copy := @(@ptrr);
+var #u32 y := #x;
+def i32 c(i32 x) {
+    log x;
+}
+// var u32[2][4] p := {{3, 4, 5, 6}, {3, 1, 5, 2}};
+// var ##u32 ptrr := #y;
+// var u32 copy := @(@ptrr);

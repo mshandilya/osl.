@@ -5,6 +5,7 @@ namespace typecheck {
     std::unique_ptr<types::Type> defaultRetType = nullptr;
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckNext(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
+        // std::cout<<"Deciding next typecheck"<<std::endl;
         switch(root->type()) {
             case ast::PROG_AST:
                 return typecheckProg(std::move(root), expectedReturnType);
@@ -207,8 +208,7 @@ namespace typecheck {
         auto node = dynamic_cast<ast::Log*>(root.get());
         auto child = typecheckNext(std::move(node->val));
         
-        // child's type must be that of the function's return type
-        if(child->resultingType->name() == types::ATOM) {
+        if(child->resultingType->name() != types::ATOM) {
             std::cout << "code.osl: \033[31mTypeError\033[0m: Only atomic types are allowed to be logged." << std::endl;
             exit(0);
         }
@@ -323,7 +323,3951 @@ namespace typecheck {
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckBinOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
-
+        // std::cout<<"Entering Binary Operation"<<std::endl;
+        auto node = dynamic_cast<ast::BinaryOperator*>(root.get());
+        switch(node->op) {
+            case ast::GT_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                            exit(0);
+                    }
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::RGT_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::make_unique<types::Boolean>());
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::GEQ_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                            exit(0);
+                    }
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::RGEQ_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::make_unique<types::Boolean>());
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::LT_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                            exit(0);
+                    }
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::RLT_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::make_unique<types::Boolean>());
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::LEQ_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                            exit(0);
+                    }
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::RLEQ_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::make_unique<types::Boolean>());
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::NEQ_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(*(lc->resultingType) == *(rc->resultingType)) {
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::RNEQ_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::make_unique<types::Boolean>());
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::EQ_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(*(lc->resultingType) == *(rc->resultingType)) {
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::REQ_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::make_unique<types::Boolean>());
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary relational comparator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::MUL_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::AMUL_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::ADD_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                // std::cout<<"Typechecked children for addition"<<std::endl;
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            // std::cout<<"\tLeft type deduced as u32"<<std::endl;
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    // std::cout<<"\tRight type deduced as u32 as well"<<std::endl;
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::AADD_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::DIV_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::ADIV_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::SUB_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::ASUB_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::POW_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::APOW_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::MOD_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::AMOD_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary arithmetic operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::OR_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::BOOL: {
+                            switch(atr->atomicName()) {
+                                case types::BOOL: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeMismatch\033[0m: Logical operator may only be applied to boolean values." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            auto retType = types::gtc(*(lc->resultingType));
+                            auto ret = std::make_unique<codetree::BinaryCTN>(codetree::LOR_CTN, std::move(lc), std::move(rc));
+                            ret->setResultingType(std::move(retType));
+                            return ret;
+                            break;
+                        }
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded OR operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::BOR_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded OR operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::AND_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::BOOL: {
+                            switch(atr->atomicName()) {
+                                case types::BOOL: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeMismatch\033[0m: Logical operator may only be applied to boolean values." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            auto retType = types::gtc(*(lc->resultingType));
+                            auto ret = std::make_unique<codetree::BinaryCTN>(codetree::LAND_CTN, std::move(lc), std::move(rc));
+                            ret->setResultingType(std::move(retType));
+                            return ret;
+                            break;
+                        }
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded AND operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::BAND_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded AND operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::XOR_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::BOOL: {
+                            switch(atr->atomicName()) {
+                                case types::BOOL: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeMismatch\033[0m: Logical operator may only be applied to boolean values." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            auto retType = types::gtc(*(lc->resultingType));
+                            auto ret = std::make_unique<codetree::BinaryCTN>(codetree::LXOR_CTN, std::move(lc), std::move(rc));
+                            ret->setResultingType(std::move(retType));
+                            return ret;
+                            break;
+                        }
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded XOR operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::BXOR_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded XOR operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::XAND_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::BOOL: {
+                            switch(atr->atomicName()) {
+                                case types::BOOL: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeMismatch\033[0m: Logical operator may only be applied to boolean values." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            auto retType = types::gtc(*(lc->resultingType));
+                            auto ret = std::make_unique<codetree::BinaryCTN>(codetree::LXAND_CTN, std::move(lc), std::move(rc));
+                            ret->setResultingType(std::move(retType));
+                            return ret;
+                            break;
+                        }
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Bitwise operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded XAND operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::BXAND_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Overloaded XAND operator may only be applied to numerical values of same/compatible types or to boolean values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::LSHIFT_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::BLSHFT_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::RSHIFT_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ATOM and rc->resultingType->name() == types::ATOM) {
+                    auto atl = dynamic_cast<types::AtomicType*>(lc->resultingType.get());
+                    auto atr = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                    switch(atl->atomicName()) {
+                        case types::NUM: {
+                            switch(atr->atomicName()) {
+                                case types::NUM: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT: {
+                            switch(atr->atomicName()) {
+                                case types::INT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_8: {
+                            switch(atr->atomicName()) {
+                                case types::INT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_16: {
+                            switch(atr->atomicName()) {
+                                case types::INT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_32: {
+                            switch(atr->atomicName()) {
+                                case types::INT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_64: {
+                            switch(atr->atomicName()) {
+                                case types::INT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::INT_128: {
+                            switch(atr->atomicName()) {
+                                case types::INT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT: {
+                            switch(atr->atomicName()) {
+                                case types::UINT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_8: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_8: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_16: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_32: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_64: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::UINT_128: {
+                            switch(atr->atomicName()) {
+                                case types::UINT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_16: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_16: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_32: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_32: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_64: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_64: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        case types::FLOAT_128: {
+                            switch(atr->atomicName()) {
+                                case types::FLOAT_128: {
+                                    break;
+                                }
+                                default: {
+                                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                                    exit(0);
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values of same/compatible types." << std::endl;
+                            exit(0);
+                    }
+                    auto retType = types::gtc(*(lc->resultingType));
+                    auto ret = std::make_unique<codetree::BinaryCTN>(codetree::BRSHFT_CTN, std::move(lc), std::move(rc));
+                    ret->setResultingType(std::move(retType));
+                    return ret;
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Binary bitwise shift operator may only be applied to numerical values." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+            case ast::ARRACC_OP: {
+                auto lc = typecheckNext(std::move(node->leftChild), expectedReturnType);
+                auto rc = typecheckNext(std::move(node->rightChild), expectedReturnType);
+                if(lc->resultingType->name() == types::ARR) {
+                    auto retType = types::gtc(*(dynamic_cast<types::ArrayType*>(lc->resultingType.get())->underlyingType));
+                    if(rc->resultingType->name() == types::ATOM) {
+                        auto at = dynamic_cast<types::AtomicType*>(rc->resultingType.get());
+                        switch(at->atomicName()) {
+                            case types::NUM:
+                            case types::INT:
+                            case types::INT_8:
+                            case types::INT_16:
+                            case types::INT_32:
+                            case types::INT_64:
+                            case types::INT_128:
+                            case types::UINT:
+                            case types::UINT_8:
+                            case types::UINT_16:
+                            case types::UINT_32:
+                            case types::UINT_64:
+                            case types::UINT_128: {
+                                auto ret = std::make_unique<codetree::BinaryCTN>(codetree::ARRGET_CTN, std::move(lc), std::move(rc));
+                                ret->setResultingType(std::move(retType));
+                                return ret;
+                                break;
+                            }
+                            default:
+                                std::cout << "code.osl: \033[31mTypeError\033[0m: Array access index must be an integer." << std::endl;
+                                exit(0);
+                        }
+                    }
+                    else {
+                        std::cout << "code.osl: \033[31mTypeError\033[0m: Array access index must be an integer." << std::endl;
+                        exit(0);
+                    }
+                }
+                else {
+                    std::cout << "code.osl: \033[31mTypeError\033[0m: Array Accesses must occur on valid arrays." << std::endl;
+                    exit(0);
+                }
+                break;
+            }
+        }
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckUnOp(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
@@ -525,9 +4469,11 @@ namespace typecheck {
     }
 
     std::unique_ptr<codetree::CodeTreeNode> TypeChecker::typecheckChar(std::unique_ptr<ast::ASTNode>&& root, std::unique_ptr<types::Type>& expectedReturnType) {
+        // std::cout<<"Got character type"<<std::endl;
         auto node = dynamic_cast<ast::CharValue*>(root.get());
         auto ret = std::make_unique<codetree::AtomCTN>(codetree::CHAR_CTN, std::move(node->val));
         ret->setResultingType(types::gtc(*(ret->val)));
+        // std::cout<<ret->resultingType->name()<<" "<<(dynamic_cast<types::AtomicType*>(ret->resultingType.get()))->atomicName()<<std::endl;
         return ret;
     }
 

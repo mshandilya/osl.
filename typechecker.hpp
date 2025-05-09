@@ -10,11 +10,11 @@ namespace codetree {
         RET_CTN,    //      // Done
         LOG_CTN,    //      // Done
         GET_CTN,    //
-        ANEG_CTN,   //
-        BNOT_CTN,   //
-        LNOT_CTN,   //
-        PTRREF_CTN, //
-        PTRAT_CTN,   //
+        ANEG_CTN,   //      // Done
+        BNOT_CTN,   //      // Done
+        LNOT_CTN,   //      // Done
+        PTRREF_CTN, //      // Done
+        PTRAT_CTN,   //     // Done
         UTS_CTN,    //
         STU_CTN,    //
         ITF_CTN,    //
@@ -26,35 +26,35 @@ namespace codetree {
     enum BinaryOperation {
         LOOP_CTN,   //      // Done
         PCOND_CTN,  //      // Done
-        DMKARR_CTN, //
+        DMKARR_CTN, //      // Done
         SET_CTN,    //
         SETASS_CTN, //      // Done
         BIND_CTN,   //
         APAD_CTN,   //
         LPAD_CTN,   //      
-        AADD_CTN,   //      // Kris
-        ASUB_CTN,   //      // Kris
-        AMUL_CTN,   //      // Kris
-        ADIV_CTN,   //      // Kris
-        AMOD_CTN,   //      // Kris
-        APOW_CTN,   //      // Kris
-        BOR_CTN,    //      // Kris
-        BAND_CTN,   //      // Kris
-        BXOR_CTN,   //      // Kris
-        BXAND_CTN,  //      // Kris
-        BLSHFT_CTN, //      // Kris
-        BRSHFT_CTN, //      // Kris
-        LOR_CTN,    //      // Kris
-        LAND_CTN,   //      // Kris
-        LXOR_CTN,   //      // Kris
-        LXAND_CTN,  //      // Kris
-        RNEQ_CTN,   //      // Kris
-        REQ_CTN,    //      // Kris
-        RGT_CTN,    //      // Kris
-        RLT_CTN,    //      // Kris
-        RGEQ_CTN,   //      // Kris
-        RLEQ_CTN,   //      // Kris
-        ARRGET_CTN, //      // Kris
+        AADD_CTN,   //      // Done
+        ASUB_CTN,   //      // Done
+        AMUL_CTN,   //      // Done
+        ADIV_CTN,   //      // Done
+        AMOD_CTN,   //      // Done
+        APOW_CTN,   //      // Done
+        BOR_CTN,    //      // Done
+        BAND_CTN,   //      // Done
+        BXOR_CTN,   //      // Done
+        BXAND_CTN,  //      // Done
+        BLSHFT_CTN, //      // Done
+        BRSHFT_CTN, //      // Done
+        LOR_CTN,    //      // Done
+        LAND_CTN,   //      // Done
+        LXOR_CTN,   //      // Done
+        LXAND_CTN,  //      // Done
+        RNEQ_CTN,   //      // Done
+        REQ_CTN,    //      // Done
+        RGT_CTN,    //      // Done
+        RLT_CTN,    //      // Done
+        RGEQ_CTN,   //      // Done
+        RLEQ_CTN,   //      // Done
+        ARRGET_CTN, //      // Done
     };
 
     enum TernaryOperation {
@@ -65,8 +65,8 @@ namespace codetree {
         PROG_CTN,   //      // Done
         BLOCK_CTN,  //      // Done
         MKFUN_CTN,  //      // Done
-        MKARR_CTN,  //
-        CALL_CTN,   //
+        MKARR_CTN,  //      // Done
+        CALL_CTN,   //      // Done
     };
 
     enum ValueType {
